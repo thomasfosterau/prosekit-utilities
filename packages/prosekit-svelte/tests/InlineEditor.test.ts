@@ -1,0 +1,69 @@
+/**
+ * `InlineEditor` — the same envelope remap and hidden input as
+ * `BlockEditor`, plus the one thing only this component promises: Enter does
+ * not make a second line.
+ *
+ * That promise needs a real browser twice over. The key has to be a real
+ * keydown for ProseMirror's keymap to see it, and "no second block" can only
+ * be read off the document the editor actually built.
+ */
+
+import { expect, test } from 'vite-plus/test';
+import { userEvent } from 'vite-plus/test/browser';
+import { render } from 'vitest-browser-svelte';
+import InlineEditor from '../src/lib/editor/InlineEditor.svelte';
+import { hiddenInputValue, proseMirror, typeInEditor } from './helpers.ts';
+
+test('the hidden input carries the envelope-typed document after typing', async () => {
+  await render(InlineEditor, { name: 'title' });
+
+  await typeInEditor('Sorrel');
+
+  expect(hiddenInputValue('title')).toMatchObject({
+    type: 'inlineDocument',
+    content: [{ type: 'text', text: 'Sorrel' }],
+  });
+});
+
+test('seeds from an envelope-typed `defaultContent` without throwing', async () => {
+  await render(InlineEditor, {
+    name: 'title',
+    defaultContent: { type: 'inlineDocument', content: [{ type: 'text', text: 'Seeded' }] },
+  });
+
+  await expect.element(proseMirror()).toHaveTextContent('Seeded');
+  expect(hiddenInputValue('title')).toMatchObject({ type: 'inlineDocument' });
+});
+
+test('`documentType` overrides the envelope name', async () => {
+  await render(InlineEditor, { name: 'title', documentType: 'inlineTitle' });
+
+  await typeInEditor('Yarrow');
+
+  expect(hiddenInputValue('title')).toMatchObject({ type: 'inlineTitle' });
+});
+
+test('Enter inserts nothing — no second block, no line break', async () => {
+  await render(InlineEditor, { name: 'title' });
+
+  await typeInEditor('One');
+  await userEvent.keyboard('{Enter}');
+  await userEvent.keyboard('Two');
+
+  const document_ = hiddenInputValue('title') as { content: ReadonlyArray<{ type: string }> };
+  expect(document_.content.every((child) => child.type === 'text')).toBe(true);
+  expect(proseMirror().element().querySelectorAll('p')).toHaveLength(0);
+  await expect.element(proseMirror()).toHaveTextContent('OneTwo');
+});
+
+test('`label` names the wrapper group', async () => {
+  const screen = await render(InlineEditor, { label: 'Title' });
+
+  await expect.element(screen.getByRole('group')).toHaveAccessibleName('Title');
+});
+
+test('renders no toolbar', async () => {
+  const screen = await render(InlineEditor, {});
+
+  expect(screen.getByRole('toolbar').elements()).toHaveLength(0);
+});

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://www.schemastore.org/package",
+  "name": "@thomasfosterau/prosekit-utilities-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "ProseKit document grammars as Effect Schemas, Drizzle document columns, and Svelte 5 editor components — in a Vite+ workspace",
+  "license": "MIT",
+  "author": "Thomas Foster <me@thomasfoster.au>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thomasfosterau/prosekit-utilities.git"
+  },
+  "type": "module",
+  "scripts": {
+    "prepare": "vp config",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "vp run -r build && pnpm publish -r --access public --provenance"
+  },
+  "dependencies": {
+    "@thomasfosterau/prosekit-flowchart": "workspace:*",
+    "@thomasfosterau/prosekit-svelte": "workspace:*",
+    "@thomasfosterau/prosekit-utilities": "workspace:*"
+  },
+  "devDependencies": {
+    "@changesets/cli": "catalog:",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
+  },
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=11"
+  },
+  "packageManager": "pnpm@11.26.0"
+}

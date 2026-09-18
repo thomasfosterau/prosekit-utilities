@@ -1,0 +1,69 @@
+{
+  "$schema": "https://www.schemastore.org/package",
+  "name": "@thomasfosterau/prosekit-flowchart",
+  "version": "0.0.0",
+  "description": "A flowchart block for ProseKit documents: the node spec, its Effect Schema payload and a server-renderable SVG (no Svelte, no xyflow) under `./node`, and the @xyflow/svelte canvas, edit dialog and Svelte node view at the root",
+  "keywords": [
+    "editor",
+    "flowchart",
+    "prosekit",
+    "prosemirror",
+    "svelte",
+    "svelte5",
+    "xyflow"
+  ],
+  "license": "MIT",
+  "author": "Thomas Foster <me@thomasfoster.au>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thomasfosterau/prosekit-utilities.git",
+    "directory": "packages/prosekit-flowchart"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "types": "./dist/index.d.ts",
+  "svelte": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "svelte": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node/index.d.ts",
+      "default": "./dist/node/index.js"
+    }
+  },
+  "dependencies": {
+    "@thomasfosterau/prosekit-svelte": "workspace:*",
+    "@thomasfosterau/prosekit-utilities": "workspace:*",
+    "bits-ui": "catalog:"
+  },
+  "devDependencies": {
+    "@prosekit/pm": "catalog:",
+    "@storybook/sveltekit": "catalog:",
+    "@sveltejs/kit": "catalog:",
+    "@sveltejs/package": "catalog:",
+    "@sveltejs/vite-plugin-svelte": "catalog:",
+    "@testing-library/jest-dom": "catalog:",
+    "@types/node": "catalog:",
+    "@vitest/browser-playwright": "catalog:",
+    "@xyflow/svelte": "catalog:",
+    "effect": "catalog:",
+    "playwright": "catalog:",
+    "prosekit": "catalog:",
+    "svelte": "catalog:",
+    "svelte-check": "catalog:",
+    "vitest-browser-svelte": "catalog:"
+  },
+  "peerDependencies": {
+    "@prosekit/pm": "^0.1.19",
+    "@xyflow/svelte": "^1.6.6",
+    "effect": "^4.0.0-rc.112",
+    "prosekit": "^0.22.2",
+    "svelte": "^5.30.1"
+  }
+}

@@ -1,0 +1,13 @@
+/* Storybook-only stylesheet: the same Tailwind + daisyUI stack a consumer
+   runs, so a story renders exactly as an application does. The editor's own
+   stylesheets (`prosekit/basic/style.css`, `prosekit/basic/typography.css`)
+   arrive through `Editor.svelte`'s bare imports, exactly as they do in an
+   app. */
+@import 'tailwindcss';
+@source '../src';
+@source '../../prosekit-flowchart/src';
+@plugin "daisyui" {
+  themes:
+    light --default,
+    dark --prefersdark;
+}
