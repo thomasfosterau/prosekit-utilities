@@ -5,4 +5,6 @@
  * @module
  */
 
-export {};
+export { jsonbSchemaColumn } from './jsonb-column.ts';
+export { documentColumn, type HasDocumentSchema } from './document-column.ts';
+export { documentTextSql } from './document-text-sql.ts';
