@@ -8,4 +8,10 @@
  * @module
  */
 
-export {};
+export { EMPTY_FLOWCHART, parseFlowchartData, type FlowchartPosition } from './data.ts';
+export { defineFlowchart } from './flowchart-node.ts';
+export { postProcessFlowcharts } from './html.ts';
+export { flowchartMarkdown } from './markdown.ts';
+export { FLOWCHART_ATTRIBUTE_OVERRIDES } from './overrides.ts';
+export { FlowchartData, FlowchartEdge, FlowchartNode } from './schema.ts';
+export { generateFlowchartSvg, type FlowchartSvgLabels } from './svg.ts';
