@@ -79,6 +79,15 @@ export default defineConfig({
       '@testing-library/jest-dom/vitest',
       '@xyflow/svelte',
       'bits-ui',
+      'effect/Array',
+      'effect/Effect',
+      'effect/HashSet',
+      'effect/Option',
+      'effect/Predicate',
+      'effect/Record',
+      'effect/Result',
+      'effect/Schema',
+      'effect/String',
       'effect',
       'prosekit/core',
       'prosekit/svelte',
@@ -86,6 +95,10 @@ export default defineConfig({
       'vite-plus/test/browser',
       'vitest-browser-svelte',
     ],
+    // Reached only through the core's dynamic `import('linkedom')`, which a
+    // browser never takes (there is a global `document`); left out of the
+    // pre-bundle rather than bundling a server DOM into the suite.
+    exclude: ['linkedom'],
   },
 
   test: {
