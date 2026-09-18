@@ -83,6 +83,7 @@ export default defineConfig({
       'prosekit/core',
       'prosekit/svelte',
       'svelte',
+      'vite-plus/test/browser',
       'vitest-browser-svelte',
     ],
   },
