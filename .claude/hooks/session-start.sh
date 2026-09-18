@@ -171,8 +171,8 @@ write_vp_shim
 # missing codegen step. Cheap and idempotent, so it runs unconditionally.
 if [ -d "$PROJECT_DIR/node_modules" ]; then
   log "running svelte-kit sync…"
-  (cd "$PROJECT_DIR" && "$LOCAL_BIN/vp" run --filter ./packages/components sync >/dev/null 2>&1) \
-    || log "codegen failed; run \`vp run --filter ./packages/components sync\` by hand"
+  (cd "$PROJECT_DIR" && "$LOCAL_BIN/vp" run --filter ./packages/prosekit-svelte --filter ./packages/prosekit-flowchart sync >/dev/null 2>&1) \
+    || log "codegen failed; run \`vp run -r sync\` by hand"
 fi
 
 exit 0

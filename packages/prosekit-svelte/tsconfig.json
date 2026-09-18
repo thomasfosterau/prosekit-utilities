@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // `vite/client` for the ambient module declarations that let a component
+    // import a stylesheet for its side effect; those are Vite's, not Node's.
+    "types": ["node", "vite/client"]
+  },
+  "include": ["src", "tests", ".storybook"]
+}

@@ -1,0 +1,70 @@
+name: CI
+
+# ONE job, ONE required check. The pipeline is a short, ordered list of the
+# same gates a human runs before pushing — there is no stage to deploy, no
+# credential to inject and no service to provision, so nothing here needs a
+# `needs:` graph.
+#
+# The one step that is CI-only is the Playwright browser install: the Svelte
+# packages' `test:unit` drives real Chromium, which a dev machine and the
+# agent image already carry (see the `playwright` entry in
+# pnpm-workspace.yaml) and a fresh runner does not.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: Check, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+
+      # pnpm before Node so setup-node's `cache: pnpm` can resolve the store
+      # path. The pnpm version comes from the `packageManager` field in
+      # package.json — do not pin it here as well, or the two drift.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # `vp`, `svelte-check`, `svelte-package`, `storybook` and `playwright`
+      # all land in node_modules/.bin, which is on nobody's PATH by default.
+      - name: Put the toolchain on PATH
+        run: echo "$GITHUB_WORKSPACE/node_modules/.bin" >> "$GITHUB_PATH"
+
+      # Chromium + its apt system libraries, at exactly the revision the pinned
+      # `playwright` expects. CI-only: everywhere else the browser is already
+      # present under PLAYWRIGHT_BROWSERS_PATH.
+      - name: Install Chromium for the browser suites
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Format and lint
+        run: vp check
+
+      - name: Type check
+        run: vp run check
+
+      - name: Unit tests (node for the core, browser for the Svelte packages)
+        run: vp run -r test:unit
+
+      - name: Build the libraries
+        run: vp run -r build
+
+      - name: Build Storybook
+        run: vp run --filter ./packages/prosekit-svelte storybook:build

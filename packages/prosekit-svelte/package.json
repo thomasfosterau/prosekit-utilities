@@ -1,0 +1,67 @@
+{
+  "$schema": "https://www.schemastore.org/package",
+  "name": "@thomasfosterau/prosekit-svelte",
+  "version": "0.0.0",
+  "description": "Svelte 5 rich-text editor components on ProseKit — Editor, BlockEditor, InlineEditor, a declarative toolbar with an insert menu and link/image dialogs on bits-ui, every string a prop",
+  "keywords": [
+    "accessibility",
+    "bits-ui",
+    "editor",
+    "prosekit",
+    "prosemirror",
+    "rich-text",
+    "svelte",
+    "svelte5"
+  ],
+  "license": "MIT",
+  "author": "Thomas Foster <me@thomasfoster.au>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thomasfosterau/prosekit-utilities.git",
+    "directory": "packages/prosekit-svelte"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "types": "./dist/index.d.ts",
+  "svelte": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "svelte": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@thomasfosterau/prosekit-utilities": "workspace:*",
+    "bits-ui": "catalog:"
+  },
+  "devDependencies": {
+    "@prosekit/pm": "catalog:",
+    "@storybook/addon-a11y": "catalog:",
+    "@storybook/addon-svelte-csf": "catalog:",
+    "@storybook/sveltekit": "catalog:",
+    "@sveltejs/kit": "catalog:",
+    "@sveltejs/package": "catalog:",
+    "@sveltejs/vite-plugin-svelte": "catalog:",
+    "@tailwindcss/vite": "catalog:",
+    "@testing-library/jest-dom": "catalog:",
+    "@types/node": "catalog:",
+    "@vitest/browser-playwright": "catalog:",
+    "daisyui": "catalog:",
+    "playwright": "catalog:",
+    "prosekit": "catalog:",
+    "storybook": "catalog:",
+    "svelte": "catalog:",
+    "svelte-check": "catalog:",
+    "tailwindcss": "catalog:",
+    "vitest-browser-svelte": "catalog:"
+  },
+  "peerDependencies": {
+    "@prosekit/pm": "^0.1.19",
+    "prosekit": "^0.22.2",
+    "svelte": "^5.30.1"
+  }
+}
