@@ -35,7 +35,7 @@ vp run --filter ./packages/prosekit-svelte storybook:build
 
 ## Versioning
 
-[Changesets](https://github.com/changesets/changesets). Add one per affected package with `pnpm changeset` in any pull request that changes published behaviour; the release workflow opens a version PR and publishes on merge.
+[Changesets](https://github.com/changesets/changesets). Add one per affected package with `pnpm changeset` in any pull request that changes published behaviour; the release workflow opens a version PR and, once it merges, publishes each package to npm with OIDC trusted publishing and provenance — there is no npm token in the repo.
 
 ## License
 

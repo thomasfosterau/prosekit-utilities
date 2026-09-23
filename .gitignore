@@ -16,6 +16,10 @@ dist/
 # Storybook static build output.
 storybook-static/
 
+# `pnpm pack` output — the release path packs each package to `package.tgz`
+# before `npm publish`; a local dry run leaves the same file behind.
+*.tgz
+
 # Vitest coverage reports.
 coverage/
 

@@ -2,7 +2,7 @@
 '@thomasfosterau/prosekit-utilities': minor
 ---
 
-First release of the core package: a ProseKit document grammar as data, extracted from the owner's two SvelteKit + Effect apps, in four entry points.
+First release of the core package (`0.0.0` → `0.1.0`; the package has never been published): a ProseKit document grammar as data, extracted from the owner's two SvelteKit + Effect apps, in four entry points.
 
 - **`.`** (ProseKit-free): `defineDocumentShape` — the browser-cheap envelope codec with an installable grammar guard and `narrow(allowList)`; `defineAllowList`, `allowListViolation`, `checkAllowList` and `allowListFilter` with `DocumentViolation` as a tagged error; `isSafeHref`; `extractDocumentText` and `inlineDocumentText`; `toEditorDocument` / `fromEditorDocument`; `createMarkdownSerialiser` with the stock node table and opt-in `mentionMarkdown`, `figureMarkdown`, `sidenoteMarkdown` entries.
 - **`./derive`**: the effect-prosekit engine — `deriveDocumentSchema`, `deriveNodeSchema`, `deriveMarkSchema`, `Registry`, `createRegistryCache`, the attribute-overlay vocabulary — moved wholesale.

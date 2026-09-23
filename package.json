@@ -15,7 +15,7 @@
     "prepare": "vp config",
     "changeset": "changeset",
     "version": "changeset version",
-    "release": "vp run -r build && pnpm publish -r --access public --provenance"
+    "release": "pnpm -r --workspace-concurrency=1 exec pnpm pack --out package.tgz && pnpm -r --workspace-concurrency=1 exec npm publish package.tgz --access public && changeset tag"
   },
   "dependencies": {
     "@thomasfosterau/prosekit-flowchart": "workspace:*",
