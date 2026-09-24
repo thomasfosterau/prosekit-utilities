@@ -70,7 +70,7 @@ catalog:
   # hand-rolled keyboard and focus handling. A runtime `dependency` of the
   # Svelte packages, not a peer: consumers should not have to know it exists.
   bits-ui: ^2.19.0
-  daisyui: ^5.7.28
+  daisyui: ^5.7.44
   # A peer of `@thomasfosterau/prosekit-utilities/drizzle` only. The app
   # repos are on this release candidate; the peer range is `^1.0.0-rc.5`.
   drizzle-orm: 1.0.0-rc.5-ab785fc
