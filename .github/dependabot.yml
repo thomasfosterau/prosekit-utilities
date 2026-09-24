@@ -1,0 +1,85 @@
+# Dependabot reads the pnpm catalog in pnpm-workspace.yaml, which is where
+# every external version lives (package.json files carry only `catalog:`), so
+# a bump here is a bump for the whole workspace at once.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    # The same supply-chain delay pnpm applies at install (`minimumReleaseAge:
+    # 1440`, one day, in pnpm-workspace.yaml): a newly published version has
+    # a window to be pulled before Dependabot proposes it. First-party
+    # releases are exempt on both sides, so this workspace can pick up an
+    # app-repo or sibling-library release the day it lands.
+    cooldown:
+      default-days: 1
+      exclude:
+        - '@thomasfosterau/*'
+    # Packages that only work as a set are grouped so one PR moves them
+    # together; a lone bump of any of them fails install or the browser suite.
+    groups:
+      # `prosekit` and `@prosekit/pm` (ProseMirror re-published as one
+      # package) move together — the node and mark specs here are written
+      # against both.
+      prosekit:
+        patterns:
+          - prosekit
+          - '@prosekit/*'
+      # The Svelte compiler, SvelteKit (`svelte-kit sync` + `svelte-package`),
+      # the Vite plugin and svelte-check all pin against one another.
+      svelte:
+        patterns:
+          - svelte
+          - svelte-check
+          - '@sveltejs/*'
+      # vite-plus pins `vitest` (and oxlint / oxfmt) exactly, the browser
+      # provider pins `vitest` exactly, and `playwright` is the provider's
+      # browser — see the comments on each in the catalog. Moving any one
+      # alone breaks the exact-peer chain.
+      vitest-toolchain:
+        patterns:
+          - vite
+          - vite-plus
+          - vitest
+          - '@vitest/*'
+          - vitest-browser-svelte
+          - playwright
+      storybook:
+        patterns:
+          - storybook
+          - '@storybook/*'
+      # The flowchart package's required peer, plus its dev copy.
+      xyflow:
+        patterns:
+          - '@xyflow/*'
+    # `prosemirror-model` and `prosemirror-view` are pinned EXACTLY in the
+    # catalog's `overrides`: the derivation in `./derive` walks ProseMirror's
+    # compiled schema, and a stored document is only guaranteed to decode
+    # identically while that model is the same (see AGENTS.md — a bump is a
+    # major changeset, decided by a person). Scoped to the version update
+    # types rather than a bare ignore, so a security advisory against either
+    # still gets a Dependabot PR.
+    ignore:
+      - dependency-name: prosemirror-model
+        update-types:
+          - 'version-update:semver-major'
+          - 'version-update:semver-minor'
+          - 'version-update:semver-patch'
+      - dependency-name: prosemirror-view
+        update-types:
+          - 'version-update:semver-major'
+          - 'version-update:semver-minor'
+          - 'version-update:semver-patch'
+
+  # The SHA-pinned actions in .github/workflows. Dependabot updates the SHA
+  # and the trailing `# vX.Y.Z` comment together.
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns:
+          - '*'

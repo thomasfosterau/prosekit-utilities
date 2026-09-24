@@ -63,7 +63,11 @@ Durable knowledge has one home each: a decision, findings report or invariant di
 
 ## Publishing
 
-Changesets. Any PR that changes published behaviour adds one per affected package (`pnpm changeset`); `.github/workflows/release.yml` opens a "Version Packages" PR while unreleased changesets exist and publishes with provenance once it merges. The default branch is `main` — that is what `.changeset/config.json`'s `baseBranch` must say.
+Changesets. Any PR that changes published behaviour adds one per affected package (`pnpm changeset`); `.github/workflows/release.yml` opens a "Version Packages" PR while unreleased changesets exist and publishes once it merges. The default branch is `main` — that is what `.changeset/config.json`'s `baseBranch` must say.
+
+Publishing is **npm OIDC trusted publishing**, not a token: the release job runs in the protected `release` environment (manual approval), proves its identity to npm with a short-lived, workflow-bound OIDC token, and every version carries provenance. There is no `NPM_TOKEN` anywhere in this repo. The publish step is `pnpm pack` per package followed by `npm publish` of the tarball (the root `release` script): `pnpm pack` is what rewrites `workspace:*` and `catalog:` specifiers to real ranges, and the npm CLI is what speaks OIDC — pnpm does not yet (`pnpm/pnpm#9812`). `changeset tag` then emits the `New tag:` lines `changesets/action` turns into GitHub releases. Both workflows install with `--ignore-scripts`, start from `permissions: {}` and pin every action to a commit SHA; Dependabot (`.github/dependabot.yml`) keeps the pins and the catalog moving, with the exactly pinned `prosemirror-*` packages held back except for security advisories. `.github/workflows/effect-canary.yml` floats the core package onto `effect@rc` weekly and files an issue when it breaks; it never gates a PR.
+
+One-time owner setup, none of which an agent can do: (1) on npmjs.com, each of the three packages → Settings → Trusted Publisher → GitHub Actions, repository `thomasfosterau/prosekit-utilities`, workflow `release.yml`, environment `release` — if npm still requires a package to exist before a trusted publisher can be added, bootstrap each one by hand first; (2) Settings → Environments → `release` → required reviewers, deployments restricted to `main`; (3) Settings → Actions → General → allow GitHub Actions to create and approve pull requests, or the "Version Packages" PR cannot be opened; (4) protect `main`.
 
 ## Worktree workflow
 
@@ -77,16 +81,16 @@ Before opening a PR from a worktree, **rebase onto `main`** (`git fetch origin m
 
 ## Claude Code conventions
 
-- The toolchain is **Vite+** (the `vp` CLI) on **Node + pnpm**. Invoke everything through `vp` — `vp run <script>`, `vp exec <bin>`; use `vp exec` instead of `npx`, and reach for `vp` rather than bare `pnpm`/`npm`/`yarn`. The sanctioned non-`vp` invocations: `pnpm install` (and `pnpm install --frozen-lockfile` in CI), `pnpm changeset` / `pnpm publish` on the release path, and `pnpm exec playwright install` in CI.
+- The toolchain is **Vite+** (the `vp` CLI) on **Node + pnpm**. Invoke everything through `vp` — `vp run <script>`, `vp exec <bin>`; use `vp exec` instead of `npx`, and reach for `vp` rather than bare `pnpm`/`npm`/`yarn`. The sanctioned non-`vp` invocations: `pnpm install` (and `pnpm install --frozen-lockfile --ignore-scripts` in CI), `pnpm changeset` / `pnpm pack` / `npm publish` on the release path, and `pnpm exec playwright install` in CI.
 - **GitHub writes are scoped to `thomasfosterau/prosekit-utilities` only.** Never create or edit issues, PRs, comments, reviews or releases in any other repository — upstream projects, dependencies, the owner's app repos included — without the owner's explicit approval for that specific action in the current session. Beware `gh`'s target inference: it resolves the repo from the cwd's git remote, so a write run from inside a clone of another repo silently files there. Pass `-R thomasfosterau/prosekit-utilities` explicitly whenever the cwd might not be this checkout. **Nothing enforces this mechanically — it is on you.**
-- **Agent sessions are not hydrated.** The committed SessionStart hook ([.claude/hooks/session-start.sh](.claude/hooks/session-start.sh)) syncs dependencies, links the toolchain (`vp`, `node`) so they resolve from a **non-interactive** shell (which `~/.bashrc` alone does not do), and runs first-checkout codegen. It hydrates no secrets: `NPM_TOKEN` exists only in the release workflow, so nothing here can publish.
+- **Agent sessions are not hydrated.** The committed SessionStart hook ([.claude/hooks/session-start.sh](.claude/hooks/session-start.sh)) syncs dependencies, links the toolchain (`vp`, `node`) so they resolve from a **non-interactive** shell (which `~/.bashrc` alone does not do), and runs first-checkout codegen. It hydrates no secrets, and there are none to hydrate: publishing is OIDC from the release workflow's own identity, so nothing here can publish.
 - New rules: formatter/lint config goes in `vite.config.ts` first; otherwise in this file or the nearest package `CLAUDE.md`.
 
 ## Verification
 
 - Don't declare verification complete until every check has output a final pass/fail status. Claims of verification name the command and its final status.
 - `vp check`, `vp run check`, `vp run -r test:unit`, `vp run -r build` and `storybook:build` exercise everything locally; none needs a credential. The browser suites need a Chromium matching the pinned `playwright` — see that entry's comment in the catalog.
-- Before every push, prove CI parity from a clean tree: `rm -rf node_modules packages/*/node_modules packages/*/.svelte-kit packages/*/dist && pnpm install --frozen-lockfile`, then the gates above. A warm local tree hides a missing peer; a fresh runner does not.
+- Before every push, prove CI parity from a clean tree: `rm -rf node_modules packages/*/node_modules packages/*/.svelte-kit packages/*/dist && pnpm install --frozen-lockfile --ignore-scripts`, then the gates above. A warm local tree hides a missing peer; a fresh runner does not.
 
 ## PR Management
 

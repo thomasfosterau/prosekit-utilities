@@ -46,9 +46,9 @@
 #
 # ## Secrets, and the browser
 #
-# This hook hydrates NO secrets. The only credential this repo has is
-# `NPM_TOKEN`, which exists solely inside the release workflow — nothing in a
-# session can publish, by construction.
+# This hook hydrates NO secrets, and the repo holds none: publishing is npm
+# OIDC trusted publishing from the release workflow's own identity, so there
+# is no token to hydrate — nothing in a session can publish, by construction.
 #
 # It also does NOT install a Playwright browser. `vp run -r test:unit` drives
 # real Chromium, and the image is expected to provide one under
