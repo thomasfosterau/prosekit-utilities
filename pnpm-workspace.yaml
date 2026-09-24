@@ -43,8 +43,8 @@ catalog:
   # SvelteKit is a BUILD-TIME dependency here, not a runtime one: `svelte-kit
   # sync` generates the package's ambient types and `svelte-package` emits
   # `dist/`. Nothing in `src/lib/` may import `$app/*`.
-  '@sveltejs/kit': 3.0.0-next.25
-  '@sveltejs/package': 3.0.0-next.7
+  '@sveltejs/kit': 3.0.0-next.27
+  '@sveltejs/package': 3.0.0-next.8
   '@sveltejs/vite-plugin-svelte': ^7.3.0
   '@tailwindcss/vite': ^4.3.3
   '@testing-library/jest-dom': ^7.0.1
@@ -97,7 +97,7 @@ catalog:
   prosekit: ^0.22.2
   storybook: ^10.6.0
   svelte-check: ^4.7.6
-  svelte: ^5.57.0
+  svelte: ^5.57.1
   tailwindcss: ^4.3.3
   # The TS6 JS compiler (bin `tsc6`), aliased so the package stays importable
   # as `typescript`: svelte-check and tsdown's declaration emit drive
