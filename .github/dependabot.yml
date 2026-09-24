@@ -35,9 +35,9 @@ updates:
           - svelte-check
           - '@sveltejs/*'
       # vite-plus pins `vitest` (and oxlint / oxfmt) exactly, the browser
-      # provider pins `vitest` exactly, and `playwright` is the provider's
-      # browser — see the comments on each in the catalog. Moving any one
-      # alone breaks the exact-peer chain.
+      # provider pins `vitest` exactly — see the comments on each in the
+      # catalog. Moving any one alone breaks the exact-peer chain.
+      # (`playwright` is deliberately NOT here: it is ignored below.)
       vitest-toolchain:
         patterns:
           - vite
@@ -45,7 +45,6 @@ updates:
           - vitest
           - '@vitest/*'
           - vitest-browser-svelte
-          - playwright
       storybook:
         patterns:
           - storybook
@@ -68,6 +67,16 @@ updates:
           - 'version-update:semver-minor'
           - 'version-update:semver-patch'
       - dependency-name: prosemirror-view
+        update-types:
+          - 'version-update:semver-major'
+          - 'version-update:semver-minor'
+          - 'version-update:semver-patch'
+      # `playwright` is pinned EXACTLY and behind the app repos on purpose:
+      # its Chromium revision must match the one the agent-session image
+      # pre-installs under PLAYWRIGHT_BROWSERS_PATH (see the `playwright`
+      # entry in pnpm-workspace.yaml), so a bump is made together with the
+      # image, by a person. Same update-type scoping as above.
+      - dependency-name: playwright
         update-types:
           - 'version-update:semver-major'
           - 'version-update:semver-minor'
