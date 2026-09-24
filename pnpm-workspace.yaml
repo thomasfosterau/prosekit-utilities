@@ -56,8 +56,8 @@ catalog:
   # Vitest 4 browser mode: the Playwright provider is its own package as of
   # v4 and pins `vitest` EXACTLY, so it must track the `vitest` entry below
   # (which itself must match vite-plus's exact pin — see that entry).
-  '@vitest/browser-playwright': 4.1.11
-  '@vitest/coverage-istanbul': 4.1.11
+  '@vitest/browser-playwright': 5.0.1
+  '@vitest/coverage-istanbul': 5.0.1
   # The REQUIRED peer of `@thomasfosterau/prosekit-flowchart` — and the
   # reason that package exists apart from the editor package: a component
   # whose behaviour needs a specific third-party engine lives in its own
@@ -93,7 +93,7 @@ catalog:
   # installs the matching revision itself (`pnpm exec playwright install
   # --with-deps chromium`), so bumping this only costs the session, not the
   # pipeline — but bump it together with the image.
-  playwright: 1.56.1
+  playwright: 1.63.0
   prosekit: ^0.22.2
   storybook: ^10.6.0
   svelte-check: ^4.7.6
@@ -108,9 +108,9 @@ catalog:
   # `vitest: "catalog:"` override forces every resolution to the catalog
   # singleton, and a mismatch there breaks the browser provider's exact peer.
   # `vite` is the same release published under its aliased core package.
-  vite-plus: 0.3.0
+  vite-plus: 0.3.3
   vite: npm:@voidzero-dev/vite-plus-core@0.3.0
-  vitest: 4.1.11
+  vitest: 5.0.1
   # `render` + locators for Svelte components under Vitest browser mode.
   vitest-browser-svelte: ^3.1.0
 
