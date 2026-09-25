@@ -27,9 +27,9 @@ jobs:
       pull-requests: write # open/update the "Version Packages" PR
       id-token: write # OIDC: prove this workflow's identity to npm (no token needed)
     env:
-      # pnpm 11 defaults `verify-deps-before-run` to `install`: before any
-      # `pnpm run` / `pnpm exec` (including the root `release` script's two
-      # `pnpm -r exec` calls) it compares node_modules with the manifests
+      # pnpm 11 defaults `verify-deps-before-run` to `install`: before a
+      # top-level `pnpm run` (`pnpm run version` / `pnpm run release`) it
+      # compares node_modules with the manifests
       # and, if a manifest looks newer than the last install, re-installs
       # WITH lifecycle scripts, ignoring the `--ignore-scripts` of the install
       # step below. That re-install runs the root `prepare` (`vp config`) and
@@ -37,7 +37,10 @@ jobs:
       # `@tailwindcss/oxide`) inside this job, which holds `id-token: write`.
       # It triggers whenever a manifest's mtime moves after the install step,
       # e.g. a `git checkout` / `git reset --hard` by the Changesets action
-      # before `pnpm run version`. Scoped to this job: CI and local runs keep
+      # before `pnpm run version`. Commands nested inside a `pnpm run` script
+      # (scripts/release.sh's `pnpm -r exec` / `pnpm pack`) already inherit
+      # `pnpm_config_verify_deps_before_run=false` from pnpm, so the top-level
+      # calls are the entry points. Scoped to this job: CI and local runs keep
       # the default. pnpm 11 reads only the `pnpm_config_*` spelling for this
       # setting; `npm_config_verify_deps_before_run` is ignored.
       pnpm_config_verify_deps_before_run: 'false'
@@ -91,11 +94,13 @@ jobs:
 
       # When changesets are pending, this opens/updates a "Version Packages" PR
       # (via `pnpm run version`). Once that PR is merged (no changesets remain),
-      # it runs `pnpm run release`, which packs each package with `pnpm pack`
-      # (rewriting `workspace:*` and `catalog:` specifiers to real ranges — a
-      # thing `npm publish` on the source tree would not do) and publishes each
-      # tarball with `npm publish` (OIDC trusted publishing — there is no
-      # NPM_TOKEN to steal) and then `changeset tag`. The action parses the
+      # it runs `pnpm run release` (scripts/release.sh), which skips any
+      # package already on npm at its version, packs the rest with `pnpm pack
+      # --config.ignore-scripts=true` (rewriting `workspace:*` and `catalog:`
+      # specifiers to real ranges — a thing `npm publish` on the source tree
+      # would not do), publishes each tarball with `npm publish` (OIDC trusted
+      # publishing — there is no NPM_TOKEN to steal) and then runs
+      # `changeset tag`. The action parses the
       # "New tag:" output, pushes the tags and creates the GitHub releases.
       #
       # Provenance is left to npm: with no explicit provenance setting, npm
