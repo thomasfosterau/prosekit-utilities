@@ -32,7 +32,7 @@ catalog:
   # ProseMirror's model / view / state / transform, re-published as one
   # package by ProseKit. Type-only for `./derive`; a runtime peer of
   # `./prosekit` and the Svelte packages.
-  '@prosekit/pm': ^0.1.19
+  '@prosekit/pm': ^0.1.20
   # Storybook 10 over the SvelteKit framework preset — the Svelte 5 + Vite
   # pipeline a `svelte-package` library uses too — plus the Svelte CSF addon
   # so snippet-taking components can be storied in `.svelte`, and the a11y
@@ -94,7 +94,7 @@ catalog:
   # --with-deps chromium`), so bumping this only costs the session, not the
   # pipeline — but bump it together with the image.
   playwright: 1.56.1
-  prosekit: ^0.22.2
+  prosekit: ^0.22.3
   storybook: ^10.6.0
   svelte-check: ^4.7.6
   svelte: ^5.57.1
