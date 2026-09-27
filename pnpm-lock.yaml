@@ -55,8 +55,8 @@ catalogs:
       specifier: ^5.7.44
       version: 5.7.44
     drizzle-orm:
-      specifier: 1.0.0-rc.5-ab785fc
-      version: 1.0.0-rc.5-ab785fc
+      specifier: 1.0.0-rc.5-5935859
+      version: 1.0.0-rc.5-5935859
     happy-dom:
       specifier: ^20.14.0
       version: 20.14.5
@@ -271,7 +271,7 @@ importers:
         version: 4.1.11(supports-color@7.2.0)(vitest@4.1.11)
       drizzle-orm:
         specifier: 'catalog:'
-        version: 1.0.0-rc.5-ab785fc(effect@4.0.0-rc.117)
+        version: 1.0.0-rc.5-5935859(effect@4.0.0-rc.117)
       effect:
         specifier: 4.0.0-rc.117
         version: 4.0.0-rc.117
@@ -2355,11 +2355,12 @@ packages:
     resolution: {integrity: sha512-qI4JLRKnSzqFqr7hAlS5xQDusBCjKSEG4t4+7aNrIQMHBcsC2TGEhuyABJdYkgSewL57PNLYEiibY2iPKhKpaA==}
     engines: {node: '>=20.19.0'}
 
-  drizzle-orm@1.0.0-rc.5-ab785fc:
-    resolution: {integrity: sha512-28PVt0PS/+4kPa8eKr4mqP8y/YcbdOgdVcGUa6LGl2Kd2bykNWuf/WUOFoSCoynagblbcRgMO1zChLvRcWD6Tg==}
+  drizzle-orm@1.0.0-rc.5-5935859:
+    resolution: {integrity: sha512-PkVjyxhamD7IOVfpDMn3BmV9afyvj3eeLvIPind3NmPv+cfv6/jh6GN0fHP0zzgrprGx/jGE4mkE0ttRFlzHwA==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
       '@cloudflare/workers-types': '>=4'
+      '@drizzle-team/minipg': '>=0.3.2'
       '@effect/sql-d1': '>=4.0.0-beta.105 || >=4.0.0'
       '@effect/sql-libsql': '>=4.0.0-beta.105 || >=4.0.0'
       '@effect/sql-mysql2': '>=4.0.0-beta.105 || >=4.0.0'
@@ -2396,7 +2397,6 @@ packages:
       bun-types: '*'
       effect: 4.0.0-rc.117
       expo-sqlite: '>=14.0.0'
-      minipg: '>=0.2.0'
       mssql: ^11.0.1
       mysql2: '>=2'
       pg: '>=8'
@@ -2410,6 +2410,8 @@ packages:
       '@aws-sdk/client-rds-data':
         optional: true
       '@cloudflare/workers-types':
+        optional: true
+      '@drizzle-team/minipg':
         optional: true
       '@effect/sql-d1':
         optional: true
@@ -2482,8 +2484,6 @@ packages:
       effect:
         optional: true
       expo-sqlite:
-        optional: true
-      minipg:
         optional: true
       mssql:
         optional: true
@@ -5457,7 +5457,7 @@ snapshots:
       domelementtype: 3.0.0
       domhandler: 6.0.1
 
-  drizzle-orm@1.0.0-rc.5-ab785fc(effect@4.0.0-rc.117):
+  drizzle-orm@1.0.0-rc.5-5935859(effect@4.0.0-rc.117):
     optionalDependencies:
       effect: 4.0.0-rc.117
 
