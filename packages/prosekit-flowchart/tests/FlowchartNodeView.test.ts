@@ -101,7 +101,9 @@ test('Edit opens the dialog, and Save writes the diagram back through setAttrs',
 
   await expect.element(screen.getByRole('dialog')).toHaveAccessibleName('Edit flowchart');
   // Wait for the canvas behind the dynamic import before pulling a snapshot.
-  await expect.element(screen.getByRole('button', { name: 'Start' })).toBeInTheDocument();
+  await expect
+    .element(screen.getByRole('button', { name: 'Start', exact: false }))
+    .toBeInTheDocument();
 
   await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 

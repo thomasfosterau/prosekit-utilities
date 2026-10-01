@@ -120,12 +120,6 @@ export default defineConfig({
       headless: true,
       provider: playwright(),
       instances: [{ browser: 'chromium' }],
-      // Vitest 5 flipped `browser.locators.exact` to `true`, which applies to
-      // `getByText` and to `getByRole(..., { name })` alike: `{ name: 'Start' }`
-      // stopped matching "Start node" and every negative assertion would pass
-      // vacuously. Keep the substring, case-insensitive matching these suites
-      // were written against.
-      locators: { exact: false },
       screenshotFailures: false,
     },
   },
