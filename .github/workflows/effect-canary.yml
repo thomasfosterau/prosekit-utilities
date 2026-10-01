@@ -3,8 +3,10 @@ name: Effect Canary
 # Runs the core package's gate against the newest Effect *prerelease* (the
 # "rc" npm dist-tag) instead of the version pinned in the catalog, so upstream
 # breakage surfaces here on a schedule rather than in a consumer's build.
-# Only `@thomasfosterau/prosekit-utilities` targets Effect (the Svelte
-# packages never import it), so only that package is floated and checked.
+# Two published entries import Effect: the core package and
+# `@thomasfosterau/prosekit-flowchart/node`. The whole workspace is floated,
+# but this job checks the core only; checking the flowchart package too is
+# tracked in #28.
 #
 # Scheduled + manual only — this never runs on push or pull_request, so a red
 # run can never block a PR merge. The job still finishes red in the Actions

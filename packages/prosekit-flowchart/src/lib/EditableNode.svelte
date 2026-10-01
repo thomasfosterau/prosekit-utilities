@@ -1,3 +1,5 @@
+<!-- @component The Svelte Flow node type `Flowchart` renders, with an inline-editable label. Svelte Flow instantiates it, so its copy arrives through `data.labels`. -->
+
 <!--
   EditableNode — the Svelte Flow node type this package's canvas renders, with
   an inline-editable label.

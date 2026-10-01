@@ -45,13 +45,12 @@ const decodeFlowchartEdge = Schema.decodeUnknownOption(FlowchartEdgeSchema);
 export const EMPTY_FLOWCHART: FlowchartDataSchema = { nodes: [], edges: [] };
 
 /**
- * Parses a JSON string into a {@link FlowchartDataSchema}, returning
+ * Parses a JSON string into a `FlowchartData` payload, returning
  * {@link EMPTY_FLOWCHART} on any failure. Validates the shape just enough to
  * make downstream rendering safe.
  *
- * Nodes and edges are validated individually against {@link FlowchartNodeSchema}
- * / {@link FlowchartEdgeSchema} — a single malformed entry is dropped, not the
- * whole array.
+ * Nodes and edges are validated individually against `FlowchartNode` /
+ * `FlowchartEdge` — a single malformed entry is dropped, not the whole array.
  */
 export function parseFlowchartData(input: string): FlowchartDataSchema {
   const decoded = decodeJson(input);

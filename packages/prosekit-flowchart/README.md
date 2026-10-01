@@ -116,7 +116,7 @@ Server-side, an application keeps only `./node`: `defineFlowchart()` in the exte
 
 # `./node`
 
-The flowchart block without a canvas. Imports no Svelte and no `@xyflow/svelte` — the build proves it, since `dist/node/*.js` contains neither specifier — so it is safe on a server, in a Worker, and in any bundle that never renders the interactive canvas; the root entry is what pulls those in.
+The flowchart block without a canvas. Imports no Svelte and no `@xyflow/svelte`, so it is safe on a server, in a Worker, and in any bundle that never renders the interactive canvas; the root entry is what pulls those in.
 
 ```ts
 import { defineFlowchart } from '@thomasfosterau/prosekit-flowchart/node';
@@ -179,13 +179,3 @@ The toolbar and insert-menu entries:
 | `flowchartSlashCommand` | `(label?: string) => SlashCommand` | The same insertion, as an insert-menu entry. Default label `'Flowchart'`. |
 
 Both insert the starter diagram — one node labelled `'Start'` at `(120, 80)` — rather than an empty payload, because an empty canvas gives an author nothing to double-click and no anchor to drag a connection from. Each insertion builds its own diagram object, so two blocks never share one payload. The insertion is reached by name through the editor's own `commands`, so an entry added to a toolbar whose extension never registered `defineFlowchart()` is inert rather than throwing.
-
-## Import boundary
-
-- **Siblings only through their published entry points.** `@thomasfosterau/prosekit-utilities` (root and `./derive`) and `@thomasfosterau/prosekit-svelte` are `workspace:*` dependencies resolved through their `exports`, i.e. their built `dist/` — never a relative path into another package's `src/`. That is why `check`, `build` and `test:unit` take a `{ task: 'build', from: 'dependencies' }` edge.
-- **`./node` imports no Svelte and no `@xyflow/svelte`**, and the build proves it (`dist/node/*.js` contains neither specifier). It is the half a server render and a document-schema declaration need; the canvas is reached only from the root.
-- **The engine is reached once, from one place.** `Flowchart.svelte` is the only module that imports `@xyflow/svelte` and its stylesheet; the node view previews a flowchart with the same SVG the server renders, so the `@xyflow/svelte` bundle only loads when a user opens the edit dialog — a document that merely contains a flowchart never pays for it.
-
-## Testing
-
-Suites run under Vitest browser mode, headless Chromium via Playwright, the same mechanics as the sibling Svelte package. `tests/node/` covers the `./node` entry — a mounted ProseMirror view is available, because the suite runs in a real browser rather than node Vitest — and one file per component covers the root, asserting accessible name, role, and keyboard path with real pointer and keyboard events.

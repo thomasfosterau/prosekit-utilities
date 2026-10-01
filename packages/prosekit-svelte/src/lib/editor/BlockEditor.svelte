@@ -1,3 +1,5 @@
+<!-- @component An `Editor` on the block-document grammar with the default toolbar (`toolbar`, default `true`), the envelope remap (`documentType`, default `'blockDocument'`, ⇄ `doc`) and, given `name`, a hidden form input carrying the document JSON. -->
+
 <!--
   BlockEditor — an `Editor` on the block-document grammar, with the default
   toolbar and a hidden form input.

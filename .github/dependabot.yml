@@ -53,11 +53,12 @@ updates:
       xyflow:
         patterns:
           - '@xyflow/*'
-    # `prosemirror-model` and `prosemirror-view` are pinned EXACTLY in the
-    # catalog's `overrides`: the derivation in `./derive` walks ProseMirror's
-    # compiled schema, and a stored document is only guaranteed to decode
-    # identically while that model is the same (see AGENTS.md — a bump is a
-    # major changeset, decided by a person). Scoped to the version update
+    # `prosemirror-model` and `prosemirror-view` are pinned EXACTLY under
+    # `overrides:` in pnpm-workspace.yaml: the derivation in `./derive` walks
+    # ProseMirror's compiled schema, and a stored document is only guaranteed
+    # to decode identically while that model is the same (see
+    # packages/prosekit-utilities/CLAUDE.md § Invariants — a bump is a major
+    # changeset, decided by a person). Scoped to the version update
     # types rather than a bare ignore, so a security advisory against either
     # still gets a Dependabot PR.
     ignore:

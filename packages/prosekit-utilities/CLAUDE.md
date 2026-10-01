@@ -1,8 +1,13 @@
 # packages/prosekit-utilities — the core package
 
-`@thomasfosterau/prosekit-utilities`: a ProseKit document grammar as data. Four entry points, built by `vp pack` (tsdown) into `dist/{index,derive,prosekit,drizzle}.js` + `.d.ts`, tested under node Vitest. The repo-wide rules (Effect-first, `.ts` imports, `T | undefined`, `vite-plus/test`) live in the root [AGENTS.md](../../AGENTS.md); this file carries what is specific to the package.
+`@thomasfosterau/prosekit-utilities`: a ProseKit document grammar as data. Four entry points, built by `vp pack` (tsdown) into `dist/{index,derive,prosekit,drizzle}.js` + `.d.ts`, tested under node Vitest. The repo-wide rules (`.ts` imports, `T | undefined`, `vite-plus/test`) live in the root [AGENTS.md](../../AGENTS.md); this file carries what is specific to the package.
 
-## Layout and entry points
+## Boundary
+
+- **The root entry stays ProseKit-free.** Nothing under `src/*.ts` or `src/markdown/` may import `prosekit`, `@prosekit/pm` at the value level, or `src/prosekit/**`. `src/json.ts` exists so the root's node types need no ProseKit type import either. A consuming app's browser-reachable model layer imports this entry only, which is what keeps the editor runtime off every page without a document field; only server code and editor routes import `./prosekit`. Nothing enforces this yet (#25): after `vp run -r build`, `grep -l prosekit packages/prosekit-utilities/dist/index.js` must print nothing.
+- **Generic over ProseKit, ignorant of any app.** Nothing here names a post body, an article section or any other app surface. An app-shaped special case is the signal that the code belongs in the app.
+
+### Entry points
 
 | Entry | Directory | Imports ProseKit at runtime | What it holds |
 | --- | --- | --- | --- |
@@ -13,11 +18,11 @@
 
 Each entry has its own `index.ts` barrel; `tests/` mirrors `src/`.
 
-## Local invariants
+## Invariants
 
-- **The root entry stays ProseKit-free.** Nothing under `src/*.ts` or `src/markdown/` may import `prosekit`, `@prosekit/pm` at the value level, or `src/prosekit/**`. `src/json.ts` exists so the root's node types need no ProseKit type import either. The build proves it: `dist/index.js` must contain no `prosekit` specifier. A consuming app's browser-reachable model layer imports this entry only, which is what keeps the editor runtime off every page without a document field.
-- **The derivation is the contract.** `./derive` reads node and mark names, groups, the content model and admissible marks off the compiled ProseMirror schema; `./prosekit`'s node and mark specs and `STANDARD_ATTRIBUTE_OVERRIDES` decide the rest. Stored documents are content-addressed and immutable in the consuming apps, so a change to any of these changes what already-stored rows decode as — a major changeset, every time. `prosemirror-model` / `prosemirror-view` are pinned exactly in the catalog for the same reason, and the golden-fixture suite (`tests/prosekit/document-models.test.ts`) pins the wire shape of every node and mark.
-- **The apps' own specs, not ProseKit's stock ones, for `highlight`, `subscript`, `superscript` and `mention`.** ProseKit ships same-named extensions with different attribute shapes; the ones here are wire-identical to documents the apps have already persisted.
+- **Effect-first.** Domain failures are `Schema.TaggedError<Self>()(tag, fields)` classes (`DocumentViolation`, `DocumentDecodeError`, `HtmlRenderError`) — the rc.118 spelling; older guides say `TaggedErrorClass`, which does not exist in this `effect`. Work that can fail returns `Effect`; optional values are `Option`, fallible pure computations are `Result`; `null` appears only where ProseMirror's own model demands it (a node attr). Pure total functions stay plain functions — there is no reason to wrap text extraction in an `Effect`. For an Effect API question, see the root [AGENTS.md § Effect](../../AGENTS.md#effect).
+- **The derivation is the contract.** `./derive` reads node and mark names, groups, the content model and admissible marks off the compiled ProseMirror schema; `./prosekit`'s node and mark specs and `STANDARD_ATTRIBUTE_OVERRIDES` decide the rest. Stored documents are content-addressed and immutable in the consuming apps, so a change to any of these changes what already-stored rows decode as — a major changeset, every time. `prosemirror-model` / `prosemirror-view` are pinned exactly under `overrides:` in `pnpm-workspace.yaml` for the same reason (Dependabot holds them back except for security advisories), and the golden-fixture suite (`tests/prosekit/document-models.test.ts`) pins the wire shape of every node and mark.
+- **The apps' own specs, not ProseKit's stock ones, for `highlight`, `subscript`, `superscript` and `mention`.** ProseKit ships same-named extensions (`defineHighlight`, `defineSubscript`, `defineSuperscript`, `defineMention`) with different attribute shapes; the ones here are wire-identical to documents the apps have already persisted, so never swap in ProseKit's.
 - **Lazy, and cached per isolate.** Compiling a ProseMirror schema is expensive and the schema never changes at runtime. `lazySchema` compiles on first use and caches; `defineDocumentSchema` wraps the derivation in `Schema.suspend` so importing the module never pays for a compile; `createHtmlRenderer` resolves its DOM once. Never call `createEditor` on a per-row or per-render path.
 - **Two halves, one shape.** A `DocumentShape` (root) and a `DocumentSchema` (`./prosekit`) are linked by the shape object: `defineDocumentSchema(shape, …)` and `schema.install()` upgrade that shape's `Schema` from a structural check to the full grammar for the life of the isolate. The install site is the consuming app's persistence module, which every server runtime loads before handling a request and no browser bundle can reach. An uninstalled runtime is permissive, never spuriously rejecting.
 - **Serialisers are total over the stock grammar.** `createMarkdownSerialiser`'s stock table and `createHtmlRenderer`'s sanitiser handle every node and mark the presets admit; an app node reaches Markdown through the `blocks` / `inlines` / `marks` option maps and HTML through ProseKit's own `toDOM` plus the `postProcess` hook. An unknown node in Markdown falls back to its inline text so nothing is silently lost.

@@ -2,22 +2,17 @@
 
 `@thomasfosterau/prosekit-flowchart`: a flowchart block for ProseKit documents, in two entry points. `./node` is the canvas-free half — the ProseMirror node spec and its `updateFlowchartData` command, the Effect Schema payload, the server-renderable SVG, the attribute-override entry and the HTML / Markdown serialiser hooks — and imports neither Svelte nor xyflow, so it is safe on a server and in any bundle. The root is the `@xyflow/svelte` canvas (`Flowchart`), the edit dialog, the editable node, the ProseKit Svelte node view and the toolbar / insert-menu entries. Built with `svelte-package` exactly like the editor package; the repo-wide rules are in the root [AGENTS.md](../../AGENTS.md).
 
-**Why it is its own package.** A component whose behaviour needs a specific third-party dependency lives in its own package adjacent to the editor package, so the editor package stays free of it. Here that dependency is `@xyflow/svelte` (and its stylesheet), which one of the two source apps deliberately dropped: it is this package's **required** peer, installing this package is the decision to render a flowchart, and `@thomasfosterau/prosekit-svelte` never mentions it.
+## Boundary
 
-## Layout
+- **Siblings only through their published entry points** — the repo-wide rule in the root AGENTS.md. This package imports `@thomasfosterau/prosekit-utilities` (root and `./derive`) and `@thomasfosterau/prosekit-svelte`.
+- **`./node` (`src/lib/node/`) imports no Svelte and no xyflow.** It is the half a server render and a document-schema declaration need; the canvas is reached only from the root. Nothing enforces this yet (#25): after `vp run -r build`, `grep -lE "svelte|@xyflow" packages/prosekit-flowchart/dist/node/*.js` must print nothing.
+- **The engine is reached once, from one place.** `Flowchart.svelte` is the only module that imports `@xyflow/svelte` and its stylesheet, `@xyflow/svelte/dist/style.css` — the package's only side-effecting import. The node view previews a flowchart with the same SVG the server renders, so the xyflow bundle only loads when a user opens the edit dialog.
 
-| Path | What it is |
-| --- | --- |
-| `src/lib/node/` | The `./node` entry: `schema.ts` (payload schemas), `data.ts` (`EMPTY_FLOWCHART`, `parseFlowchartData`), `svg.ts`, `flowchart-node.ts` (`defineFlowchart`), `overrides.ts`, `html.ts` (`postProcessFlowcharts`), `markdown.ts` (`flowchartMarkdown`). |
-| `src/lib/*.svelte`, `src/lib/index.ts` | The root entry: `Flowchart`, `EditableNode`, `FlowchartEditDialog`, `FlowchartNodeView`, `defineFlowchartNodeView`, `flowchartToolbarItem`, `flowchartSlashCommand`. `Flowchart.svelte` carries the package's only side-effecting import, `@xyflow/svelte/dist/style.css`. |
-| `src/stories/` | Stories, rendered by the ONE Storybook in `packages/prosekit-svelte` (its `stories` glob reaches across). There is no `.storybook/` here. |
-| `tests/` | The browser suite: `tests/node/` for the `./node` entry (a mounted ProseMirror view is available because the suite runs in Chromium), one file per component for the root. |
+## Invariants
 
-## Import boundary
-
-- **Siblings only through their published entry points.** `@thomasfosterau/prosekit-utilities` (root and `./derive`) and `@thomasfosterau/prosekit-svelte` are `workspace:*` dependencies resolved through their `exports`, i.e. their built `dist/` — never a relative path into another package's `src/`. That is why `check`, `build` and `test:unit` take `{ task: 'build', from: 'dependencies' }`.
-- **`./node` imports no Svelte and no xyflow**, and the build proves it (`dist/node/*.js` contains neither specifier). It is the half a server render and a document-schema declaration need; the canvas is reached only from the root.
-- **The engine is reached once, from one place.** `Flowchart.svelte` is the only module that imports `@xyflow/svelte` and its stylesheet; the node view previews a flowchart with the same SVG the server renders, so the xyflow bundle only loads when a user opens the edit dialog.
+- **`./node` follows the core's Effect house style** — `Schema.TaggedError` errors, `Option`/`Result`, plain functions for total computations; see [`packages/prosekit-utilities/CLAUDE.md` § Invariants](../prosekit-utilities/CLAUDE.md#invariants).
+- **No Storybook here.** This package's stories (`src/stories/`) are rendered by the one Storybook in `packages/prosekit-svelte`, whose `stories` glob reaches across; there is no `.storybook/` in this package.
+- **`tests/node/` runs in Chromium too**, so a mounted ProseMirror view is available to the `./node` tests.
 
 ## Terms
 

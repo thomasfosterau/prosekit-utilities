@@ -1,3 +1,5 @@
+<!-- @component A single-line `Editor` on the inline-document grammar (Enter is a no-op), with the same envelope remap and hidden form input as `BlockEditor`. -->
+
 <!--
   InlineEditor — an `Editor` on the inline-document grammar: one line of
   rich text, marks but no blocks.

@@ -13,6 +13,10 @@
 # public, and an explicit request from a private repository fails the
 # publish.
 #
+# pnpm 11's own `pnpm publish` also performs trusted publishing; this script
+# keeps `pnpm pack` + `npm publish` by choice until the first release has gone
+# out (switching is evaluated in #31).
+#
 # Idempotent: a package already published at its current version is skipped,
 # so a partial run can be re-run, and a version bootstrapped by hand does not
 # fail the automated run. Every tarball is packed before the first publish,

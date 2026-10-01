@@ -1,3 +1,5 @@
+<!-- @component The `@xyflow/svelte` canvas for a `FlowchartData` payload: read-only by default, editable with `interactive`; pull the result with `getSnapshot()`. -->
+
 <!--
   Flowchart — the `@xyflow/svelte` canvas that renders a `FlowchartData`
   payload.

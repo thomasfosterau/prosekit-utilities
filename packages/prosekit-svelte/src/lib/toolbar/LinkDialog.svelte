@@ -1,3 +1,5 @@
+<!-- @component The link prompt as a bits-ui modal; the URL is checked with `isSafeHref` before it submits. -->
+
 <!--
   LinkDialog — the link prompt, as a modal.
 

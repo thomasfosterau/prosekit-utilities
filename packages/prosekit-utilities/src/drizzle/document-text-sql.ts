@@ -6,14 +6,12 @@
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import { sql, type SQL } from 'drizzle-orm';
 
+// Lifted from the consuming apps' document materialised views so every app
+// shares one fragment, tested against the same fixtures as the JS twin.
 /**
- * The `jsonb_path_query_array` text-extraction fragment Gardeneria's
- * `block_document_view` / `inline_document_view` materialised views use
- * (`packages/database/src/tables/nodes.ts`), lifted out so both apps'
- * document-storing views can share one fragment and test it against the same
- * fixtures as `extractDocumentText` (`packages/editor/src/document-text.ts`'s
- * JS twin, which walks the same tree and joins `text` leaves with a single
- * space).
+ * A SQL fragment yielding a jsonb document's `text` leaves joined by single
+ * spaces — the database twin of `extractDocumentText` (the root entry), for a
+ * generated or materialised search column.
  *
  * `jsonb_path_query_array(column, 'strict $.** ? (@.type == "text").text')`
  * collects every `text` leaf's `.text` value, in document order, as a jsonb

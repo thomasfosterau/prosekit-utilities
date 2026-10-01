@@ -1,3 +1,5 @@
+<!-- @component The ProseKit editor mount: `content` binds two-way, `defaultContent` seeds once, and `children` (a toolbar) renders inside the editor context. Importing it pulls in ProseKit's runtime and stylesheets. -->
+
 <!--
   Editor — the ProseKit mount, and this package's only side-effecting
   imports.

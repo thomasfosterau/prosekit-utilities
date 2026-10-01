@@ -21,14 +21,14 @@ export interface HasDocumentSchema<A> {
   readonly Document: Schema.Codec<A, A>;
 }
 
+// This is the consuming apps' read-path XSS guard (SEC-XSS-001), as their
+// `blockDocument` / `inlineDocument` columns apply it.
 /**
  * Builds a `jsonb` document column from a `DocumentSchema` (the value
  * `defineDocumentSchema` returns from `@thomasfosterau/prosekit-utilities/prosekit`).
  *
  * `jsonbSchemaColumn(schema.Document)` — the strict, ProseKit-derived schema,
- * so a row is held to the full document grammar on read exactly as
- * Gardeneria's `blockDocument` / `inlineDocument` columns hold `BlockDocument`
- * / `InlineDocument` (SEC-XSS-001 on the read path; see
+ * so a row is held to the full document grammar on read (see
  * {@link jsonbSchemaColumn}'s doc comment for why the write path is not
  * re-validated here).
  */

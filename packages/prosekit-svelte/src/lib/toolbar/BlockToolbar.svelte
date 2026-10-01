@@ -1,3 +1,5 @@
+<!-- @component The editor toolbar rendered from `ToolbarItem`s and `SlashCommand`s on a bits-ui `Toolbar` (one tab stop, arrow keys, `aria-pressed` toggles). Render it inside an `Editor`. -->
+
 <!--
   BlockToolbar — the editor's toolbar, rendered from a list of items.
 
