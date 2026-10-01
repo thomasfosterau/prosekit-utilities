@@ -10,7 +10,7 @@ pnpm add @thomasfosterau/prosekit-utilities effect prosekit @prosekit/pm
 
 | Package | Range | Why |
 | --- | --- | --- |
-| `effect` | `^4.0.0-rc.112` | Required. Every entry point returns or consumes `effect/Schema`, `Option`, `Result` or `Effect` values. |
+| `effect` | `>=4.0.0-rc.118` | Required. Every entry point returns or consumes `effect/Schema`, `Option`, `Result` or `Effect` values. |
 | `prosekit` | `^0.22.2` | Required by `./prosekit` only. The node/mark definitions, `lazySchema` and `createHtmlRenderer` run the real editor runtime. |
 | `@prosekit/pm` | `^0.1.19` | Required by `./prosekit` only (and by `./derive`'s types). ProseMirror's own model, which ProseKit re-exports. |
 | `drizzle-orm` | `^1.0.0-rc.5` | Optional. Only `./drizzle` reaches for it. |

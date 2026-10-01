@@ -62,7 +62,7 @@
   "peerDependencies": {
     "@prosekit/pm": "^0.1.19",
     "@xyflow/svelte": "^1.6.6",
-    "effect": "^4.0.0-rc.112",
+    "effect": ">=4.0.0-rc.118",
     "prosekit": "^0.22.2",
     "svelte": "^5.30.1"
   }

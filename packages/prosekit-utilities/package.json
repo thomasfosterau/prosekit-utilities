@@ -58,7 +58,7 @@
   "peerDependencies": {
     "@prosekit/pm": "^0.1.19",
     "drizzle-orm": "^1.0.0-rc.5",
-    "effect": "^4.0.0-rc.112",
+    "effect": ">=4.0.0-rc.118",
     "linkedom": "^0.18.13",
     "prosekit": "^0.22.2"
   },
