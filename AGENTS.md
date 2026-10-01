@@ -1,6 +1,6 @@
 # AGENTS.md
 
-`CLAUDE.md` is a symlink to this file. A publishable library workspace, not an application: `packages/*/dist` is the product, and it must stay wire-compatible with documents the owner's apps have already persisted. The toolchain is copied from `thomasfosterau/components`; unlike the effect-\* libraries, this repo has no fallow gate and no docgen.
+`CLAUDE.md` is a symlink to this file. A publishable library workspace, not an application: `packages/*/dist` is the product, and it must stay wire-compatible with documents the owner's apps have already persisted. The toolchain is copied from `thomasfosterau/components`. This repo has no fallow gate and no docgen.
 
 | Package | Directory | Purpose / boundary |
 | --- | --- | --- |
@@ -57,7 +57,7 @@ This is CI's order (`.github/workflows/ci.yml`). None needs a credential. The br
 - **Every change to a published package's behaviour carries a changeset** (`pnpm changeset`), one per affected package; docs-, CI- and tooling-only changes need none. A change to the derivation, a node/mark spec or the attribute overlay is a **major** — see [`packages/prosekit-utilities/CLAUDE.md`](packages/prosekit-utilities/CLAUDE.md).
 - **Never publish or version by hand.** Merging to `main` makes `.github/workflows/release.yml` open the "Version Packages" PR (`chore: version packages`); the owner merges it, and the workflow publishes through [`scripts/release.sh`](scripts/release.sh). Publishing is npm trusted publishing (OIDC) from the protected `release` environment; there is no `NPM_TOKEN`. Never add `--provenance` or `NPM_CONFIG_PROVENANCE=true` — from a private repository it fails the publish. The reason for each release step is in the comments of `scripts/release.sh` and `release.yml`; the one-time owner setup is in [README.md § Releasing](README.md#releasing).
 - **Standing approvals** (they override any default "don't open a PR unless asked"): open a PR against `main` once a branch has pushed a commit; watch it to merge or close, investigating CI failures and review comments as they arrive and rebasing promptly when it goes conflicting; keep the PR body current as the implementation diverges from it.
-- **GitHub writes go to `thomasfosterau/prosekit-utilities` only**; pass `-R thomasfosterau/prosekit-utilities` whenever the cwd might be another checkout (`gh` infers the repo from the cwd's remote). Never write to any other repository — upstream projects and the owner's app repos included — without the owner's explicit approval for that action in the current session. Use the `gh` CLI for GitHub operations, even when GitHub MCP tools are available.
+- **GitHub writes go to `thomasfosterau/prosekit-utilities` only**; pass `-R thomasfosterau/prosekit-utilities` whenever the cwd might be another checkout (`gh` infers the repo from the cwd's remote). Never write to any other repository — upstream projects and the owner's app repos included — without the owner's explicit approval for that action in the current session; nothing enforces this mechanically. Use the `gh` CLI for GitHub operations, even when GitHub MCP tools are available.
 
 ## Work tracker
 
@@ -69,12 +69,12 @@ This is CI's order (`.github/workflows/ci.yml`). None needs a credential. The br
 
 ## Effect
 
-Effect is used by the core package and by `prosekit-flowchart`'s `./node` entry only; its house style is in [`packages/prosekit-utilities/CLAUDE.md`](packages/prosekit-utilities/CLAUDE.md). The pinned version is the `effect` entry of the catalog; the published peer floor is the literal `>=4.0.0-rc.118` in each package.json. `effect-solutions` is not provisioned here (#27): for an API question read `node_modules/effect/dist/*.d.ts` (after `pnpm install`). Never guess at an Effect pattern.
+Effect is used by the core package and by `prosekit-flowchart`'s `./node` entry only; its house style is in [`packages/prosekit-utilities/CLAUDE.md`](packages/prosekit-utilities/CLAUDE.md). The pinned version is the `effect` entry of the catalog; the published peer floor is the literal `>=4.0.0-rc.118` in the core's and the flowchart's package.json. `effect-solutions` is not provisioned here (#27): for an API question read `node_modules/effect/dist/*.d.ts` (after `pnpm install`). Never guess at an Effect pattern.
 
 ## Agent sessions
 
 - The SessionStart hook ([`.claude/hooks/session-start.sh`](.claude/hooks/session-start.sh)) syncs dependencies against the lockfile, writes a `vp` shim on `~/.local/bin` that resolves the nearest project's `vite-plus`, repairs a broken bare `node`, and runs `svelte-kit sync` on a first checkout. It hydrates no secrets, and there are none to hydrate.
-- A PostToolUse hook runs `vp fmt --write` on every file an Edit or Write touches.
+- A PostToolUse hook runs `vp fmt --write` on each `.ts`/`.tsx`/`.js`/`.css`/`.json`/`.md`/`.yaml` file an Edit or Write touches. It skips `.svelte`: Oxfmt can't format it, so keep `.svelte` files in the same style by hand (two-space indent, single quotes); the pre-commit hook lints them (`vp lint --fix`).
 - Won't run in an agent session: publishing (only the release workflow can mint the OIDC token). Everything in § Verification runs here, given a Chromium for the browser suites.
 
 ## Documentation surfaces

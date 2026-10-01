@@ -2,7 +2,12 @@
 
 `@thomasfosterau/prosekit-utilities`: a ProseKit document grammar as data. Four entry points, built by `vp pack` (tsdown) into `dist/{index,derive,prosekit,drizzle}.js` + `.d.ts`, tested under node Vitest. The repo-wide rules (`.ts` imports, `T | undefined`, `vite-plus/test`) live in the root [AGENTS.md](../../AGENTS.md); this file carries what is specific to the package.
 
-## Layout and entry points
+## Boundary
+
+- **The root entry stays ProseKit-free.** Nothing under `src/*.ts` or `src/markdown/` may import `prosekit`, `@prosekit/pm` at the value level, or `src/prosekit/**`. `src/json.ts` exists so the root's node types need no ProseKit type import either. A consuming app's browser-reachable model layer imports this entry only, which is what keeps the editor runtime off every page without a document field; only server code and editor routes import `./prosekit`. Nothing enforces this yet (#25): after `vp run -r build`, `grep -l prosekit packages/prosekit-utilities/dist/index.js` must print nothing.
+- **Generic over ProseKit, ignorant of any app.** Nothing here names a post body, an article section or any other app surface. An app-shaped special case is the signal that the code belongs in the app.
+
+### Entry points
 
 | Entry | Directory | Imports ProseKit at runtime | What it holds |
 | --- | --- | --- | --- |
@@ -12,11 +17,6 @@
 | `./drizzle` | `src/drizzle/` | never | `jsonbSchemaColumn`, `documentColumn`, `documentTextSql` |
 
 Each entry has its own `index.ts` barrel; `tests/` mirrors `src/`.
-
-## Boundary
-
-- **The root entry stays ProseKit-free.** Nothing under `src/*.ts` or `src/markdown/` may import `prosekit`, `@prosekit/pm` at the value level, or `src/prosekit/**`. `src/json.ts` exists so the root's node types need no ProseKit type import either. A consuming app's browser-reachable model layer imports this entry only, which is what keeps the editor runtime off every page without a document field; only server code and editor routes import `./prosekit`. Nothing enforces this yet (#25): after `vp run -r build`, `grep -l prosekit packages/prosekit-utilities/dist/index.js` must print nothing.
-- **Generic over ProseKit, ignorant of any app.** Nothing here names a post body, an article section or any other app surface. An app-shaped special case is the signal that the code belongs in the app.
 
 ## Invariants
 

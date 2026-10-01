@@ -10,6 +10,7 @@
 
 ## Invariants
 
+- **`./node` follows the core's Effect house style** — `Schema.TaggedError` errors, `Option`/`Result`, plain functions for total computations; see [`packages/prosekit-utilities/CLAUDE.md` § Invariants](../prosekit-utilities/CLAUDE.md#invariants).
 - **No Storybook here.** This package's stories (`src/stories/`) are rendered by the one Storybook in `packages/prosekit-svelte`, whose `stories` glob reaches across; there is no `.storybook/` in this package.
 - **`tests/node/` runs in Chromium too**, so a mounted ProseMirror view is available to the `./node` tests.
 
