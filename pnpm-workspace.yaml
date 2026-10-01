@@ -56,8 +56,8 @@ catalog:
   # Vitest browser mode: the Playwright provider is its own package as of
   # v4 and pins `vitest` EXACTLY, so it must track the `vitest` entry below
   # (which itself must match vite-plus's exact pin — see that entry).
-  '@vitest/browser-playwright': 5.0.1
-  '@vitest/coverage-istanbul': 5.0.1
+  '@vitest/browser-playwright': 5.0.2
+  '@vitest/coverage-istanbul': 5.0.2
   # The REQUIRED peer of `@thomasfosterau/prosekit-flowchart` — and the
   # reason that package exists apart from the editor package: a component
   # whose behaviour needs a specific third-party engine lives in its own
@@ -110,7 +110,7 @@ catalog:
   # `vite` is the same release published under its aliased core package.
   vite-plus: 1.0.0
   vite: npm:@voidzero-dev/vite-plus-core@1.0.0
-  vitest: 5.0.1
+  vitest: 5.0.2
   # `render` + locators for Svelte components under Vitest browser mode.
   vitest-browser-svelte: ^3.1.0
 
