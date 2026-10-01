@@ -49,10 +49,11 @@ const defaultDiagramLabel = (nodeCount: number): string =>
 /** Default for `labels.untitledLabel`. */
 const DEFAULT_UNTITLED_LABEL = 'Untitled';
 
+// The defaults are the source application's own text, so an omitted `labels`
+// argument reproduces its output exactly.
 /**
- * Overridable copy for {@link generateFlowchartSvg}'s accessible strings. Each
- * defaults to Website's own text, so an omitted `labels` argument reproduces
- * its output exactly.
+ * Overridable copy for {@link generateFlowchartSvg}'s accessible strings;
+ * each field documents its English default.
  */
 export interface FlowchartSvgLabels {
   /** The empty-state `<svg>`'s `aria-label` and visible text. Default: `'Empty flowchart'`. */

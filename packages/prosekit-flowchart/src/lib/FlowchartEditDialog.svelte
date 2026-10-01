@@ -1,3 +1,5 @@
+<!-- @component The modal that hosts the editable `Flowchart` canvas, loaded on open; Save hands the diagram to `onSave`. -->
+
 <!--
   FlowchartEditDialog — the modal that hosts the full WYSIWYG canvas.
 

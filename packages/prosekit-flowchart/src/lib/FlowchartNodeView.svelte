@@ -1,3 +1,5 @@
+<!-- @component The ProseKit node view for a `flowchart` node: previews it with the server-rendered SVG and edits it in `FlowchartEditDialog`. -->
+
 <!--
   FlowchartNodeView — the Svelte node view ProseKit mounts for a `flowchart`
   node.

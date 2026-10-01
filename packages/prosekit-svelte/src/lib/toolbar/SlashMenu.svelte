@@ -1,3 +1,5 @@
+<!-- @component The insert menu: a bits-ui `DropdownMenu` of `SlashCommand` entries. `BlockToolbar` renders it; a custom toolbar can too. -->
+
 <!--
   SlashMenu — the insert menu, on bits-ui's `DropdownMenu`.
 

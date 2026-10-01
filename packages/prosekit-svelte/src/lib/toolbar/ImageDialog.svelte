@@ -1,3 +1,5 @@
+<!-- @component The image prompt as a bits-ui modal, asking only for the source URL the stock `image` node can hold. -->
+
 <!--
   ImageDialog — the image prompt, as a modal. `LinkDialog`'s reasoning,
   applied to the other prompt.
