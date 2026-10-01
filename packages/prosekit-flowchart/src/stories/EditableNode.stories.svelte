@@ -1,5 +1,9 @@
 <script module lang="ts">
   import { defineMeta } from '@storybook/addon-svelte-csf';
+  // `Flowchart` imports Svelte Flow's stylesheet; these stories render a bare
+  // `SvelteFlow`, so they must too, or they only look right when a Flowchart
+  // story happened to load it first (prosekit-utilities#34).
+  import '@xyflow/svelte/dist/style.css';
   import { SvelteFlow, type Edge, type Node, type NodeTypes } from '@xyflow/svelte';
   import EditableNode from '../lib/EditableNode.svelte';
 
