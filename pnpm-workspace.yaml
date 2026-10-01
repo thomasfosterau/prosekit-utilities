@@ -64,7 +64,7 @@ catalog:
   # package, so the editor package stays free of it. Installed as a
   # devDependency of the flowchart package too, so its browser suite and its
   # stories load the real module.
-  '@xyflow/svelte': ^1.6.6
+  '@xyflow/svelte': ^1.7.0
   # Headless Svelte 5 primitives. The toolbar (roving focus, `aria-pressed`),
   # the insert menu and the dialogs are built on these rather than on
   # hand-rolled keyboard and focus handling. A runtime `dependency` of the
