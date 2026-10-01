@@ -54,8 +54,12 @@ test('renders a container that keeps the caller’s attributes', async () => {
 test('mounts the canvas with each payload node as an EditableNode', async () => {
   const screen = await render(FlowchartFixture, { data: TWO_NODES });
 
-  await expect.element(screen.getByRole('button', { name: 'Start' })).toBeInTheDocument();
-  await expect.element(screen.getByRole('button', { name: 'Finish' })).toBeInTheDocument();
+  await expect
+    .element(screen.getByRole('button', { name: 'Start', exact: false }))
+    .toBeInTheDocument();
+  await expect
+    .element(screen.getByRole('button', { name: 'Finish', exact: false }))
+    .toBeInTheDocument();
 });
 
 test('an empty payload mounts an empty canvas', async () => {
@@ -74,7 +78,9 @@ test('getSnapshot round-trips what resetTo was given', async () => {
   });
 
   await screen.getByRole('button', { name: 'Reset' }).click();
-  await expect.element(screen.getByRole('button', { name: 'Start' })).toBeInTheDocument();
+  await expect
+    .element(screen.getByRole('button', { name: 'Start', exact: false }))
+    .toBeInTheDocument();
 
   expect(await snapshot(screen)).toEqual(TWO_NODES);
 });
@@ -129,7 +135,9 @@ test('addNode staggers each new node rather than piling them up', async () => {
 test('a read-only canvas offers no Controls', async () => {
   const screen = await render(FlowchartFixture, { data: TWO_NODES, interactive: false });
 
-  await expect.element(screen.getByRole('button', { name: 'Start' })).toBeInTheDocument();
+  await expect
+    .element(screen.getByRole('button', { name: 'Start', exact: false }))
+    .toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Zoom In' }).elements()).toHaveLength(0);
 });
 

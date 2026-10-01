@@ -45,7 +45,7 @@ beforeAll(() => {
 
 /** Just enough of what `render` hands back for the two helpers below. */
 interface Screen {
-  getByRole: (role: string, options?: { name: string }) => Locator;
+  getByRole: (role: string, options?: { name: string; exact?: boolean }) => Locator;
 }
 
 /**
@@ -53,7 +53,7 @@ interface Screen {
  * snapshot may run until its first node is on screen.
  */
 const canvasReady = async (screen: Screen, name: string): Promise<void> => {
-  await expect.element(screen.getByRole('button', { name })).toBeInTheDocument();
+  await expect.element(screen.getByRole('button', { name, exact: false })).toBeInTheDocument();
 };
 
 test('opens as a dialog named by the title and described by the help text', async () => {
@@ -132,7 +132,9 @@ test('Add node appends to the diagram Save reports', async () => {
   await canvasReady(screen, 'Start');
 
   await userEvent.click(screen.getByRole('button', { name: 'Add node' }));
-  await expect.element(screen.getByRole('button', { name: 'New' })).toBeInTheDocument();
+  await expect
+    .element(screen.getByRole('button', { name: 'New', exact: false }))
+    .toBeInTheDocument();
   await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
   const saved = onSave.mock.calls[0]?.[0] as FlowchartData;
@@ -182,11 +184,13 @@ test('the node copy is forwarded to the canvas the dialog hosts', async () => {
 
   // Edit a node inside the dialog and commit it blank: both strings are the
   // canvas's, and only reach it because the dialog forwards them.
-  await screen.getByRole('button', { name: 'Start' }).dblClick();
+  await screen.getByRole('button', { name: 'Start', exact: false }).dblClick();
   await screen.getByRole('textbox', { name: 'Étiquette du nœud' }).fill('   ');
   await userEvent.keyboard('{Enter}');
 
-  await expect.element(screen.getByRole('button', { name: 'Sans titre' })).toBeInTheDocument();
+  await expect
+    .element(screen.getByRole('button', { name: 'Sans titre', exact: false }))
+    .toBeInTheDocument();
 
   await userEvent.click(screen.getByRole('button', { name: 'Save' }));
   const saved = onSave.mock.calls[0]?.[0] as FlowchartData;
@@ -254,7 +258,9 @@ test('the imperative open(data) seeds the canvas with that payload', async () =>
   await userEvent.click(screen.getByRole('button', { name: 'Open the diagram' }));
 
   await expect.element(screen.getByTestId('open-state')).toHaveTextContent('open');
-  await expect.element(screen.getByRole('button', { name: 'Elsewhere' })).toBeInTheDocument();
+  await expect
+    .element(screen.getByRole('button', { name: 'Elsewhere', exact: false }))
+    .toBeInTheDocument();
 
   await userEvent.click(screen.getByRole('button', { name: 'Save' }));
   expect(onSave.mock.calls[0]?.[0]).toEqual(OTHER_NODE);

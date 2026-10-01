@@ -26,7 +26,7 @@ import EditableNodeFixture from './fixtures/EditableNodeFixture.svelte';
 test('names the edit field, and the name arrives through the node data', async () => {
   const screen = await render(EditableNodeFixture, { nodeLabelLabel: 'Étiquette' });
 
-  await screen.getByRole('button', { name: 'Start' }).dblClick();
+  await screen.getByRole('button', { name: 'Start', exact: false }).dblClick();
 
   await expect.element(screen.getByRole('textbox', { name: 'Étiquette' })).toBeInTheDocument();
 });
@@ -34,7 +34,7 @@ test('names the edit field, and the name arrives through the node data', async (
 test('a double-click opens the field named by the default label', async () => {
   const screen = await render(EditableNodeFixture);
 
-  await screen.getByRole('button', { name: 'Start' }).dblClick();
+  await screen.getByRole('button', { name: 'Start', exact: false }).dblClick();
 
   const field = screen.getByRole('textbox', { name: 'Node label' });
   await expect.element(field).toHaveValue('Start');
@@ -44,7 +44,7 @@ test('a double-click opens the field named by the default label', async () => {
 test('Enter on the focused node opens the field too', async () => {
   const screen = await render(EditableNodeFixture);
 
-  await screen.getByRole('button', { name: 'Start' }).click();
+  await screen.getByRole('button', { name: 'Start', exact: false }).click();
   await userEvent.keyboard('{Enter}');
 
   await expect.element(screen.getByRole('textbox', { name: 'Node label' })).toBeInTheDocument();
@@ -53,7 +53,7 @@ test('Enter on the focused node opens the field too', async () => {
 test('Enter commits the new label', async () => {
   const screen = await render(EditableNodeFixture);
 
-  await screen.getByRole('button', { name: 'Start' }).dblClick();
+  await screen.getByRole('button', { name: 'Start', exact: false }).dblClick();
   await screen.getByRole('textbox', { name: 'Node label' }).fill('Dispatch');
   await userEvent.keyboard('{Enter}');
 
@@ -64,7 +64,7 @@ test('Enter commits the new label', async () => {
 test('Escape discards the edit and restores the label', async () => {
   const screen = await render(EditableNodeFixture);
 
-  await screen.getByRole('button', { name: 'Start' }).dblClick();
+  await screen.getByRole('button', { name: 'Start', exact: false }).dblClick();
   await screen.getByRole('textbox', { name: 'Node label' }).fill('Abandoned');
   await userEvent.keyboard('{Escape}');
 
@@ -75,7 +75,7 @@ test('Escape discards the edit and restores the label', async () => {
 test('a blank label commits as the untitled fallback', async () => {
   const screen = await render(EditableNodeFixture);
 
-  await screen.getByRole('button', { name: 'Start' }).dblClick();
+  await screen.getByRole('button', { name: 'Start', exact: false }).dblClick();
   await screen.getByRole('textbox', { name: 'Node label' }).fill('   ');
   await userEvent.keyboard('{Enter}');
 
@@ -85,7 +85,7 @@ test('a blank label commits as the untitled fallback', async () => {
 test('the untitled fallback is overridable through the node data', async () => {
   const screen = await render(EditableNodeFixture, { untitledLabel: 'Sans titre' });
 
-  await screen.getByRole('button', { name: 'Start' }).dblClick();
+  await screen.getByRole('button', { name: 'Start', exact: false }).dblClick();
   await screen.getByRole('textbox', { name: 'Node label' }).fill('');
   await userEvent.keyboard('{Enter}');
 
@@ -95,13 +95,15 @@ test('the untitled fallback is overridable through the node data', async () => {
 test('a node whose label is already blank renders the fallback', async () => {
   const screen = await render(EditableNodeFixture, { label: '' });
 
-  await expect.element(screen.getByRole('button', { name: 'Untitled' })).toBeInTheDocument();
+  await expect
+    .element(screen.getByRole('button', { name: 'Untitled', exact: false }))
+    .toBeInTheDocument();
 });
 
 test('a read-only node is out of the tab order and refuses to open', async () => {
   const screen = await render(EditableNodeFixture, { readOnly: true });
 
-  const node = screen.getByRole('button', { name: 'Start' });
+  const node = screen.getByRole('button', { name: 'Start', exact: false });
   await expect.element(node).toHaveAttribute('tabindex', '-1');
 
   await node.dblClick();
