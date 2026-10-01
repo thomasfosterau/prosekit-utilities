@@ -237,7 +237,7 @@ const Document = deriveDocumentSchema(schema, { topTypeName: 'blockDocument' });
 const doc = Schema.decodeUnknownSync(Document)(json);
 ```
 
-Reads an Effect Schema back out of a compiled ProseMirror schema at runtime, so the grammar an editor already knows is never hand-transcribed a second time: node and mark **names**, **groups**, the **content model** (which children, whether it may be empty), and admissible **marks** are recovered exactly by walking the compiled `ContentMatch` automaton. ProseMirror does not expose attribute _value_ types — an `AttributeSpec` carries only a `default` and an optional `validate` hint — so attributes are recovered best-effort (`validate` grammar → `typeof` of a non-null `default` → `Schema.Unknown`), and the {@link AttributeOverlay} seam is where a caller supplies the rest. The derived schema complements, rather than replaces, a hand-written generative document contract, which still owns the attribute value types.
+Reads an Effect Schema back out of a compiled ProseMirror schema at runtime, so the grammar an editor already knows is never hand-transcribed a second time: node and mark **names**, **groups**, the **content model** (which children, whether it may be empty), and admissible **marks** are recovered exactly by walking the compiled `ContentMatch` automaton. ProseMirror does not expose attribute _value_ types — an `AttributeSpec` carries only a `default` and an optional `validate` hint — so attributes are recovered best-effort (`validate` grammar → `typeof` of a non-null `default` → `Schema.Unknown`), and the `AttributeOverlay` seam is where a caller supplies the rest. The derived schema complements, rather than replaces, a hand-written generative document contract, which still owns the attribute value types.
 
 | Export | Signature | Notes |
 | --- | --- | --- |
@@ -439,12 +439,8 @@ export const settings = pgTable('settings', {
 
 ## Wire compatibility
 
-**The derivation is the contract.** `./derive` reads node and mark names, groups, the content model and admissible marks off the compiled ProseMirror schema; `./prosekit`'s node and mark specs and `STANDARD_ATTRIBUTE_OVERRIDES` decide the rest. Stored documents are content-addressed and immutable in the consuming apps, so a change to any of these — a spec's shape, an attribute override, which marks a node admits — changes what already-stored rows decode as. `prosemirror-model`/`prosemirror-view` are pinned exactly in the catalog for the same reason.
+**The derivation is the contract.** `./derive` reads node and mark names, groups, the content model and admissible marks off the compiled ProseMirror schema; `./prosekit`'s node and mark specs and `STANDARD_ATTRIBUTE_OVERRIDES` decide the rest. Stored documents are content-addressed and immutable in the consuming apps, so a change to any of these — a spec's shape, an attribute override, which marks a node admits — changes what already-stored rows decode as. This workspace pins `prosemirror-model`/`prosemirror-view` exactly for the same reason.
 
 **The envelope is not versioned.** There is no `version` field on `DocumentJSON` and no normalisation or migration hook: this library decodes exactly what the current derivation accepts, nothing more permissive. A grammar change that needs already-stored rows to keep decoding is a **major** release, not a runtime compatibility shim.
 
 **The golden-fixture suite is the proof.** `tests/prosekit/document-models.test.ts` pins the wire shape of every node and mark this library defines, so a change that would silently alter what a stored document decodes as fails a test rather than shipping quietly.
-
-## Testing
-
-Suites run under node Vitest (`vite-plus/test`, never `vitest` directly). Most of the package needs no DOM at all — the derivation, the allow-list walk, text extraction, URL safety and the Markdown serialiser are pure tree-walks over JSON. The exceptions carry a happy-dom pragma at the top of the file: anything that mounts a real ProseKit editor view (an extension smoke test) or exercises the browser branch of `createHtmlRenderer`'s capability detection needs a global `document` to select that branch, which happy-dom supplies without pulling in an actual browser.

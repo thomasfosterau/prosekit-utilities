@@ -2,14 +2,7 @@
 
 Svelte 5 rich-text editing on [ProseKit](https://prosekit.dev): `Editor`, `BlockEditor`, `InlineEditor`, a declarative `BlockToolbar` with an insert menu, and the link and image dialogs — all built on [bits-ui](https://bits-ui.com), all styled with daisyUI's semantic classes, every user-facing string a prop with an English default.
 
-Four rules hold across every component:
-
-- **daisyUI semantic classes, never raw colour.** `btn`, `menu`, `modal-box`, `input`, `bg-base-100`, `text-error` — never a hex or an `oklch()`. Variant classes come from literal lookup tables, never a template string (Tailwind only emits classes it can see spelled out).
-- **bits-ui owns interaction.** `Toolbar` for the roving focus model, `DropdownMenu` for the insert menu, `Dialog` for the two prompts. Nothing with focus management, keyboard semantics or an ARIA relationship between elements is hand-rolled.
-- **Every user-facing string is a prop with an English default.** Accessible-name props end in `Label`; item labels are data in the toolbar spec. `setEditorMessages` is an optional second layer that changes those defaults per render site.
-- **No Effect.** Optional values are `T | undefined`; callbacks are plain functions. `effect` is not a dependency of this package.
-
-Every component spreads the native attributes of the element it renders and merges the caller's `class` last, so nothing here swallows an `id`, an `aria-*` attribute or a `data-*` hook.
+Requires Tailwind 4 + daisyUI in the consuming app (see [Peer requirements](#peer-requirements)). Accessible-name props end in `Label`. `Editor` spreads the native attributes of its wrapper; every component merges the caller's `class` last.
 
 ## Installation
 
@@ -261,7 +254,3 @@ The context key is `Symbol.for('@thomasfosterau/prosekit-svelte/messages')` — 
 
 - ProseKit's stock `link` mark declares `href`, `target` and `rel` only — no `title`. `LinkDialog`'s `title` field reaches `addLink` and survives only for a grammar whose own `link` mark declares one; against the stock mark, ProseMirror's `computeAttrs` silently drops it.
 - ProseKit's stock `image` node declares `src`, `width` and `height` only, which is why `ImageDialog` asks for one field, deliberately. The applications this package was extracted from also prompted for alt text, a title and a caption, and `computeAttrs` dropped all three — three prompts collecting text that went nowhere. An application whose image node declares more passes its own toolbar item.
-
-## Testing
-
-Suites run under Vitest **browser mode**, headless Chromium through Playwright, not a DOM shim — ProseMirror needs real layout and selection, and this package's contract is focus order, keyboard handling and the accessibility tree. `render` comes from `vitest-browser-svelte` and is asynchronous; assertions go through `expect.element(locator)`; every interaction is a real event (`locator.click()`, `userEvent.keyboard('{ArrowRight}')`, typing into a focused ProseMirror node) rather than a synthetic one.
