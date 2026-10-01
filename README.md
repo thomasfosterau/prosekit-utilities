@@ -24,18 +24,22 @@ vp run --filter ./packages/prosekit-svelte storybook    # the dev loop, port 600
 vp run --filter ./packages/prosekit-svelte storybook:build
 ```
 
-`vp check`, `vp run check`, `vp run -r test:unit` and `vp run -r build` are the meaningful pre-push gates. There is no pre-push hook; the pre-commit hook runs `vp staged` (format + lint on staged files) only.
+The pre-commit hook runs `vp staged` (format + lint on staged files); there is no pre-push hook. The gates to run before pushing, in CI's order, are in [AGENTS.md § Verification](AGENTS.md#verification); the contributor rules are in [AGENTS.md](AGENTS.md).
 
-### Toolchain notes
-
-- **Versions are catalogued.** Every external version lives in [`pnpm-workspace.yaml`](./pnpm-workspace.yaml) under `catalog:`; package.json files carry only `catalog:` or `workspace:*`, and `catalogMode: strict` enforces it. Edit the catalog, then `pnpm install`, then commit the regenerated `pnpm-lock.yaml`.
-- **The Svelte suites drive a real browser.** Vitest browser mode over Playwright Chromium, headless everywhere. Locally that needs a Chromium matching the pinned `playwright` (`pnpm exec playwright install chromium`, or an image that pre-installs one under `PLAYWRIGHT_BROWSERS_PATH`); CI installs it in a step of its own.
-- **`prosemirror-model` and `prosemirror-view` are pinned exactly.** The derivation reads ProseMirror's compiled schema; a stored document is only guaranteed to decode identically while that model is the same.
-- **`.svelte` files are outside oxfmt's remit** and are kept in the same style by hand — two-space indent, single quotes. Everything else is formatted by `vp fmt`.
+The Svelte suites drive a real browser: Vitest browser mode over Playwright Chromium, headless everywhere. Locally that needs a Chromium matching the pinned `playwright` (`pnpm exec playwright install chromium`, or an image that pre-installs one under `PLAYWRIGHT_BROWSERS_PATH`); CI installs it in a step of its own.
 
 ## Versioning
 
-[Changesets](https://github.com/changesets/changesets). Add one per affected package with `pnpm changeset` in any pull request that changes published behaviour; the release workflow opens a version PR and, once it merges, publishes each package to npm with OIDC trusted publishing (with provenance once the repository is public) — there is no npm token in the repo.
+[Changesets](https://github.com/changesets/changesets). Add one per affected package with `pnpm changeset` in any pull request that changes published behaviour. The release workflow opens the "Version Packages" PR (`chore: version packages`) and, once the owner merges it, publishes each package with npm trusted publishing (OIDC) from the protected `release` environment; there is no `NPM_TOKEN`. Nothing requests provenance: npm attaches it by itself only once the repository and the package are both public.
+
+## Releasing
+
+The pipeline is `.github/workflows/release.yml` plus [`scripts/release.sh`](scripts/release.sh); their comments carry the reason for each step. One-time owner setup, none of which an agent can do:
+
+1. On npmjs.com, each of the three packages → Settings → Trusted Publisher → GitHub Actions: repository `thomasfosterau/prosekit-utilities`, workflow `release.yml`, environment `release`. If npm still requires a package to exist before a trusted publisher can be added, bootstrap each one by hand first.
+2. GitHub Settings → Environments → `release` → required reviewers, deployments restricted to `main`.
+3. GitHub Settings → Actions → General → allow GitHub Actions to create and approve pull requests, or the "Version Packages" PR cannot be opened.
+4. Protect `main`, and allow squash merging only (#30).
 
 ## License
 
