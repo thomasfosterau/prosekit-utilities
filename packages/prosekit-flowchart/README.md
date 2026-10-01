@@ -18,7 +18,7 @@ pnpm add @thomasfosterau/prosekit-flowchart @xyflow/svelte
 | `svelte` | `^5.30.1` | The components are compiled by your build, not pre-compiled. |
 | `prosekit` | `^0.22.2` | `defineFlowchart()` registers a node spec on a ProseKit extension; `defineFlowchartNodeView()` is one. |
 | `@prosekit/pm` | `^0.1.19` | The node view's `Node` / `Attrs` types. |
-| `effect` | `^4.0.0-rc.112` | The payload schemas under `./node`. The root entry imports no Effect itself. |
+| `effect` | `>=4.0.0-rc.118` | The payload schemas under `./node`. The root entry imports no Effect itself. |
 
 `@thomasfosterau/prosekit-utilities` and `@thomasfosterau/prosekit-svelte` are not peers — they are ordinary dependencies of this package, at the same release line, and come along automatically when you install it. `bits-ui` does too, for `FlowchartEditDialog`'s `Dialog`.
 
