@@ -19,8 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     # Requires manual approval via a protected GitHub Environment named
-    # "release". See the Publishing section of AGENTS.md for the one-time
-    # setup.
+    # "release". The one-time owner setup is in README.md § Releasing.
     environment: release
     permissions:
       contents: write # push the version commit/tag and the "Version Packages" PR branch

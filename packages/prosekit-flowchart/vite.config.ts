@@ -12,7 +12,7 @@
  *   `exports`, which point at their BUILT `dist/`, so nothing here resolves
  *   until those builds have run.
  * - There are no Storybook tasks. This package's stories are rendered by the
- *   ONE Storybook in packages/prosekit-svelte, whose `stories` glob reaches
+ *   one Storybook in packages/prosekit-svelte, whose `stories` glob reaches
  *   across into `../../prosekit-flowchart/src/stories`.
  */
 

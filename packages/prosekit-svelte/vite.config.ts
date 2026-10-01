@@ -69,9 +69,9 @@ export default defineConfig({
       },
       // Storybook — a human-facing dev loop and a static build, deliberately
       // OUTSIDE the `check` graph: the stories are type-checked by `check`
-      // above (they are `src/` files), and rendering them is a review
-      // affordance, not a gate. `--no-open` because agent sessions have no
-      // browser to hand the URL to. ONE Storybook for the workspace: the
+      // above (they are `src/` files); CI runs `storybook:build` as its last
+      // step. `--no-open` because agent sessions have no browser to hand the
+      // URL to. One Storybook for the workspace: the
       // `stories` glob reaches into the sibling packages/prosekit-flowchart,
       // whose components import this package's built `dist/` — hence the
       // `build` dependency.
