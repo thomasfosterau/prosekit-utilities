@@ -31,26 +31,34 @@ export default defineConfig({
       // `exports`, so their `check` / `test:unit` tasks depend on this.
       build: {
         command: 'vp pack',
-        input: cacheInputs,
-        output: ['dist/**'],
+        cache: {
+          input: cacheInputs,
+          output: ['dist/**'],
+        },
       },
       // TypeScript 7's native `tsc` over `src/` and `tests/`.
       check: {
         command: 'tsc -p tsconfig.json',
-        input: cacheInputs,
-        output: [],
+        cache: {
+          input: cacheInputs,
+          output: [],
+        },
       },
       'test:unit': {
         command: 'vp test run tests',
-        env: ['VITEST_MAX_WORKERS'],
-        input: cacheInputs,
-        output: [],
+        cache: {
+          env: ['VITEST_MAX_WORKERS'],
+          input: cacheInputs,
+          output: [],
+        },
       },
       'test:coverage': {
         command: 'vp test run tests --coverage',
-        env: ['VITEST_MAX_WORKERS'],
-        input: cacheInputs,
-        output: ['coverage/**'],
+        cache: {
+          env: ['VITEST_MAX_WORKERS'],
+          input: cacheInputs,
+          output: ['coverage/**'],
+        },
       },
     },
   },

@@ -33,7 +33,9 @@ export default defineConfig({
       build: {
         command: 'svelte-package',
         dependsOn: ['sync', { task: 'build', from: 'dependencies' }],
-        output: ['dist/**'],
+        cache: {
+          output: ['dist/**'],
+        },
       },
       // Type-checks `src/` (stories included — they live under `src/stories/`,
       // outside the `src/lib/` tree `svelte-package` ships, and the tsconfig
@@ -47,8 +49,10 @@ export default defineConfig({
           { task: 'build', from: 'dependencies' },
           'sync',
         ],
-        input: cacheInputs,
-        output: [],
+        cache: {
+          input: cacheInputs,
+          output: [],
+        },
       },
       // Browser mode, so `test:unit` never needs `PLAYWRIGHT_BROWSERS_PATH`
       // spelled out here: Playwright reads it from the environment (the agent
@@ -57,9 +61,11 @@ export default defineConfig({
       'test:unit': {
         command: 'vp test run tests',
         dependsOn: ['sync', { task: 'build', from: 'dependencies' }],
-        env: ['VITEST_MAX_WORKERS', 'NODE_OPTIONS', 'PLAYWRIGHT_BROWSERS_PATH'],
-        input: cacheInputs,
-        output: [],
+        cache: {
+          env: ['VITEST_MAX_WORKERS', 'NODE_OPTIONS', 'PLAYWRIGHT_BROWSERS_PATH'],
+          input: cacheInputs,
+          output: [],
+        },
       },
       // Storybook — a human-facing dev loop and a static build, deliberately
       // OUTSIDE the `check` graph: the stories are type-checked by `check`
@@ -77,7 +83,9 @@ export default defineConfig({
       'storybook:build': {
         command: 'storybook build',
         dependsOn: ['sync', 'build'],
-        output: ['storybook-static/**'],
+        cache: {
+          output: ['storybook-static/**'],
+        },
       },
     },
   },
@@ -152,6 +160,12 @@ export default defineConfig({
       headless: true,
       provider: playwright(),
       instances: [{ browser: 'chromium' }],
+      // Vitest 5 flipped `browser.locators.exact` to `true`, which applies to
+      // `getByText` and to `getByRole(..., { name })` alike: `{ name: 'Start' }`
+      // stopped matching "Start node" and every negative assertion would pass
+      // vacuously. Keep the substring, case-insensitive matching these suites
+      // were written against.
+      locators: { exact: false },
       screenshotFailures: false,
     },
   },

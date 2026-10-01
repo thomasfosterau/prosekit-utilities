@@ -53,11 +53,11 @@ catalog:
   # core package, 8–12× faster than TS6; svelte-check still needs the TS6 JS
   # API (the `typescript` alias below). The same split the app repos run.
   '@typescript/native': npm:typescript@7.0.2
-  # Vitest 4 browser mode: the Playwright provider is its own package as of
+  # Vitest browser mode: the Playwright provider is its own package as of
   # v4 and pins `vitest` EXACTLY, so it must track the `vitest` entry below
   # (which itself must match vite-plus's exact pin — see that entry).
-  '@vitest/browser-playwright': 4.1.11
-  '@vitest/coverage-istanbul': 4.1.11
+  '@vitest/browser-playwright': 5.0.1
+  '@vitest/coverage-istanbul': 5.0.1
   # The REQUIRED peer of `@thomasfosterau/prosekit-flowchart` — and the
   # reason that package exists apart from the editor package: a component
   # whose behaviour needs a specific third-party engine lives in its own
@@ -104,13 +104,13 @@ catalog:
   # TypeScript through its JS API, which TypeScript 7 does not ship until 7.1.
   typescript: npm:@typescript/typescript6@6.0.2
   # vite-plus pins `oxlint`, `oxfmt` and `vitest` to exact versions, so
-  # `vitest` below must match vite-plus's own pin (0.3.0 -> 4.1.11) — the
+  # `vitest` below must match vite-plus's own pin (1.0.0 -> 5.0.1) — the
   # `vitest: "catalog:"` override forces every resolution to the catalog
   # singleton, and a mismatch there breaks the browser provider's exact peer.
   # `vite` is the same release published under its aliased core package.
-  vite-plus: 0.3.0
-  vite: npm:@voidzero-dev/vite-plus-core@0.3.0
-  vitest: 4.1.11
+  vite-plus: 1.0.0
+  vite: npm:@voidzero-dev/vite-plus-core@1.0.0
+  vitest: 5.0.1
   # `render` + locators for Svelte components under Vitest browser mode.
   vitest-browser-svelte: ^3.1.0
 
@@ -141,7 +141,7 @@ allowBuilds:
   msgpackr-extract: false
 
 # Storybook 10.6 declares `vite-plus: "^0.1.15 || ^0.2.0"` and this workspace
-# is on 0.3.0 — the toolchain is deliberately ahead of what the addon
+# is on 1.0.0 — the toolchain is deliberately ahead of what the addon
 # ecosystem has caught up to, and the same goes for `vite` / `vitest` /
 # `@sveltejs/kit`, all forced to one catalog singleton by the overrides above.
 peerDependencyRules:
