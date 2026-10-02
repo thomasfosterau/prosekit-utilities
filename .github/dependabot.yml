@@ -82,6 +82,23 @@ updates:
           - 'version-update:semver-major'
           - 'version-update:semver-minor'
           - 'version-update:semver-patch'
+      # `typescript` (the TS6 JS-API alias that svelte-check and the
+      # declaration emit load) and `@typescript/native` (TS7, the `tsc` the
+      # core type-checks with) are a pair that moves by hand, together and
+      # deliberately, not onto whatever npm's `latest` happens to be (see both
+      # entries in pnpm-workspace.yaml). If this workspace adopts
+      # `@effect/tsgo`, it joins this pair and gets the same ignore. Same
+      # update-type scoping as above, so security updates stay enabled.
+      - dependency-name: typescript
+        update-types:
+          - 'version-update:semver-major'
+          - 'version-update:semver-minor'
+          - 'version-update:semver-patch'
+      - dependency-name: '@typescript/native'
+        update-types:
+          - 'version-update:semver-major'
+          - 'version-update:semver-minor'
+          - 'version-update:semver-patch'
 
   # The SHA-pinned actions in .github/workflows. Dependabot updates the SHA
   # and the trailing `# vX.Y.Z` comment together.

@@ -1,8 +1,9 @@
 name: Effect Canary
 
-# Runs the core package's gate against the newest Effect *prerelease* (the
-# "rc" npm dist-tag) instead of the version pinned in the catalog, so upstream
-# breakage surfaces here on a schedule rather than in a consumer's build.
+# Runs the core package's gate against the newest Effect release (the
+# `latest` npm dist-tag) instead of the version pinned in the catalog, so
+# upstream breakage surfaces here on a schedule rather than in a consumer's
+# build.
 # Two published entries import Effect: the core package and
 # `@thomasfosterau/prosekit-flowchart/node`. The whole workspace is floated,
 # but this job checks the core only; checking the flowchart package too is
@@ -27,7 +28,7 @@ permissions: {}
 
 jobs:
   canary:
-    name: Typecheck, test & build the core against effect@rc
+    name: Typecheck, test & build the core against effect@latest
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -50,23 +51,26 @@ jobs:
           node-version: 22.x
           cache: pnpm
 
-      # Float the workspace onto the newest Effect prerelease. `effect` is a
+      # Float the workspace onto the newest Effect release. `effect` is a
       # catalog singleton (every package.json says `catalog:` and the
       # `overrides` block forces every resolution to it), so the one place to
       # change is the catalog entry in pnpm-workspace.yaml; `catalogMode:
-      # strict` would reject a `pnpm add` of an off-catalog version. The "rc"
-      # dist-tag is the pre-4.0 release-candidate line this repo currently
-      # tracks (see the `effect` entry in the catalog) — switch this to "beta"
-      # or "next" if the project moves to tracking a different prerelease
-      # line. The one-day `minimumReleaseAge` hold is lifted for this install
-      # only: the whole point of the canary is the version published today.
+      # strict` would reject a `pnpm add` of an off-catalog version. The
+      # `latest` dist-tag is the stable 4.x line the catalog pins (see the
+      # `effect` entry). The `rc` tag stopped moving when 4.0.0 shipped, so
+      # floating onto it would only re-test (or downgrade below) the pin; the
+      # `snapshot` tag is per-commit and not a release. Switch the tag here
+      # (and in the job name and issue title below) if the project starts
+      # tracking a prerelease line such as `next` or `beta`. The one-day
+      # `minimumReleaseAge` hold is lifted for this install only: the whole
+      # point of the canary is the version published today.
       # --ignore-scripts blocks dependency lifecycle scripts (a common
       # supply-chain attack vector) from running.
-      - name: Install dependencies against the latest Effect prerelease
+      - name: Install dependencies against the latest Effect release
         run: |
           set -euo pipefail
-          version=$(npm view effect@rc version)
-          echo "effect@rc is $version"
+          version=$(npm view effect@latest version)
+          echo "effect@latest is $version"
           sed -i "/^catalog:/,/^overrides:/ s/^  effect: .*$/  effect: $version/" pnpm-workspace.yaml
           grep -n '^  effect: ' pnpm-workspace.yaml
           pnpm install --no-frozen-lockfile --ignore-scripts --config.minimumReleaseAge=0
@@ -114,19 +118,19 @@ jobs:
         run: |
           set -euo pipefail
 
-          title="Effect canary is red against effect@rc"
+          title="Effect canary is red against effect@latest"
 
           body=$(jq -n \
             --arg run "$RUN_URL" \
             --arg typecheck "$TYPECHECK_OUTCOME" \
             --arg test "$TEST_OUTCOME" \
             --arg build "$BUILD_OUTCOME" \
-            '"The scheduled Effect canary failed against the latest `effect` prerelease (the `rc` npm dist-tag) for `@thomasfosterau/prosekit-utilities`.\n\n" +
+            '"The scheduled Effect canary failed against the latest `effect` release (the `latest` npm dist-tag) for `@thomasfosterau/prosekit-utilities`.\n\n" +
              "- typecheck: " + $typecheck + "\n" +
              "- test: " + $test + "\n" +
              "- build: " + $build + "\n\n" +
              "Run: " + $run + "\n\n" +
-             "This does not block any PR by itself — it means the next Effect prerelease is likely to break the core package once it stabilizes. Investigate the run, then either fix the break ahead of time or close this out if it turns out to be a fluke in that prerelease."')
+             "This does not block any PR by itself — it means the newest Effect release breaks the core package, so the next catalog bump will too. Investigate the run, then either fix the break ahead of the bump or close this out if it turns out to be a fluke in that release."')
 
           existing=$(curl -sS -G \
             -H "Authorization: Bearer $GITHUB_TOKEN" \
