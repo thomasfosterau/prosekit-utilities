@@ -136,9 +136,16 @@ export function defineFigcaption() {
  * exactly one `figcaption`.
  *
  * The fixed content expression is the point — a figure is a pair, not a
- * container, so ProseMirror's parser and the editor never let either half be
- * dropped or duplicated. `defining` keeps the figure as its own context on
- * paste rather than dissolving into the surrounding block.
+ * container, so ProseMirror's DOM parser and its editing transactions never
+ * let either half be dropped or duplicated. `defining` keeps the figure as its
+ * own context on paste rather than dissolving into the surrounding block.
+ *
+ * Loading JSON is not checked the same way: ProseMirror's
+ * `schema.nodeFromJSON` validates attributes but not content, and ProseKit's
+ * `defaultContent` goes through it, so a stored captionless figure loads into
+ * an editor unchecked. A consumer that wants the content expression enforced
+ * on a loaded document calls `node.check()`, which ProseKit's
+ * `editor.setContent` already does.
  *
  * The derived wire schema is deliberately laxer. Derivation reads the set of
  * admissible children and the empty-vs-non-empty distinction off the compiled
@@ -147,7 +154,8 @@ export function defineFigcaption() {
  * and `figcaption` nodes: a figure without a figcaption, a figcaption alone,
  * the halves reordered or one duplicated all decode. An empty figure and any
  * other child type are still rejected. A consumer that needs the pair enforced
- * at the wire adds its own check.
+ * at the wire adds its own check, for example `node.check()` on the node it
+ * builds from the decoded JSON.
  *
  * Use {@link defineFigure} unless you are composing the two halves yourself:
  * this node is unusable without {@link defineFigcaption} in the same

@@ -151,8 +151,10 @@ describe('deriveDocumentSchema: a fixed-sequence content expression (`image figc
   // Intended behaviour, pinned here: the derivation models a content
   // expression as "an array of a child union", so `image figcaption` derives as
   // a non-empty array drawn from `image | figcaption`. Order and per-type
-  // multiplicity are not enforced at the wire; ProseMirror's own parser and the
-  // editor still enforce the sequence.
+  // multiplicity are not enforced at the wire. ProseMirror's DOM parser and
+  // editing transactions still enforce the sequence; `schema.nodeFromJSON` and
+  // ProseKit's `defaultContent` do not check content, so a consumer that wants
+  // the check on a loaded document calls `node.check()` (as `setContent` does).
   const Document = deriveDocumentSchema(figureTestSchema);
   const image = { type: 'image', attrs: { src: null } };
   const caption = { type: 'figcaption', content: [{ type: 'text', text: 'A caption' }] };

@@ -20,8 +20,11 @@
  * `image figcaption` therefore derives as a non-empty array of
  * `image | figcaption`: a stored figure without its caption, or with the two
  * halves reordered, decodes. This is intended: order and per-type
- * multiplicity within a content expression are left to ProseMirror's own
- * parser and the editor.
+ * multiplicity within a content expression are left to ProseMirror's DOM
+ * parser and editing transactions, which enforce them. Loading JSON does not:
+ * `schema.nodeFromJSON` (and so ProseKit's `defaultContent`) checks attributes
+ * but not content, so such a figure loads unchecked unless the consumer calls
+ * `node.check()`, as ProseKit's `editor.setContent` already does.
  *
  * @module @thomasfosterau/prosekit-utilities/derive/Content
  */
