@@ -16,7 +16,12 @@
  * parser of our own; the trade-off is that we recover the *set* of admissible
  * child types and the empty-vs-non-empty distinction, not the full ordered
  * sequence. That is exactly the granularity the derived Effect schema models
- * (an array of a child union).
+ * (an array of a child union). A fixed sequence such as the figure node's
+ * `image figcaption` therefore derives as a non-empty array of
+ * `image | figcaption`: a stored figure without its caption, or with the two
+ * halves reordered, decodes. This is intended: order and per-type
+ * multiplicity within a content expression are left to ProseMirror's own
+ * parser and the editor.
  *
  * @module @thomasfosterau/prosekit-utilities/derive/Content
  */

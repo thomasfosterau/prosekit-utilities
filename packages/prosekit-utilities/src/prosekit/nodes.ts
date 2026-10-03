@@ -115,6 +115,10 @@ export function defineMention() {
  * paragraph, a list, or another figure — a caption is a line of prose, and
  * the derived wire schema enforces exactly that because it reads this content
  * expression off the compiled schema.
+ *
+ * The derived wire schema does not, however, require a figure to carry a
+ * caption: see {@link defineFigureNode} for what it does and does not enforce
+ * about the pair.
  */
 export function defineFigcaption() {
   return defineNodeSpec({
@@ -128,13 +132,22 @@ export function defineFigcaption() {
 }
 
 /**
- * A captioned image block: exactly one `image` followed by exactly one
- * `figcaption`.
+ * A captioned image block: in the editor, exactly one `image` followed by
+ * exactly one `figcaption`.
  *
  * The fixed content expression is the point — a figure is a pair, not a
- * container, so neither half can be dropped or duplicated. `defining` keeps
- * the figure as its own context on paste rather than dissolving into the
- * surrounding block.
+ * container, so ProseMirror's parser and the editor never let either half be
+ * dropped or duplicated. `defining` keeps the figure as its own context on
+ * paste rather than dissolving into the surrounding block.
+ *
+ * The derived wire schema is deliberately laxer. Derivation reads the set of
+ * admissible children and the empty-vs-non-empty distinction off the compiled
+ * content expression, not the ordered sequence (see `derive/Content`), so a
+ * stored `figure` decodes when its `content` is any non-empty array of `image`
+ * and `figcaption` nodes: a figure without a figcaption, a figcaption alone,
+ * the halves reordered or one duplicated all decode. An empty figure and any
+ * other child type are still rejected. A consumer that needs the pair enforced
+ * at the wire adds its own check.
  *
  * Use {@link defineFigure} unless you are composing the two halves yourself:
  * this node is unusable without {@link defineFigcaption} in the same

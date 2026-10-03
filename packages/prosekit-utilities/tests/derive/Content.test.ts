@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 import { allowedContentTypes, contentCardinality } from '../../src/derive/Content.ts';
-import { testSchema } from './fixture.ts';
+import { figureTestSchema, testSchema } from './fixture.ts';
 
 describe('contentCardinality', () => {
   it('reports `required` for `block+`', () => {
@@ -17,6 +17,12 @@ describe('contentCardinality', () => {
     expect(contentCardinality(testSchema.nodes.image)).toBe('none');
     expect(contentCardinality(testSchema.nodes.horizontalRule)).toBe('none');
     expect(contentCardinality(testSchema.nodes.text)).toBe('none');
+  });
+
+  it('reports `required` for a fixed sequence (`image figcaption`)', () => {
+    // The start state of a sequence is not a valid end, so the node needs at
+    // least one child; that is all the cardinality says about a sequence.
+    expect(contentCardinality(figureTestSchema.nodes.figure)).toBe('required');
   });
 });
 
@@ -38,5 +44,13 @@ describe('allowedContentTypes', () => {
 
   it('returns nothing for a leaf', () => {
     expect(allowedContentTypes(testSchema.nodes.image)).toEqual([]);
+  });
+
+  it('collects a fixed sequence as the set of its members, not the sequence', () => {
+    // `image figcaption` yields both types, once each, in sequence order — but
+    // the result carries no position or multiplicity, so a consumer cannot
+    // tell it apart from `(image | figcaption)+`.
+    const names = allowedContentTypes(figureTestSchema.nodes.figure).map((t) => t.name);
+    expect(names).toEqual(['image', 'figcaption']);
   });
 });
