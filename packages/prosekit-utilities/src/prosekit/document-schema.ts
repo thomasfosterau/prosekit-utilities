@@ -87,8 +87,12 @@ export interface DocumentSchemaOptions {
   readonly attributes?: AttributeOverrides | undefined;
   /**
    * A `RegistryCache` to share with other document schemas built from
-   * overlapping extensions — see {@link defineDocumentSchema}. Defaults to a
-   * cache private to this schema.
+   * overlapping extensions. Defaults to a cache private to this schema.
+   *
+   * Share one only between grammars whose mark sets match and whose same-named
+   * types are defined identically; otherwise the first schema forced decides
+   * the shared `text` node's marks for the others. See
+   * {@link defineDocumentSchema} for the failure this causes.
    */
   readonly registryCache?: RegistryCache | undefined;
 }
@@ -150,10 +154,22 @@ export interface DocumentSchema<Name extends string> {
  * force compiling every grammar up front and couple their failure domains, for
  * exactly the same sharing benefit this gets without either cost.
  *
- * Sharing a cache is only correct when the same-named types across the two
- * grammars are structurally identical — true by construction when both are
- * assembled from the same extension definitions, which is the only case this
- * targets.
+ * ## When two grammars may share a cache
+ *
+ * Only when their **mark sets match** and every node or mark type they both
+ * name is defined identically (the same spec and the same attribute overlay).
+ * The cache memoises derived schemas by type *name*, and an inline node's
+ * derived `marks` field is the union of every mark its grammar's textblocks
+ * admit. So two grammars that compose the same `text` node but different marks
+ * do not derive the same `text` schema, and whichever is forced first decides
+ * it for both.
+ *
+ * Concretely: a block grammar that adds `defineCitation()` and an inline
+ * grammar that does not must not share a cache. If they do, forcing the block
+ * schema first makes the inline schema accept a `citation` mark it never
+ * declared, and forcing the inline schema first makes the block schema reject
+ * its own `citation` marks. Neither order raises an error. Give such grammars
+ * separate caches (or none: the default is a private cache).
  */
 export function defineDocumentSchema<Name extends string>(
   shape: DocumentShape<Name>,

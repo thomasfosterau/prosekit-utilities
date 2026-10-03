@@ -110,8 +110,11 @@ export interface DocumentSchemaSpec {
  * when every schema in the call defines same-named marks/nodes identically
  * (the same extension composed into each schema, as opposed to two schemas
  * that coincidentally both declare a differently-shaped type under the same
- * name) — a mismatch would silently resolve to whichever schema's version
- * was derived first, for every schema after it, with no error.
+ * name) **and admits the same set of marks** — an inline node's derived
+ * `marks` field is the schema's whole inline mark union, so a schema with an
+ * extra mark derives a different `text`. A mismatch would silently resolve
+ * to whichever schema's version was derived first, for every schema after
+ * it, with no error.
  *
  * All entries are built eagerly in this one call — pass already-compiled
  * schemas. A caller that needs each document to stay independently lazy

@@ -26,6 +26,13 @@
  * construction when the schemas are assembled from the same extension
  * definitions, which is the only scenario `deriveDocumentSchemas` targets.
  *
+ * That includes the **mark set**. An inline node's derived `marks` field is
+ * the schema-wide union of inline marks (see `#inlineMarks`), so two schemas
+ * that both define `text` identically but admit different marks still derive
+ * different `text` schemas, and the cache keeps whichever was built first. A
+ * schema with an extra mark that is derived first makes the other accept that
+ * mark; derived second, it rejects its own mark. Nothing reports the clash.
+ *
  * @module @thomasfosterau/prosekit-utilities/derive/Registry
  */
 
@@ -38,7 +45,13 @@ import { deriveAttrsStruct } from './Attribute.ts';
 import { allowedContentTypes, contentCardinality } from './Content.ts';
 import type { DeriveOptions, DerivedMarkJSON, DerivedNodeJSON } from './Options.ts';
 
-/** The memoised mark/node maps a {@link Registry} reads and writes. */
+/**
+ * The memoised mark/node maps a {@link Registry} reads and writes.
+ *
+ * Keys are type names. Share one cache only between schemas whose mark sets
+ * match and whose same-named types are defined identically; see the module
+ * doc for what goes wrong otherwise.
+ */
 export interface RegistryCache {
   readonly nodeCache: Map<string, Schema.Codec<DerivedNodeJSON>>;
   readonly markCache: Map<string, Schema.Codec<DerivedMarkJSON>>;
