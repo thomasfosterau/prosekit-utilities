@@ -280,6 +280,21 @@ describe('block document: golden-fixture node/mark coverage', () => {
     expect(decodeBlock(doc)).toEqual(doc);
   });
 
+  it('admits a figure holding only a figcaption, and the two halves reordered — same limit', () => {
+    const image = { type: 'image', attrs: { src: null, width: null, height: null } };
+    const caption = { type: 'figcaption', content: [{ type: 'text', text: 'A caption' }] };
+    const captionOnly = {
+      type: 'blockDocument',
+      content: [{ type: 'figure', content: [caption] }],
+    };
+    const reordered = {
+      type: 'blockDocument',
+      content: [{ type: 'figure', content: [caption, image] }],
+    };
+    expect(decodeBlock(captionOnly)).toEqual(captionOnly);
+    expect(decodeBlock(reordered)).toEqual(reordered);
+  });
+
   it('rejects a figure carrying a block inside its caption', () => {
     expect(() =>
       decodeBlock({

@@ -53,7 +53,9 @@ import { blockDocument } from './document-shapes.ts';
 
 // Shared so a second document schema built from an overlapping extension
 // derives the marks and `text` node once instead of once per schema, while
-// each stays independently lazy.
+// each stays independently lazy. Share it only with a grammar that admits the
+// same marks: a grammar with an extra mark (say `defineCitation()`) needs its
+// own cache, or the first one forced decides `text`'s marks for both.
 const registryCache = createRegistryCache();
 
 export const blockDocumentSchema = defineDocumentSchema(blockDocument, {
@@ -258,7 +260,7 @@ Reads an Effect Schema back out of a compiled ProseMirror schema at runtime, so 
 | `RequiredAttribute` | `{ readonly schema: Schema.Top }` (branded with a private `unique symbol`) | Constructed only by `required`; detected only by `isRequiredAttribute`. |
 | `Registry` | `class Registry { constructor(schema: PmSchema, options?: DeriveOptions, cache?: RegistryCache); mark(markType: MarkType): Schema.Codec<DerivedMarkJSON>; node(nodeType: NodeType): Schema.Codec<DerivedNodeJSON>; nodeAs(nodeType: NodeType, typeName: string): Schema.Codec<DerivedNodeJSON> }` | The memoised, mutually-recursive builder (`Schema.suspend`) every entry point reads from. `nodeAs` is not memoised — used for a renamed top node. |
 | `createRegistryCache` | `() => RegistryCache` | A fresh, empty cache, private to one `Registry` unless explicitly shared. |
-| `RegistryCache` | `{ readonly nodeCache: Map<string, Schema.Codec<DerivedNodeJSON>>; readonly markCache: Map<string, Schema.Codec<DerivedMarkJSON>> }` | Shared across `Registry` instances so structure two schemas have in common is built once — memoised by mark/node **name**, so only correct when same-named types across the schemas are structurally identical. |
+| `RegistryCache` | `{ readonly nodeCache: Map<string, Schema.Codec<DerivedNodeJSON>>; readonly markCache: Map<string, Schema.Codec<DerivedMarkJSON>> }` | Shared across `Registry` instances so structure two schemas have in common is built once — memoised by mark/node **name**, so only correct when same-named types across the schemas are structurally identical and the schemas admit the same marks (an inline node's `marks` field is the schema-wide mark union). |
 | `Attribute`, `Content`, `Derive`, `Options` | Namespace re-exports (`export * as X`) | The lower-level modules the entry points above are built from — see [Layout](#derive-layout). |
 
 ### Options
@@ -361,7 +363,7 @@ The only entry that imports `prosekit` at the value level, so a browser-reachabl
 | `MENTION_ATTRIBUTE_OVERRIDES` | `AttributeOverrides` | `mention: { id: required(Schema.String), label: required(Schema.String) }` — merge in when the grammar includes `defineMention()`. |
 | `mergeAttributeOverrides` | `(...overrides: ReadonlyArray<AttributeOverrides>) => AttributeOverrides` | Shallow per node, then per attribute; later wins. Non-mutating. |
 | `defineDocumentSchema` | `<Name extends string>(shape: DocumentShape<Name>, options: DocumentSchemaOptions) => DocumentSchema<Name>` | The centrepiece: `Schema.suspend` + `Registry.nodeAs(topNodeType, shape.name)`. Nothing compiles or derives at declaration time. |
-| `DocumentSchemaOptions` | `{ readonly extension: () => Extension; readonly attributes?: AttributeOverrides \| undefined; readonly registryCache?: RegistryCache \| undefined }` | `attributes` defaults to `STANDARD_ATTRIBUTE_OVERRIDES`; `registryCache` defaults to a cache private to this schema. |
+| `DocumentSchemaOptions` | `{ readonly extension: () => Extension; readonly attributes?: AttributeOverrides \| undefined; readonly registryCache?: RegistryCache \| undefined }` | `attributes` defaults to `STANDARD_ATTRIBUTE_OVERRIDES`; `registryCache` defaults to a cache private to this schema; share one only between grammars with matching mark sets. |
 | `DocumentSchema<Name>` | `{ readonly shape: DocumentShape<Name>; readonly extension: () => Extension; readonly schema: () => PmSchema; readonly Document: Schema.Codec<DocumentJSON<Name>>; readonly is: (v: unknown) => v is DocumentJSON<Name>; readonly decode: (v: unknown) => Effect.Effect<DocumentJSON<Name>, DocumentDecodeError>; readonly install: () => void }` | `is` keeps a try/catch defect net; `install()` is `shape.install(is)`. Satisfies `./drizzle`'s `HasDocumentSchema<A>` structurally. |
 | `installDocumentGrammars` | `(...schemas: ReadonlyArray<DocumentSchema<string>>) => void` | The persistence module's one call. Forces no derivation — installing just stores a function reference. |
 | `DocumentDecodeError` | `class DocumentDecodeError extends Schema.TaggedError<DocumentDecodeError>()('DocumentDecodeError', { document: Schema.String, issue: Schema.Defect() }) {}` | Wraps the underlying `SchemaError` for a caller that wants a tagged channel; `Document` itself stays a plain codec. |

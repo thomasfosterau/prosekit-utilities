@@ -63,3 +63,21 @@ export const inlineTestSchema = new PmSchema({
     },
   },
 });
+
+/**
+ * A third schema for the content-model granularity tests: a `figure` whose
+ * content expression is a fixed two-element sequence (`image figcaption`),
+ * declared the way `defineFigureNode` / `defineFigcaption` declare it. The
+ * derivation recovers the child *set* and the non-empty cardinality from it,
+ * not the sequence, so these pin exactly what that means at the wire.
+ */
+export const figureTestSchema = new PmSchema({
+  nodes: {
+    doc: { content: 'block+' },
+    paragraph: { group: 'block', content: 'inline*' },
+    image: { group: 'block', attrs: { src: { default: null } } },
+    figcaption: { content: 'inline*' },
+    figure: { group: 'block', content: 'image figcaption' },
+    text: { group: 'inline' },
+  },
+});

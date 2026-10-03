@@ -10,7 +10,7 @@ import {
   deriveNodeSchema,
   Registry,
 } from '../../src/derive/index.ts';
-import { inlineTestSchema, testSchema } from './fixture.ts';
+import { figureTestSchema, inlineTestSchema, testSchema } from './fixture.ts';
 
 const decodes = (schema: Schema.Codec<unknown>, value: unknown): boolean =>
   Result.isSuccess(Result.try(() => Schema.decodeUnknownSync(schema)(value)));
@@ -144,6 +144,54 @@ describe('deriveDocumentSchema', () => {
     };
     expect(decodes(Overlaid, good)).toBe(true);
     expect(decodes(Overlaid, bad)).toBe(false);
+  });
+});
+
+describe('deriveDocumentSchema: a fixed-sequence content expression (`image figcaption`)', () => {
+  // Intended behaviour, pinned here: the derivation models a content
+  // expression as "an array of a child union", so `image figcaption` derives as
+  // a non-empty array drawn from `image | figcaption`. Order and per-type
+  // multiplicity are not enforced at the wire. ProseMirror's DOM parser and
+  // editing transactions still enforce the sequence; `schema.nodeFromJSON` and
+  // ProseKit's `defaultContent` do not check content, so a consumer that wants
+  // the check on a loaded document calls `node.check()` (as `setContent` does).
+  const Document = deriveDocumentSchema(figureTestSchema);
+  const image = { type: 'image', attrs: { src: null } };
+  const caption = { type: 'figcaption', content: [{ type: 'text', text: 'A caption' }] };
+  const figure = (content: ReadonlyArray<unknown>) => ({
+    type: 'doc',
+    content: [{ type: 'figure', content }],
+  });
+
+  it('accepts the declared sequence', () => {
+    expect(decodes(Document, figure([image, caption]))).toBe(true);
+  });
+
+  it('accepts a figure without a figcaption', () => {
+    expect(decodes(Document, figure([image]))).toBe(true);
+  });
+
+  it('accepts a figure holding only a figcaption', () => {
+    expect(decodes(Document, figure([caption]))).toBe(true);
+  });
+
+  it('accepts the two halves in reverse order', () => {
+    expect(decodes(Document, figure([caption, image]))).toBe(true);
+  });
+
+  it('accepts a duplicated half', () => {
+    expect(decodes(Document, figure([image, image, caption]))).toBe(true);
+  });
+
+  it('still rejects an empty figure, a missing content key and a foreign child', () => {
+    expect(decodes(Document, figure([]))).toBe(false);
+    expect(decodes(Document, { type: 'doc', content: [{ type: 'figure' }] })).toBe(false);
+    expect(
+      decodes(
+        Document,
+        figure([image, { type: 'paragraph', content: [{ type: 'text', text: 'x' }] }]),
+      ),
+    ).toBe(false);
   });
 });
 

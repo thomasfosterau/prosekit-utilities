@@ -1,10 +1,16 @@
 /**
- * A representative pair of document surfaces for the `./prosekit` suites: a
- * block grammar carrying every opt-in node and mark the library ships, and an
- * inline grammar, sharing one registry cache the way a consuming application's
- * would.
+ * Representative document surfaces for the `./prosekit` suites.
  *
- * Built by a factory rather than exported as module constants because
+ * {@link createDocumentFixture} is a block grammar carrying every opt-in node
+ * and mark the library ships, and an inline grammar with the standard marks
+ * only. Their mark sets differ (the block grammar adds `citation`), so each
+ * gets its own registry cache: grammars may share one only when their mark
+ * sets match (see `defineDocumentSchema`).
+ *
+ * {@link createSharedCacheFixture} is the pair that may share a cache: the same
+ * block grammar without `citation`, whose marks match the inline grammar's.
+ *
+ * Built by factories rather than exported as module constants because
  * `install()` is a per-isolate, irreversible upgrade of a shape: a suite that
  * installs needs shapes nobody else is watching.
  */
@@ -25,21 +31,25 @@ import {
 } from '../../src/prosekit/presets.ts';
 
 export interface DocumentFixture {
-  readonly cache: RegistryCache;
+  readonly blockCache: RegistryCache;
+  readonly inlineCache: RegistryCache;
   readonly blockShape: DocumentShape<'blockDocument'>;
   readonly inlineShape: DocumentShape<'inlineDocument'>;
   readonly block: DocumentSchema<'blockDocument'>;
   readonly inline: DocumentSchema<'inlineDocument'>;
 }
 
-/** A fresh, uninstalled block/inline pair sharing one registry cache. */
-export const createDocumentFixture = (): DocumentFixture => {
-  const cache = createRegistryCache();
+const createPair = (
+  withCitation: boolean,
+  blockCache: RegistryCache,
+  inlineCache: RegistryCache,
+): DocumentFixture => {
   const blockShape = defineDocumentShape({ name: 'blockDocument' });
   const inlineShape = defineDocumentShape({ name: 'inlineDocument' });
 
   return {
-    cache,
+    blockCache,
+    inlineCache,
     blockShape,
     inlineShape,
     block: defineDocumentSchema(blockShape, {
@@ -47,18 +57,35 @@ export const createDocumentFixture = (): DocumentFixture => {
         defineBlockDocumentExtension(
           defineMention(),
           defineFigure(),
-          defineCitation(),
+          ...(withCitation ? [defineCitation()] : []),
           defineSidenote(),
         ),
       attributes: mergeAttributeOverrides(
         STANDARD_ATTRIBUTE_OVERRIDES,
         MENTION_ATTRIBUTE_OVERRIDES,
       ),
-      registryCache: cache,
+      registryCache: blockCache,
     }),
     inline: defineDocumentSchema(inlineShape, {
       extension: () => defineInlineDocumentExtension(),
-      registryCache: cache,
+      registryCache: inlineCache,
     }),
   };
+};
+
+/**
+ * A fresh, uninstalled block/inline pair. The block grammar adds `citation`,
+ * so the two have different mark sets and each derives against its own cache.
+ */
+export const createDocumentFixture = (): DocumentFixture =>
+  createPair(true, createRegistryCache(), createRegistryCache());
+
+/**
+ * A fresh, uninstalled block/inline pair with matching mark sets (no
+ * `citation`), sharing one registry cache the way a consuming application may.
+ * `blockCache` and `inlineCache` are the same object.
+ */
+export const createSharedCacheFixture = (): DocumentFixture => {
+  const cache = createRegistryCache();
+  return createPair(false, cache, cache);
 };

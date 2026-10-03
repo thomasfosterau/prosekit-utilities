@@ -12,6 +12,12 @@
  * builds its own pair and forces them the opposite way round, which is the
  * property a single shared module-scope cache could silently break.
  *
+ * Sharing is only correct between grammars whose mark sets match, so the
+ * shared-cache pair here is `createSharedCacheFixture`. The last suites pin
+ * the other half of that rule: a block grammar with an opt-in mark the inline
+ * grammar lacks (`citation`) derives against its own cache, and each grammar
+ * then admits exactly its own marks whichever is forced first.
+ *
  * @module
  */
 
@@ -20,7 +26,7 @@ import * as Schema from 'effect/Schema';
 import { defineDocumentShape } from '../../src/document-shape.ts';
 import { defineDocumentSchema } from '../../src/prosekit/document-schema.ts';
 import { defineBlockDocumentExtension } from '../../src/prosekit/presets.ts';
-import { createDocumentFixture } from './fixture.ts';
+import { createDocumentFixture, createSharedCacheFixture } from './fixture.ts';
 
 const BLOCK_DOC = {
   type: 'blockDocument',
@@ -35,7 +41,7 @@ const INLINE_DOC = {
 };
 
 describe('shared registry cache: inline forced first', () => {
-  const { block, inline, cache } = createDocumentFixture();
+  const { block, inline, blockCache: cache } = createSharedCacheFixture();
 
   it('nothing is derived until a document is validated', () => {
     expect(cache.nodeCache.size).toBe(0);
@@ -60,7 +66,7 @@ describe('shared registry cache: inline forced first', () => {
 });
 
 describe('shared registry cache: block forced first', () => {
-  const { block, inline } = createDocumentFixture();
+  const { block, inline } = createSharedCacheFixture();
 
   it('decodes the block document correctly when forced first', () => {
     expect(Schema.decodeUnknownSync(block.Document)(BLOCK_DOC)).toEqual(BLOCK_DOC);
@@ -80,6 +86,41 @@ describe('shared registry cache: block forced first', () => {
         content: [{ type: 'paragraph', content: [] }],
       }),
     ).toThrow();
+  });
+});
+
+const citedText = {
+  type: 'text',
+  text: 'cited',
+  marks: [{ type: 'citation', attrs: { workId: 'w-1' } }],
+};
+const INLINE_CITED = { type: 'inlineDocument', content: [citedText] };
+const BLOCK_CITED = {
+  type: 'blockDocument',
+  content: [{ type: 'paragraph', content: [citedText] }],
+};
+
+describe('an opt-in mark in one grammar only (`citation`, block grammar)', () => {
+  it('the two grammars derive against separate caches', () => {
+    const { blockCache, inlineCache } = createDocumentFixture();
+    expect(blockCache).not.toBe(inlineCache);
+  });
+
+  it('inline forced first: inline rejects `citation`, then block accepts it', () => {
+    const { block, inline } = createDocumentFixture();
+    expect(inline.is(INLINE_CITED)).toBe(false);
+    expect(block.is(BLOCK_CITED)).toBe(true);
+  });
+
+  it('block forced first: block accepts `citation`, then inline rejects it', () => {
+    const { block, inline } = createDocumentFixture();
+    expect(block.is(BLOCK_CITED)).toBe(true);
+    expect(inline.is(INLINE_CITED)).toBe(false);
+  });
+
+  it('each grammar alone: inline rejects `citation`, block accepts it', () => {
+    expect(createDocumentFixture().inline.is(INLINE_CITED)).toBe(false);
+    expect(createDocumentFixture().block.is(BLOCK_CITED)).toBe(true);
   });
 });
 
