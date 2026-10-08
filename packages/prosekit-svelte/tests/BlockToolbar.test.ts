@@ -287,5 +287,15 @@ test('`labelledBy` names the toolbar by a visible heading, over the default `lab
   const toolbar = screen.getByRole('toolbar');
   await expect.element(toolbar).toHaveAccessibleName('Formatting');
   await expect.element(toolbar).toHaveAttribute('aria-labelledby', 'toolbar-heading');
-  await expect.element(toolbar).not.toHaveAttribute('aria-label');
+  await expect.element(toolbar).toHaveAttribute('aria-label', 'Editor toolbar');
+});
+
+test('the default `label` names the toolbar when `labelledBy` points at no element', async () => {
+  const screen = await render(ToolbarFixture, {
+    attributes: { labelledBy: 'toolbar-missing-heading' },
+  });
+
+  const toolbar = screen.getByRole('toolbar');
+  await expect.element(toolbar).toHaveAccessibleName('Editor toolbar');
+  await expect.element(toolbar).toHaveAttribute('aria-labelledby', 'toolbar-missing-heading');
 });

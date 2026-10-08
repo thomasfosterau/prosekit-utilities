@@ -53,11 +53,13 @@
   // and `aria-labelledby` are omitted from the props, and the markup sets
   // both after the spread: an untyped caller's `aria-labelledby`, which
   // would otherwise outrank `aria-label`, is cleared unless `labelledBy` sets
-  // it, and given `labelledBy`, `aria-label` is left off (`labelledBy` wins
-  // over `label` and its default; `Editor` says why that is not a union).
-  // bits-ui sets no `aria-labelledby` of its own on the toolbar. `children` is omitted: the toolbar renders its own. `id` is
-  // redeclared without `null`, which bits-ui's primitives do not accept (they
-  // key node lookups on it).
+  // it (an empty `labelledBy` counts as unset). Given `labelledBy`, it wins,
+  // and `label` (or its default) stays as `aria-label`, the fallback name
+  // when no element has the id; `Editor` says why that is not a union.
+  // bits-ui sets no `aria-labelledby` of its own on the toolbar. `children`
+  // is omitted: the toolbar renders its own. `id` is redeclared without
+  // `null`, which bits-ui's primitives do not accept (they key node lookups
+  // on it).
   interface Props
     extends Omit<
       HTMLAttributes<HTMLDivElement>,
@@ -73,7 +75,8 @@
     label?: string | undefined;
     /**
      * The `id` (or space-separated `id`s) of the visible element that names
-     * the toolbar, rendered as `aria-labelledby`. Wins over `label`.
+     * the toolbar, rendered as `aria-labelledby`. Wins over `label`, which
+     * stays the fallback name if no element has the id.
      */
     labelledBy?: string | undefined;
     /** Visible text and accessible name of the insert button. */
@@ -197,8 +200,8 @@
 <Toolbar.Root
   {...rest}
   {...(id === undefined ? {} : { id })}
-  aria-label={labelledBy === undefined ? label : undefined}
-  aria-labelledby={labelledBy}
+  aria-label={label}
+  aria-labelledby={labelledBy || undefined}
   class={[
     'border-base-300 bg-base-100 flex flex-wrap items-center gap-1.5 rounded border p-2',
     className,

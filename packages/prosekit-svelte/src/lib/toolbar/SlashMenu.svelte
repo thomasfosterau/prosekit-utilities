@@ -40,9 +40,10 @@
   // name; for the same reason `aria-label` and `aria-labelledby` are left out
   // of the props, and the markup sets both after the spread: an untyped
   // caller's `aria-labelledby`, which would otherwise outrank `aria-label`, is
-  // cleared unless `labelledBy` sets it, and given `labelledBy`, `aria-label`
-  // is left off (`labelledBy` wins over `menuLabel` and its default; `Editor`
-  // says why that is not a union). bits-ui sets no `aria-labelledby` of its
+  // cleared unless `labelledBy` sets it (an empty one counts as unset). Given
+  // `labelledBy`, it wins, and `menuLabel` (or its default) stays as
+  // `aria-label`, the fallback name when no element has the id; `Editor`
+  // says why that is not a union. bits-ui sets no `aria-labelledby` of its
   // own on the menu content. `id` is redeclared without `null`, which
   // bits-ui's primitives do not accept; `dir` is left out: on
   // `DropdownMenu.Content` bits-ui types it as its own `Direction` (no
@@ -64,7 +65,8 @@
     menuLabel?: string | undefined;
     /**
      * The `id` (or space-separated `id`s) of the visible element that names
-     * the open menu, rendered as `aria-labelledby`. Wins over `menuLabel`.
+     * the open menu, rendered as `aria-labelledby`. Wins over `menuLabel`,
+     * which stays the fallback name if no element has the id.
      */
     labelledBy?: string | undefined;
     /**
@@ -160,8 +162,8 @@
       side="bottom"
       align="start"
       sideOffset={6}
-      aria-label={labelledBy === undefined ? menuLabel : undefined}
-      aria-labelledby={labelledBy}
+      aria-label={menuLabel}
+      aria-labelledby={labelledBy || undefined}
       onCloseAutoFocus={closeAutoFocus}
       class="z-50"
     >

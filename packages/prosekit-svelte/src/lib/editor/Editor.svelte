@@ -37,10 +37,12 @@
   // owns the wrapper's accessible name, through `label` or `labelledBy`: the
   // markup sets both after the spread, so an untyped caller's
   // `aria-labelledby`, which would outrank `aria-label`, is cleared unless
-  // `labelledBy` sets it. Given both, `labelledBy` wins and `aria-label` is
-  // left off. Not a type-level union: `Omit<ComponentProps<…>, …>`, the
-  // usual wrapper's props type, is not distributive, so it would collapse
-  // the union and the wrapper's `{...rest}` would no longer type-check.
+  // `labelledBy` sets it (an empty `labelledBy` counts as unset). Given both,
+  // `labelledBy` wins and `label` stays as `aria-label`, the fallback name
+  // when no element has the id. Not a type-level union:
+  // `Omit<ComponentProps<…>, …>`, the usual wrapper's props type, is not
+  // distributive, so it would collapse the union and the wrapper's
+  // `{...rest}` would no longer type-check.
   interface Props
     extends Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'aria-label' | 'aria-labelledby'> {
     /** The grammar and behaviour this editor is built from. */
@@ -54,13 +56,15 @@
      */
     defaultContent?: NodeJSON | undefined;
     /**
-     * Accessible name of the wrapper. With neither this nor `labelledBy`, the
-     * wrapper has no role.
+     * Accessible name of the wrapper, and the fallback name when `labelledBy`
+     * names no element. With neither this nor `labelledBy`, the wrapper has
+     * no role.
      */
     label?: string | undefined;
     /**
      * The `id` (or space-separated `id`s) of the visible element that names
-     * the wrapper, rendered as `aria-labelledby`. Wins over `label`.
+     * the wrapper, rendered as `aria-labelledby`. Wins over `label`, which
+     * stays the fallback name if no element has the id.
      */
     labelledBy?: string | undefined;
     /** Extra classes on the wrapper. */
@@ -103,9 +107,9 @@
 
 <div
   {...rest}
-  role={label === undefined && labelledBy === undefined ? undefined : 'group'}
-  aria-label={labelledBy === undefined ? label : undefined}
-  aria-labelledby={labelledBy}
+  role={label === undefined && !labelledBy ? undefined : 'group'}
+  aria-label={label}
+  aria-labelledby={labelledBy || undefined}
   class={['flex flex-col gap-2', className]}
 >
   <ProseKit {editor}>

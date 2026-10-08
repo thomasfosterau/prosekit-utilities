@@ -55,7 +55,8 @@
     label?: string | undefined;
     /**
      * The `id` (or space-separated `id`s) of the visible element that names
-     * the wrapper, rendered as `aria-labelledby`. Wins over `label`.
+     * the wrapper, rendered as `aria-labelledby`. Wins over `label`, which
+     * stays the fallback name if no element has the id.
      */
     labelledBy?: string | undefined;
     /** Extra classes on the wrapper. */
