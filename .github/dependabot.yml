@@ -73,10 +73,10 @@ updates:
           - 'version-update:semver-minor'
           - 'version-update:semver-patch'
       # `playwright` is pinned EXACTLY and behind the app repos on purpose:
-      # its Chromium revision must match the one the agent-session image
-      # pre-installs under PLAYWRIGHT_BROWSERS_PATH (see the `playwright`
-      # entry in pnpm-workspace.yaml), so a bump is made together with the
-      # image, by a person. Same update-type scoping as above.
+      # agent sessions reach its Chromium revision through the SessionStart
+      # hook's symlink bridge to the image's older build (see the `playwright`
+      # entry in pnpm-workspace.yaml), so a bump moves the hook's revision
+      # with it and is made by a person. Same update-type scoping as above.
       - dependency-name: playwright
         update-types:
           - 'version-update:semver-major'
