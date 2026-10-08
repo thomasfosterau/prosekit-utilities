@@ -36,10 +36,15 @@
   // an `aria-*` attribute means something; on the `role="none"` list it
   // would turn the list back into one and come between the menu and its
   // items. `class` stays on the list, which carries the daisyUI styling.
-  // Spread first, so `menuLabel` keeps owning the accessible name; for the
-  // same reason `aria-label` and `aria-labelledby` are left out of the props,
-  // and the markup clears an untyped caller's `aria-labelledby`, which would
-  // otherwise outrank `aria-label`. `id` is redeclared without `null`, which
+  // Spread first, so `menuLabel` / `labelledBy` keep owning the accessible
+  // name; for the same reason `aria-label` and `aria-labelledby` are left out
+  // of the props, and the markup sets both after the spread: an untyped
+  // caller's `aria-labelledby`, which would otherwise outrank `aria-label`, is
+  // cleared unless `labelledBy` sets it (an empty one counts as unset). Given
+  // `labelledBy`, it wins, and `menuLabel` (or its default) stays as
+  // `aria-label`, the fallback name when no element has the id; `Editor`
+  // says why that is not a union. bits-ui sets no `aria-labelledby` of its
+  // own on the menu content. `id` is redeclared without `null`, which
   // bits-ui's primitives do not accept; `dir` is left out: on
   // `DropdownMenu.Content` bits-ui types it as its own `Direction` (no
   // `auto`) and overwrites it with the menu root's `dir`.
@@ -59,6 +64,12 @@
     /** Accessible name of the open menu. */
     menuLabel?: string | undefined;
     /**
+     * The `id` (or space-separated `id`s) of the visible element that names
+     * the open menu, rendered as `aria-labelledby`. Wins over `menuLabel`,
+     * which stays the fallback name if no element has the id.
+     */
+    labelledBy?: string | undefined;
+    /**
      * The dialogs a command may ask for. Omitted — a menu mounted outside a
      * toolbar — `dialogs.link()` / `dialogs.image()` do nothing, and a
      * command that calls one is inert rather than broken.
@@ -77,6 +88,7 @@
     open = $bindable(false),
     label = messages.insertLabel,
     menuLabel = messages.insertMenuLabel,
+    labelledBy,
     dialogs,
     class: className,
     trigger,
@@ -151,7 +163,7 @@
       align="start"
       sideOffset={6}
       aria-label={menuLabel}
-      aria-labelledby={undefined}
+      aria-labelledby={labelledBy || undefined}
       onCloseAutoFocus={closeAutoFocus}
       class="z-50"
     >

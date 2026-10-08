@@ -180,3 +180,32 @@ test('`menuLabel` owns the accessible name: `aria-label` / `aria-labelledby` are
   await expect.element(menu).toHaveAttribute('aria-label', 'Insert block');
   await expect.element(menu).not.toHaveAttribute('aria-labelledby');
 });
+
+test('`labelledBy` names the open menu by a visible heading, over the default `menuLabel`', async () => {
+  labellingElement('menu-heading', 'Add a block', 'h2');
+
+  const screen = await render(SlashMenuFixture, {
+    commands: commands(() => undefined),
+    attributes: { labelledBy: 'menu-heading' },
+  });
+
+  await screen.getByRole('button', { name: 'Insert' }).click();
+
+  const menu = screen.getByRole('menu');
+  await expect.element(menu).toHaveAccessibleName('Add a block');
+  await expect.element(menu).toHaveAttribute('aria-labelledby', 'menu-heading');
+  await expect.element(menu).toHaveAttribute('aria-label', 'Insert block');
+});
+
+test('the default `menuLabel` names the open menu when `labelledBy` points at no element', async () => {
+  const screen = await render(SlashMenuFixture, {
+    commands: commands(() => undefined),
+    attributes: { labelledBy: 'menu-missing-heading' },
+  });
+
+  await screen.getByRole('button', { name: 'Insert' }).click();
+
+  const menu = screen.getByRole('menu');
+  await expect.element(menu).toHaveAccessibleName('Insert block');
+  await expect.element(menu).toHaveAttribute('aria-labelledby', 'menu-missing-heading');
+});

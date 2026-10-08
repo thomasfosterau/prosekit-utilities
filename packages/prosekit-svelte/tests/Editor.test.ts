@@ -103,3 +103,69 @@ test('`label` owns the accessible name: `aria-label` / `aria-labelledby` are no 
   await expect.element(group).toHaveAttribute('aria-label', 'Body');
   await expect.element(group).not.toHaveAttribute('aria-labelledby');
 });
+
+test('`labelledBy` names the wrapper group by a visible heading', async () => {
+  labellingElement('editor-heading', 'Meeting notes', 'h2');
+
+  const screen = await render(Editor, {
+    extension: defineBlockDocumentExtension(),
+    labelledBy: 'editor-heading',
+  });
+
+  // Named, so a group, though `label` is absent.
+  const group = screen.getByRole('group');
+  await expect.element(group).toHaveAccessibleName('Meeting notes');
+  await expect.element(group).toHaveAttribute('aria-labelledby', 'editor-heading');
+  await expect.element(group).not.toHaveAttribute('aria-label');
+});
+
+test('given both, `labelledBy` wins over `label`, which stays as `aria-label`', async () => {
+  labellingElement('editor-both-heading', 'Meeting notes', 'h2');
+
+  const screen = await render(Editor, {
+    extension: defineBlockDocumentExtension(),
+    label: 'Body',
+    labelledBy: 'editor-both-heading',
+  });
+
+  const group = screen.getByRole('group');
+  await expect.element(group).toHaveAccessibleName('Meeting notes');
+  await expect.element(group).toHaveAttribute('aria-labelledby', 'editor-both-heading');
+  await expect.element(group).toHaveAttribute('aria-label', 'Body');
+});
+
+test('`label` names the wrapper when `labelledBy` points at no element', async () => {
+  // A mistyped or not-yet-rendered heading: `aria-labelledby` resolves to
+  // nothing, so the accessible-name computation falls through to `aria-label`.
+  const screen = await render(Editor, {
+    extension: defineBlockDocumentExtension(),
+    label: 'Body',
+    labelledBy: 'editor-missing-heading',
+  });
+
+  const group = screen.getByRole('group');
+  await expect.element(group).toHaveAccessibleName('Body');
+  await expect.element(group).toHaveAttribute('aria-labelledby', 'editor-missing-heading');
+});
+
+test('an empty `labelledBy` counts as unset', async () => {
+  const unnamed = await render(Editor, {
+    extension: defineBlockDocumentExtension(),
+    labelledBy: '',
+  });
+
+  // No name, so no role, and no empty `aria-labelledby` on the wrapper.
+  expect(unnamed.getByRole('group').elements()).toHaveLength(0);
+  expect(unnamed.container.querySelector('[aria-labelledby]')).toBeNull();
+  await unnamed.unmount();
+
+  const labelled = await render(Editor, {
+    extension: defineBlockDocumentExtension(),
+    label: 'Body',
+    labelledBy: '',
+  });
+
+  const group = labelled.getByRole('group');
+  await expect.element(group).toHaveAccessibleName('Body');
+  await expect.element(group).not.toHaveAttribute('aria-labelledby');
+});
