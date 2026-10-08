@@ -57,17 +57,18 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 22.x
+          node-version: latest
           cache: pnpm
           registry-url: https://registry.npmjs.org
 
       # The root `release` script publishes each `pnpm pack` tarball with the
       # npm CLI (`npm publish`), and npm's own OIDC trusted publishing needs
-      # npm >= 11.5.1, newer than the npm bundled with Node 22. Pinned to an
-      # exact version rather than `@latest`, so what runs in this id-token job
-      # is a version that was reviewed, not whatever the registry serves on
-      # the day (`@latest` is already npm 12). Bump it by hand; Dependabot
-      # does not see it.
+      # npm >= 11.5.1. The npm bundled with Node `latest` already meets that
+      # floor (Node 26.11 ships npm 11.20.0), but which npm that is moves with
+      # every Node release. Pinned to an exact version rather than `@latest`,
+      # so what runs in this id-token job is a version that was reviewed, not
+      # whatever the registry or the Node release serves on the day (`@latest`
+      # is already npm 12). Bump it by hand; Dependabot does not see it.
       - name: Upgrade npm (OIDC trusted publishing)
         run: npm install -g npm@11.20.0
 
