@@ -19,6 +19,7 @@ pnpm install                                            # dependencies + the Vit
 vp check                                                # format + lint (oxfmt + oxlint)
 vp run check                                            # the type-check gate (tsc + svelte-check)
 vp run -r test:unit                                     # node Vitest for the core, headless Chromium for the Svelte packages
+vp run --filter ./packages/prosekit-utilities test:coverage  # the core's suite with its coverage thresholds, as CI runs it
 vp run -r build                                         # vp pack / svelte-package -> packages/*/dist
 vp run --filter ./packages/prosekit-svelte storybook    # the dev loop, port 6006 — one Storybook, both Svelte packages' stories
 vp run --filter ./packages/prosekit-svelte storybook:build

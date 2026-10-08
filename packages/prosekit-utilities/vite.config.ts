@@ -52,6 +52,8 @@ export default defineConfig({
           output: [],
         },
       },
+      // The suite above under istanbul, failing below `test.coverage.thresholds`.
+      // CI runs this one for the core instead of `test:unit`.
       'test:coverage': {
         command: 'vp test run tests --coverage',
         cache: {
