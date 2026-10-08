@@ -29,8 +29,10 @@ import { defineConfig } from 'vite-plus';
  *
  * The second workspace-relative exclusion drops each sibling package's
  * `node_modules/`. Resolving a bare import from a sibling's built `dist/`
- * probes that sibling's `node_modules/` first, and under `nodeLinker: hoisted`
- * the directory exists only as Vitest's `.vite` scratch, so its first
+ * probes that sibling's `node_modules/` first. Under `nodeLinker: hoisted` that
+ * directory holds only pnpm's workspace symlinks (`@thomasfosterau/*`, whose
+ * reads are fingerprinted at their real paths) and generated scratch (Vite's
+ * `.vite` / `.vite-temp`, `svelte-kit sync`'s `$app` types), so its first
  * appearance would otherwise miss `svelte-package` and `storybook build` once.
  * The lockfile still stands in for every dependency.
  *
@@ -65,8 +67,9 @@ export default defineConfig({
         },
       },
       // Type-checks `src/` (stories included — they live under `src/stories/`,
-      // outside the `src/lib/` tree `svelte-package` ships, and the tsconfig
-      // `include` reaches `.storybook/` too) and `tests/`. The core package is
+      // outside the `src/lib/` tree `svelte-package` ships), `tests/` and the
+      // Storybook config (`.storybook/**/*.ts` in the tsconfig `include`; the
+      // flowchart's stories are its own `check`'s). The core package is
       // imported through its published `exports`, i.e. its built `dist/`, so
       // this cannot run until that build has.
       check: {
