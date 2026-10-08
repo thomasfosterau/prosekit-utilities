@@ -13,11 +13,37 @@ import { defineConfig } from 'vite-plus';
  * Input fingerprint for this package's cached tasks: everything the task can
  * read, minus `node_modules`, plus the lockfile — so a dependency bump busts
  * the cache and a `touch` does not.
+ *
+ * `'!.'` drops the package root's directory listing. These tasks list the root,
+ * and the cache fingerprints a listing by entry name, so `storybook-static/`
+ * appearing (written by `storybook:build`) or disappearing would otherwise miss
+ * `svelte-package`, `svelte-check` and the browser suite. A negative glob
+ * filters tracked paths, not the entries inside a listing, so
+ * `'!storybook-static/**'` alone cannot do this. It is here as well because
+ * `svelte-check` walks the package for `.svelte` files and so lists every
+ * directory under `storybook-static/`, whose chunk names change with each
+ * Storybook build; nothing there is a `.svelte` file or in `tsconfig.json`'s
+ * `include`. Every file a task does read (`package.json`, `tsconfig.json`,
+ * `svelte.config.js`, this config, `src/`, `tests/`, `.storybook/`) is still
+ * fingerprinted, and so are those directories' listings.
+ *
+ * The second workspace-relative exclusion drops each sibling package's
+ * `node_modules/`. Resolving a bare import from a sibling's built `dist/`
+ * probes that sibling's `node_modules/` first, and under `nodeLinker: hoisted`
+ * the directory exists only as Vitest's `.vite` scratch, so its first
+ * appearance would otherwise miss `svelte-package` and `storybook build` once.
+ * The lockfile still stands in for every dependency.
+ *
+ * `build` and `storybook:build` take this list too: a task without `input`
+ * tracks everything it touches, these exclusions included.
  */
 const cacheInputs = [
   { auto: true },
+  '!.',
+  '!storybook-static/**',
   '!node_modules/**',
   { pattern: '!node_modules/**', base: 'workspace' as const },
+  { pattern: '!packages/*/node_modules/**', base: 'workspace' as const },
   { pattern: 'pnpm-lock.yaml', base: 'workspace' as const },
 ];
 
@@ -34,6 +60,7 @@ export default defineConfig({
         command: 'svelte-package',
         dependsOn: ['sync', { task: 'build', from: 'dependencies' }],
         cache: {
+          input: cacheInputs,
           output: ['dist/**'],
         },
       },
@@ -84,6 +111,7 @@ export default defineConfig({
         command: 'storybook build',
         dependsOn: ['sync', 'build'],
         cache: {
+          input: cacheInputs,
           output: ['storybook-static/**'],
         },
       },
