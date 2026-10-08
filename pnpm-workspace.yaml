@@ -85,15 +85,22 @@ catalog:
   # The ONLY consumer is the Vitest browser provider above (`playwright: "*"`
   # peer); this repo has no Playwright test suite of its own.
   #
-  # PINNED EXACT, and behind the app repos' 1.63.0 on purpose: 1.56.x is the
-  # release whose Chromium revision is 1194, which is what the agent-session
-  # image pre-installs under `PLAYWRIGHT_BROWSERS_PATH`
-  # (/opt/pw-browsers/chromium-1194). Matching it is what lets `vp run -r
-  # test:unit` launch a real browser in a session with no download. CI
-  # installs the matching revision itself (`pnpm exec playwright install
-  # --with-deps chromium`), so bumping this only costs the session, not the
-  # pipeline — but bump it together with the image.
-  playwright: 1.56.1
+  # PINNED EXACT, and behind the app repos' 1.63.0 on purpose. 1.60.0 is the
+  # oldest release whose bundled zip extractor completes on Node 26: through
+  # 1.59.1 it stalls at the first large deflated entry, so CI's browser
+  # install hung until the job timed out on Node `latest` (#65, #53).
+  #
+  # 1.60.0 expects Chromium revision 1223 (Chrome 148). CI installs exactly
+  # that itself (`pnpm exec playwright install --with-deps chromium`). The
+  # agent-session image still pre-installs revision 1194 (Chrome 141) under
+  # /opt/pw-browsers, so the SessionStart hook (.claude/hooks/session-start.sh,
+  # section 4) builds a directory of symlinks named for 1223 that point at the
+  # 1194 build and exports `PLAYWRIGHT_BROWSERS_PATH` to it. That is what lets
+  # `vp run -r test:unit` launch a real browser in a session with no download.
+  # Bump this together with the hook's PW_WANT_REV, and check the older build
+  # still launches under the new release; drop the bridge once the image
+  # carries the wanted revision.
+  playwright: 1.60.0
   prosekit: ^0.22.3
   storybook: ^10.6.1
   svelte-check: ^4.7.6

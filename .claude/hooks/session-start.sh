@@ -51,12 +51,13 @@
 # is no token to hydrate — nothing in a session can publish, by construction.
 #
 # It also does NOT install a Playwright browser. `vp run -r test:unit` drives
-# real Chromium, and the image is expected to provide one under
-# `PLAYWRIGHT_BROWSERS_PATH` matching the `playwright` version the catalog pins
-# (see that entry in pnpm-workspace.yaml). Downloading one here would be a
-# multi-hundred-megabyte fetch on every session start; when the browser is
-# genuinely missing, `pnpm exec playwright install chromium` is the one command
-# to run, once.
+# real Chromium, and the image provides one under /opt/pw-browsers. That build
+# is OLDER than the revision the catalog's `playwright` expects (see that entry
+# in pnpm-workspace.yaml), so section 4 bridges the two with a directory of
+# symlinks rather than downloading anything. Downloading here would be a
+# multi-hundred-megabyte fetch on every session start; when no browser is
+# present at all, `pnpm exec playwright install chromium` is the one command to
+# run, once.
 #
 # ## Contract
 #
@@ -173,6 +174,69 @@ if [ -d "$PROJECT_DIR/node_modules" ]; then
   log "running svelte-kit sync…"
   (cd "$PROJECT_DIR" && "$LOCAL_BIN/vp" run --filter ./packages/prosekit-svelte --filter ./packages/prosekit-flowchart sync >/dev/null 2>&1) \
     || log "codegen failed; run \`vp run -r sync\` by hand"
+fi
+
+# ── 4. Playwright browser bridge ─────────────────────────────────────────────
+# The catalog pins `playwright` 1.60.0, which looks for Chromium revision 1223;
+# the image ships revision 1194 under /opt/pw-browsers. Playwright finds a
+# browser purely by path — <PLAYWRIGHT_BROWSERS_PATH>/<name>-<revision>/<the
+# per-platform layout in playwright-core's EXECUTABLE_PATHS> — so a directory
+# of symlinks carrying 1223's names but pointing at the 1194 build is enough
+# for `vp run -r test:unit` to launch it. Both layouts are linked: x64 CfT
+# names (`chrome-linux64/chrome`, `chrome-headless-shell-linux64/
+# chrome-headless-shell`) and the arm64 ones (`chrome-linux/…`). Headless runs
+# use the headless shell, so that is the one the suites actually launch.
+#
+# /opt/pw-browsers is read, never written. The bridge only applies while the
+# image still lacks 1223; once the image carries it, this section is a no-op
+# and should be deleted along with the bump comment in the catalog. Bump
+# PW_WANT_REV together with the catalog's `playwright` entry.
+#
+# The variable reaches the agent's shells through $CLAUDE_ENV_FILE, which
+# Claude Code sources before each Bash command — the one way a SessionStart
+# hook can export into its caller. Without it (a devcontainer invoking this
+# file directly), the export line is logged for the caller to apply.
+PW_IMAGE_DIR="/opt/pw-browsers"
+PW_HAVE_REV="1194"
+PW_WANT_REV="1223"
+PW_BRIDGE_DIR="${HOME:-/root}/.cache/prosekit-pw-browsers"
+PW_FULL="$PW_IMAGE_DIR/chromium-$PW_HAVE_REV/chrome-linux"
+PW_SHELL="$PW_IMAGE_DIR/chromium_headless_shell-$PW_HAVE_REV/chrome-linux"
+if [ -d "$PW_IMAGE_DIR/chromium-$PW_WANT_REV" ]; then
+  : # The image already carries the wanted revision; nothing to bridge.
+elif [ -x "$PW_FULL/chrome" ] && [ -x "$PW_SHELL/headless_shell" ]; then
+  log "bridging Chromium $PW_HAVE_REV as $PW_WANT_REV under $PW_BRIDGE_DIR…"
+  full="$PW_BRIDGE_DIR/chromium-$PW_WANT_REV"
+  shell="$PW_BRIDGE_DIR/chromium_headless_shell-$PW_WANT_REV"
+  if mkdir -p "$full" "$shell/chrome-headless-shell-linux64" 2>/dev/null; then
+    ln -sfn "$PW_FULL" "$full/chrome-linux64"
+    ln -sfn "$PW_FULL" "$full/chrome-linux"
+    ln -sfn "$PW_SHELL" "$shell/chrome-linux"
+    # The image's `headless_shell` is a wrapper that execs the absolute path
+    # of `headless_shell.real`, so a symlink under the CfT name resolves its
+    # resources from the 1194 directory.
+    ln -sfn "$PW_SHELL/headless_shell" \
+      "$shell/chrome-headless-shell-linux64/chrome-headless-shell"
+    # ffmpeg's revision is unchanged between the two releases.
+    for other in "$PW_IMAGE_DIR"/ffmpeg-*; do
+      [ -d "$other" ] && ln -sfn "$other" "$PW_BRIDGE_DIR/$(basename "$other")"
+    done
+    touch "$full/INSTALLATION_COMPLETE" "$full/DEPENDENCIES_VALIDATED" \
+      "$shell/INSTALLATION_COMPLETE" "$shell/DEPENDENCIES_VALIDATED"
+    pw_export="$(printf 'export PLAYWRIGHT_BROWSERS_PATH=%q' "$PW_BRIDGE_DIR")"
+    if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
+      # A `resume` re-runs this hook against the same env file; append once.
+      grep -qxF "$pw_export" "$CLAUDE_ENV_FILE" 2>/dev/null \
+        || printf '%s\n' "$pw_export" >>"$CLAUDE_ENV_FILE" \
+        || log "could not write \$CLAUDE_ENV_FILE; $pw_export by hand"
+    else
+      log "export PLAYWRIGHT_BROWSERS_PATH=$PW_BRIDGE_DIR to use the bridged browser"
+    fi
+  else
+    log "could not create $PW_BRIDGE_DIR; the browser suites will not find Chromium $PW_WANT_REV"
+  fi
+else
+  log "no Chromium $PW_HAVE_REV under $PW_IMAGE_DIR to bridge; run \`pnpm exec playwright install chromium\` once"
 fi
 
 exit 0
