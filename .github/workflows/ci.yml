@@ -73,8 +73,16 @@ jobs:
       - name: Type check
         run: vp run check
 
-      - name: Unit tests (node for the core, browser for the Svelte packages)
-        run: vp run -r test:unit
+      # The core's node suite runs ONCE, under istanbul coverage, so the
+      # thresholds in packages/prosekit-utilities/vite.config.ts (statements
+      # 90 / branches 85 / functions 90 / lines 90) fail the job when they
+      # are missed. The Svelte packages' browser suites keep plain
+      # `test:unit`; the `!` filter selects every package but the core.
+      - name: Unit tests with coverage thresholds (the core, node)
+        run: vp run --filter ./packages/prosekit-utilities test:coverage
+
+      - name: Unit tests (the Svelte packages, browser)
+        run: vp run --filter '!./packages/prosekit-utilities' test:unit
 
       - name: Build the libraries
         run: vp run -r build
