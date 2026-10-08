@@ -32,7 +32,11 @@
   // `children` is omitted and redeclared because Svelte's own
   // `HTMLAttributes` writes it `children?: Snippet` — legal only without
   // `exactOptionalPropertyTypes`, which this workspace compiles with.
-  interface Props extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
+  // `aria-label` and `aria-labelledby` are omitted because `label` owns the
+  // wrapper's accessible name: the markup sets `aria-label` after the spread
+  // and clears `aria-labelledby`, which would otherwise outrank it.
+  interface Props
+    extends Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'aria-label' | 'aria-labelledby'> {
     /** The grammar and behaviour this editor is built from. */
     extension: E;
     /** Two-way bound current content; reflects user edits. */
@@ -86,6 +90,7 @@
   {...rest}
   role={label === undefined ? undefined : 'group'}
   aria-label={label}
+  aria-labelledby={undefined}
   class={['flex flex-col gap-2', className]}
 >
   <ProseKit {editor}>

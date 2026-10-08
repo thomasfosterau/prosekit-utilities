@@ -11,14 +11,16 @@
 
 import { expect, test } from 'vite-plus/test';
 import { userEvent } from 'vite-plus/test/browser';
+import type { ComponentProps } from 'svelte';
 import { render } from 'vitest-browser-svelte';
+import type BlockToolbar from '../src/lib/toolbar/BlockToolbar.svelte';
 import {
   createDefaultToolbarItems,
   isToolbarSeparator,
   type ToolbarItem,
 } from '../src/lib/toolbar/items.ts';
 import ToolbarFixture from './fixtures/ToolbarFixture.svelte';
-import { proseMirror, typeInEditor } from './helpers.ts';
+import { labellingElement, proseMirror, typeInEditor } from './helpers.ts';
 
 const defaultItems = createDefaultToolbarItems();
 const defaultButtons = defaultItems.filter(
@@ -235,7 +237,6 @@ test('spreads native attributes on the toolbar, merges `class`, and `label` keep
       id: 'note-toolbar',
       'data-surface': 'note',
       'aria-describedby': 'note-toolbar-hint',
-      'aria-label': 'Ignored',
     },
   });
 
@@ -245,4 +246,33 @@ test('spreads native attributes on the toolbar, merges `class`, and `label` keep
   await expect.element(toolbar).toHaveAttribute('aria-describedby', 'note-toolbar-hint');
   await expect.element(toolbar).toHaveAccessibleName('Note toolbar');
   await expect.element(toolbar).toHaveClass('sticky', 'flex', 'border');
+});
+
+test('`label` owns the accessible name: `aria-label` / `aria-labelledby` are no props, and lose at runtime', async () => {
+  // The type half: neither is a prop. `svelte-check` runs over `tests/`, so
+  // `vp run check` fails if either directive goes unused — that is, if the
+  // props type ever accepts the attribute again.
+  const withAriaLabel: ComponentProps<typeof BlockToolbar> = {
+    // @ts-expect-error -- `label` owns the toolbar's accessible name.
+    'aria-label': 'Ignored',
+  };
+  const withAriaLabelledBy: ComponentProps<typeof BlockToolbar> = {
+    // @ts-expect-error -- `label` owns the toolbar's accessible name.
+    'aria-labelledby': 'toolbar-hijack',
+  };
+  labellingElement('toolbar-hijack', 'Hijacked');
+
+  // The runtime half: spread before the component's own attributes, an
+  // untyped caller's `aria-label` is overridden and its `aria-labelledby`
+  // cleared.
+  const screen = await render(ToolbarFixture, {
+    label: 'Note toolbar',
+    attributes: { ...withAriaLabel, ...withAriaLabelledBy, id: 'note-toolbar' },
+  });
+
+  const toolbar = screen.getByRole('toolbar');
+  await expect.element(toolbar).toHaveAttribute('id', 'note-toolbar');
+  await expect.element(toolbar).toHaveAccessibleName('Note toolbar');
+  await expect.element(toolbar).toHaveAttribute('aria-label', 'Note toolbar');
+  await expect.element(toolbar).not.toHaveAttribute('aria-labelledby');
 });

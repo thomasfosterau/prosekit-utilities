@@ -4,6 +4,7 @@
  * @module
  */
 
+import { onTestFinished } from 'vite-plus/test';
 import { page, userEvent } from 'vite-plus/test/browser';
 
 /**
@@ -38,4 +39,17 @@ export function hiddenInputValue(name: string): unknown {
   const input = document.querySelector<HTMLInputElement>(`input[type="hidden"][name="${name}"]`);
   if (input === null) throw new Error(`no hidden input named ${name}`);
   return JSON.parse(input.value);
+}
+
+/**
+ * Puts a `<span id={id}>` reading `text` in the document for the rest of the
+ * test, so an `aria-labelledby` that pointed at it would name its element
+ * `text`: the proof that a component's own label won.
+ */
+export function labellingElement(id: string, text: string): void {
+  const element = document.createElement('span');
+  element.id = id;
+  element.textContent = text;
+  document.body.append(element);
+  onTestFinished(() => element.remove());
 }

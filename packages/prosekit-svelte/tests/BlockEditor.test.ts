@@ -10,10 +10,11 @@
  */
 
 import { expect, test } from 'vite-plus/test';
+import type { ComponentProps } from 'svelte';
 import { render } from 'vitest-browser-svelte';
 import BlockEditor from '../src/lib/editor/BlockEditor.svelte';
 import BlockEditorFixture from './fixtures/BlockEditorFixture.svelte';
-import { hiddenInputValue, proseMirror, typeInEditor } from './helpers.ts';
+import { hiddenInputValue, labellingElement, proseMirror, typeInEditor } from './helpers.ts';
 
 const storedDocument = {
   type: 'blockDocument',
@@ -103,4 +104,31 @@ test('spreads native attributes on the wrapper and merges the caller `class`', a
   await expect.element(group).toHaveAttribute('data-surface', 'post');
   await expect.element(group).toHaveAttribute('aria-describedby', 'post-body-hint');
   await expect.element(group).toHaveClass('ring-2', 'flex', 'flex-col');
+});
+
+test('`label` owns the accessible name: `aria-label` / `aria-labelledby` are no props, and lose at runtime', async () => {
+  // The type half: neither is a prop. `svelte-check` runs over `tests/`, so
+  // `vp run check` fails if either directive goes unused — that is, if the
+  // props type ever accepts the attribute again.
+  const withAriaLabel: ComponentProps<typeof BlockEditor> = {
+    // @ts-expect-error -- `label` owns the wrapper's accessible name.
+    'aria-label': 'Ignored',
+  };
+  const withAriaLabelledBy: ComponentProps<typeof BlockEditor> = {
+    // @ts-expect-error -- `label` owns the wrapper's accessible name.
+    'aria-labelledby': 'block-editor-hijack',
+  };
+  labellingElement('block-editor-hijack', 'Hijacked');
+
+  // The runtime half: an untyped caller still gets `label`, through `Editor`.
+  const screen = await render(BlockEditor, {
+    ...withAriaLabel,
+    ...withAriaLabelledBy,
+    label: 'Body',
+  });
+
+  const group = screen.getByRole('group');
+  await expect.element(group).toHaveAccessibleName('Body');
+  await expect.element(group).toHaveAttribute('aria-label', 'Body');
+  await expect.element(group).not.toHaveAttribute('aria-labelledby');
 });

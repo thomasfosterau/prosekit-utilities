@@ -49,10 +49,17 @@
 
   // The toolbar's native attributes (`id`, `data-*`, `aria-*`, …) are
   // spread on bits-ui's `Toolbar.Root` `<div>` before `aria-label` and
-  // `class`, so `label` keeps owning the accessible name. `children` is
-  // omitted: the toolbar renders its own. `id` is redeclared without `null`,
-  // which bits-ui's primitives do not accept (they key node lookups on it).
-  interface Props extends Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'id'> {
+  // `class`. `label` owns the accessible name, so `aria-label` and
+  // `aria-labelledby` are omitted from the props, and the markup clears an
+  // untyped caller's `aria-labelledby`, which would otherwise outrank
+  // `aria-label`. `children` is omitted: the toolbar renders its own. `id` is
+  // redeclared without `null`, which bits-ui's primitives do not accept (they
+  // key node lookups on it).
+  interface Props
+    extends Omit<
+      HTMLAttributes<HTMLDivElement>,
+      'children' | 'id' | 'aria-label' | 'aria-labelledby'
+    > {
     /** The toolbar element's `id`. */
     id?: string | undefined;
     /** The buttons and separators, in order. */
@@ -182,6 +189,7 @@
   {...rest}
   {...(id === undefined ? {} : { id })}
   aria-label={label}
+  aria-labelledby={undefined}
   class={[
     'border-base-300 bg-base-100 flex flex-wrap items-center gap-1.5 rounded border p-2',
     className,

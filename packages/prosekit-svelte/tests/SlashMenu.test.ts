@@ -9,10 +9,12 @@
 
 import { expect, test, vi } from 'vite-plus/test';
 import { userEvent } from 'vite-plus/test/browser';
+import type { ComponentProps } from 'svelte';
 import { render } from 'vitest-browser-svelte';
 import type { SlashCommand } from '../src/lib/toolbar/items.ts';
+import type SlashMenu from '../src/lib/toolbar/SlashMenu.svelte';
 import SlashMenuFixture from './fixtures/SlashMenuFixture.svelte';
-import { proseMirror } from './helpers.ts';
+import { labellingElement, proseMirror } from './helpers.ts';
 
 const commands = (run: () => void): ReadonlyArray<SlashCommand> => [
   { id: 'one', label: 'Sow', run },
@@ -130,7 +132,6 @@ test('spreads native attributes on the menu element; `class` stays on the stylin
       id: 'insert-menu',
       'data-surface': 'insert',
       'aria-describedby': 'insert-menu-hint',
-      'aria-label': 'Ignored',
     },
   });
 
@@ -147,4 +148,35 @@ test('spreads native attributes on the menu element; `class` stays on the stylin
   const list = menu.element().querySelector('ul');
   expect(list).toHaveClass('w-72', 'menu');
   expect(list?.getAttribute('role')).toBe('none');
+});
+
+test('`menuLabel` owns the accessible name: `aria-label` / `aria-labelledby` are no props, and lose at runtime', async () => {
+  // The type half: neither is a prop. `svelte-check` runs over `tests/`, so
+  // `vp run check` fails if either directive goes unused — that is, if the
+  // props type ever accepts the attribute again.
+  const withAriaLabel: Omit<ComponentProps<typeof SlashMenu>, 'commands'> = {
+    // @ts-expect-error -- `menuLabel` owns the menu's accessible name.
+    'aria-label': 'Ignored',
+  };
+  const withAriaLabelledBy: Omit<ComponentProps<typeof SlashMenu>, 'commands'> = {
+    // @ts-expect-error -- `menuLabel` owns the menu's accessible name.
+    'aria-labelledby': 'menu-hijack',
+  };
+  labellingElement('menu-hijack', 'Hijacked');
+
+  // The runtime half: spread before the component's own attributes, an
+  // untyped caller's `aria-label` is overridden and its `aria-labelledby`
+  // cleared.
+  const screen = await render(SlashMenuFixture, {
+    commands: commands(() => undefined),
+    attributes: { ...withAriaLabel, ...withAriaLabelledBy, id: 'insert-menu' },
+  });
+
+  await screen.getByRole('button', { name: 'Insert' }).click();
+
+  const menu = screen.getByRole('menu');
+  await expect.element(menu).toHaveAttribute('id', 'insert-menu');
+  await expect.element(menu).toHaveAccessibleName('Insert block');
+  await expect.element(menu).toHaveAttribute('aria-label', 'Insert block');
+  await expect.element(menu).not.toHaveAttribute('aria-labelledby');
 });
