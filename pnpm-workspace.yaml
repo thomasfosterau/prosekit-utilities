@@ -103,13 +103,16 @@ catalog:
   # as `typescript`: svelte-check and tsdown's declaration emit drive
   # TypeScript through its JS API, which TypeScript 7 does not ship until 7.1.
   typescript: npm:@typescript/typescript6@6.0.2
-  # vite-plus pins `oxlint`, `oxfmt` and `vitest` to exact versions, so
-  # `vitest` below must match vite-plus's own pin (1.0.0 -> 5.0.1) — the
-  # `vitest: "catalog:"` override forces every resolution to the catalog
-  # singleton, and a mismatch there breaks the browser provider's exact peer.
+  # vite-plus pins `oxlint`, `oxfmt`, `vitest` and the `@vitest/*` runtime
+  # packages to exact versions, so `vitest`, `@vitest/browser-playwright` and
+  # `@vitest/coverage-istanbul` must all match vite-plus's own pin (1.1.0 ->
+  # 5.0.3). The `vitest: "catalog:"` override forces every resolution to the
+  # catalog singleton, a mismatch breaks the browser provider's exact peer,
+  # and vite-plus refuses to start `test:coverage` when the coverage provider
+  # differs from its pin. Bump vite-plus first, then the vitest set to its pin.
   # `vite` is the same release published under its aliased core package.
-  vite-plus: 1.0.0
-  vite: npm:@voidzero-dev/vite-plus-core@1.0.0
+  vite-plus: 1.1.0
+  vite: npm:@voidzero-dev/vite-plus-core@1.1.0
   vitest: 5.0.3
   # `render` + locators for Svelte components under Vitest browser mode.
   vitest-browser-svelte: ^3.1.0
