@@ -144,7 +144,7 @@ allowBuilds:
   msgpackr-extract: false
 
 # Storybook 10.6 declares `vite-plus: "^0.1.15 || ^0.2.0"` and this workspace
-# is on 1.0.0 — the toolchain is deliberately ahead of what the addon
+# is on 1.x — the toolchain is deliberately ahead of what the addon
 # ecosystem has caught up to, and the same goes for `vite` / `vitest` /
 # `@sveltejs/kit`, all forced to one catalog singleton by the overrides above.
 peerDependencyRules:
