@@ -500,24 +500,22 @@ type Binding =
   | { readonly kind: 'import'; readonly source: string; readonly imported: string }
   | { readonly kind: 'local' };
 
-/** This workspace's own value factories `isPureCallee` trusts by name. */
-const OWN_PURE_FACTORIES: ReadonlySet<string> = new Set(['required', 'createMarkdownSerialiser']);
-
 /**
  * Callees whose calls are pure by contract, so a module may call them while
  * it loads without a `/* @__PURE__ *\/` annotation:
  *
  * - Effect's `Schema` and `Option` modules, which only build values;
- * - the global `Symbol.for`, an idempotent registry read;
- * - this workspace's own value factories, called by name: `required` (the
- *   core's `./derive`, wraps a schema) and `createMarkdownSerialiser` (the
- *   core's root, builds a serialiser object). Only a binding declared in the
- *   same file, imported relatively or imported from
- *   `@thomasfosterau/prosekit-utilities` counts.
+ * - the global `Symbol.for`, an idempotent registry read.
  *
- * Anything else called at load — a global, any other import, an un-annotated
- * local helper — fails until it is annotated in source or added here with a
- * reason.
+ * Trust covers the whole call chain rooted at one of these (`Schema.X(a)(b)`),
+ * callbacks it invokes included; implicit getters and iterators are invisible
+ * to this syntax check either way.
+ *
+ * Anything else called at load — a global, any other import, the workspace's
+ * own factories (`required`, `createMarkdownSerialiser`), a local helper —
+ * fails until it is annotated `/* @__PURE__ *\/` in source or added here with
+ * a reason. Nothing is trusted by name: a same-file or relatively imported
+ * function can be redefined, so only the annotation at the call site counts.
  */
 const isPureCallee = (
   root: string,
@@ -525,15 +523,9 @@ const isPureCallee = (
   property: string | undefined,
 ): boolean => {
   if (binding === undefined) return root === 'Symbol' && property === 'for';
-  if (binding.kind === 'import') {
-    if (/^effect\/(?:Schema|Option)$/.test(binding.source) && binding.imported === '*') return true;
-    if (binding.source === 'effect' && ['Schema', 'Option'].includes(binding.imported)) return true;
-  }
-  const own =
-    binding.kind === 'local' ||
-    binding.source.startsWith('.') ||
-    /^@thomasfosterau\/prosekit-utilities(?:\/|$)/.test(binding.source);
-  return own && OWN_PURE_FACTORIES.has(root.replace(/\$\d+$/, ''));
+  if (binding.kind !== 'import') return false;
+  if (/^effect\/(?:Schema|Option)$/.test(binding.source)) return binding.imported === '*';
+  return binding.source === 'effect' && ['Schema', 'Option'].includes(binding.imported);
 };
 
 /** A node's source, whitespace collapsed and cut to one short line, for a failure message. */
