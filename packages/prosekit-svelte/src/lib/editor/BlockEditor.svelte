@@ -33,11 +33,15 @@
   import { defineBlockDocumentExtension } from '@thomasfosterau/prosekit-utilities/prosekit';
   import type { Extension } from 'prosekit/core';
   import type { Snippet } from 'svelte';
+  import type { HTMLAttributes } from 'svelte/elements';
   import BlockToolbar from '../toolbar/BlockToolbar.svelte';
   import type { SlashCommand, ToolbarItem, ToolbarSeparator } from '../toolbar/items.ts';
   import EditorMount from './Editor.svelte';
 
-  interface Props {
+  // The wrapper's native attributes (`id`, `data-*`, `aria-*`, …) pass
+  // through to `Editor`, which spreads them on its `<div>`. `children` is
+  // omitted and redeclared for the reason `Editor` gives.
+  interface Props extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
     /**
      * The grammar. Omitted, `defineBlockDocumentExtension()` — built lazily,
      * so an application passing its own never constructs the default.
@@ -77,6 +81,7 @@
     label,
     class: className,
     children,
+    ...rest
   }: Props = $props();
 
   // Built here rather than in the prop default so an application that passes
@@ -98,6 +103,7 @@
 </script>
 
 <EditorMount
+  {...rest}
   bind:content
   extension={resolvedExtension}
   defaultContent={editorDefaultContent}
