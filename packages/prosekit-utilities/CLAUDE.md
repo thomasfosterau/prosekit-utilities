@@ -4,7 +4,7 @@
 
 ## Boundary
 
-- **The root entry stays ProseKit-free.** Nothing under `src/*.ts` or `src/markdown/` may import `prosekit`, `@prosekit/pm` at the value level, or `src/prosekit/**`. `src/json.ts` exists so the root's node types need no ProseKit type import either. A consuming app's browser-reachable model layer imports this entry only, which is what keeps the editor runtime off every page without a document field; only server code and editor routes import `./prosekit`. Nothing enforces this yet (#25): after `vp run -r build`, `grep -l prosekit packages/prosekit-utilities/dist/index.js` must print nothing.
+- **The root entry stays ProseKit-free.** Nothing under `src/*.ts` or `src/markdown/` may import `prosekit`, `@prosekit/pm` at the value level, or `src/prosekit/**`. `src/json.ts` exists so the root's node types need no ProseKit type import either. A consuming app's browser-reachable model layer imports this entry only, which is what keeps the editor runtime off every page without a document field; only server code and editor routes import `./prosekit`. `vp run check:dist` enforces this, and the same for `./derive` and `./drizzle`, against the built `dist/`: [`scripts/check-dist-boundaries.ts`](../../scripts/check-dist-boundaries.ts) follows each entry's emitted import graph through the shared chunks and fails on any `prosekit`, `prosekit/*` or `@prosekit/*` import, dynamic `import()` included. CI runs it after the build.
 - **Generic over ProseKit, ignorant of any app.** Nothing here names a post body, an article section or any other app surface. An app-shaped special case is the signal that the code belongs in the app.
 
 ### Entry points

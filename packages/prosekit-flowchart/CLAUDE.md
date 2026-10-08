@@ -5,7 +5,7 @@
 ## Boundary
 
 - **Siblings only through their published entry points** — the repo-wide rule in the root AGENTS.md. This package imports `@thomasfosterau/prosekit-utilities` (root and `./derive`) and `@thomasfosterau/prosekit-svelte`.
-- **`./node` (`src/lib/node/`) imports no Svelte and no xyflow.** It is the half a server render and a document-schema declaration need; the canvas is reached only from the root. Nothing enforces this yet (#25): after `vp run -r build`, `grep -lE "svelte|@xyflow" packages/prosekit-flowchart/dist/node/*.js` must print nothing.
+- **`./node` (`src/lib/node/`) imports no Svelte and no xyflow.** It is the half a server render and a document-schema declaration need; the canvas is reached only from the root. `vp run check:dist` enforces this against the built `dist/`: [`scripts/check-dist-boundaries.ts`](../../scripts/check-dist-boundaries.ts) follows `dist/node/index.js`'s emitted import graph and fails on any `svelte`, `svelte/*`, `@xyflow/*`, `bits-ui` or `@thomasfosterau/prosekit-svelte` import, or any `.svelte` module. CI runs it after the build.
 - **The engine is reached once, from one place.** `Flowchart.svelte` is the only module that imports `@xyflow/svelte` and its stylesheet, `@xyflow/svelte/dist/style.css` — the package's only side-effecting import. The node view previews a flowchart with the same SVG the server renders, so the xyflow bundle only loads when a user opens the edit dialog.
 
 ## Invariants

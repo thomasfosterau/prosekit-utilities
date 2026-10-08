@@ -35,6 +35,7 @@ The toolchain is **Vite+** (the `vp` CLI) on **Node + pnpm**. Invoke everything 
 - `vp run -r test:unit` — every suite: node Vitest for the core, headless Chromium under Vitest browser mode for the Svelte packages.
 - `vp run --filter ./packages/prosekit-utilities test:coverage` — the core's node suite under istanbul coverage, failing below the thresholds in its `vite.config.ts` (statements 90 / branches 85 / functions 90 / lines 90). CI runs this in place of the core's plain `test:unit`, and `vp run --filter '!./packages/prosekit-utilities' test:unit` for the Svelte packages' browser suites. Never lower a threshold to get green; add the missing tests.
 - `vp run -r build` — `vp pack` → `packages/prosekit-utilities/dist`, `svelte-package` → the two Svelte `dist/`s.
+- `vp run check:dist` — the entry-point import boundaries, checked against the built `dist/` ([`scripts/check-dist-boundaries.ts`](scripts/check-dist-boundaries.ts)): the core's `.`, `./derive` and `./drizzle` reach no `prosekit` / `@prosekit/*`, and the flowchart's `./node` reaches no Svelte or xyflow. Depends on every package's `build`; fails, never skips, when a `dist/` is missing.
 - `vp run --filter ./packages/prosekit-svelte storybook` — the dev loop on port 6006; `storybook:build` for the static build. One Storybook for the workspace: its `stories` glob reaches across into `packages/prosekit-flowchart/src/stories`.
 - `cd packages/<name> && vp test run tests` — one package's suite while iterating; `vp run -r` from the root is the gate.
 
@@ -47,7 +48,8 @@ Before you report work as done, run the gates below in order and quote each comm
 3. `vp run --filter ./packages/prosekit-utilities test:coverage`
 4. `vp run --filter '!./packages/prosekit-utilities' test:unit`
 5. `vp run -r build`
-6. `vp run --filter ./packages/prosekit-svelte storybook:build`
+6. `vp run check:dist`
+7. `vp run --filter ./packages/prosekit-svelte storybook:build`
 
 This is CI's order (`.github/workflows/ci.yml`). None needs a credential. The browser suites need a Chromium matching the pinned `playwright` — see that entry's comment in the catalog. Before every push, prove CI parity from a clean tree: `rm -rf node_modules packages/*/node_modules packages/*/.svelte-kit packages/*/dist && pnpm install --frozen-lockfile --ignore-scripts`, then the gates above. A warm local tree hides a missing peer; a fresh runner does not.
 
