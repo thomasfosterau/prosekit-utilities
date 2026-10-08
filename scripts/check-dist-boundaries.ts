@@ -70,11 +70,14 @@ const PROSEKIT =
 
 /**
  * Svelte itself, the xyflow engine, the Svelte component packages this
- * workspace depends on, any compiled `.svelte` module, and this package's own
- * canvas root (or any subpath but `./node`) reached by name.
+ * workspace depends on, ProseKit's Svelte bindings (`prosekit/svelte`,
+ * `@prosekit/svelte` and their subpaths — the only ProseKit entries whose
+ * runtime imports Svelte), any compiled `.svelte` module, and this package's
+ * own canvas root (or any subpath but `./node`) reached by name. Every other
+ * `prosekit/*` subpath stays allowed: `./node` imports `prosekit/core`.
  */
 const SVELTE_OR_XYFLOW =
-  /^(?:svelte(?:\/|$)|@xyflow\/|bits-ui(?:\/|$)|@thomasfosterau\/prosekit-svelte(?:\/|$)|@thomasfosterau\/prosekit-flowchart(?:$|\/(?!node$)))|\.svelte(?:\.js)?$/;
+  /^(?:svelte(?:\/|$)|@xyflow\/|bits-ui(?:\/|$)|@?prosekit\/svelte(?:\/|$)|@thomasfosterau\/prosekit-svelte(?:\/|$)|@thomasfosterau\/prosekit-flowchart(?:$|\/(?!node$)))|\.svelte(?:\.js)?$/;
 
 const CORE = 'packages/prosekit-utilities';
 const FLOWCHART = 'packages/prosekit-flowchart';
