@@ -89,9 +89,10 @@ jobs:
 
       # Reads the dist/ the step above wrote: the core's `.`, `./derive` and
       # `./drizzle` must reach no ProseKit, and the flowchart's `./node` no
-      # Svelte or xyflow (scripts/check-dist-boundaries.ts). Its `build`
-      # dependencies are cache hits here.
-      - name: Entry-point boundaries (built dist/)
+      # Svelte or xyflow, and every emitted module must be side-effect-free
+      # (scripts/check-dist-boundaries.ts). Its `build` dependencies are cache
+      # hits here.
+      - name: Entry-point boundaries and side effects (built dist/)
         run: vp run check:dist
 
       - name: Build Storybook

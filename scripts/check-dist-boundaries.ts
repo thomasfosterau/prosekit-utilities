@@ -27,14 +27,24 @@
  * positive control cannot see the import it must see (so the walk can never
  * pass vacuously).
  *
+ * It also enforces the `"sideEffects": false` claim over every `.js`, `.mjs`
+ * and `.svelte` file in each package's `dist/` (`sideEffects` below): no bare
+ * side-effect import but the three allow-listed stylesheets, no top-level
+ * statement other than a declaration, import or export, and no load-time
+ * effect inside a declaration — an `await`, an assignment, or a call that is
+ * neither `/* @__PURE__ *\/`-annotated nor a known-pure factory
+ * (`isPureCallee`). A component's `<script module>` gets every rule; its
+ * instance `<script>` runs per component, so only its imports are checked.
+ *
  * Run it after the build: `vp run check:dist` (the root task depends on every
  * package's `build`). The boundaries themselves are documented in each
  * package's CLAUDE.md § Boundary.
  */
 
-import { existsSync, readFileSync, realpathSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parse as parseSvelte } from 'svelte/compiler';
 import { parseSync } from 'vite-plus';
 
 /** One guarded entry point and the bare specifiers it must never reach. */
@@ -72,12 +82,15 @@ const PROSEKIT =
  * Svelte itself, the xyflow engine, the Svelte component packages this
  * workspace depends on, ProseKit's Svelte bindings (`prosekit/svelte`,
  * `@prosekit/svelte` and their subpaths — the only ProseKit entries whose
- * runtime imports Svelte), any compiled `.svelte` module, and this package's
- * own canvas root (or any subpath but `./node`) reached by name. Every other
- * `prosekit/*` subpath stays allowed: `./node` imports `prosekit/core`.
+ * runtime imports Svelte), the Svelte-runtime packages those pull in and a
+ * hoisted `node_modules/` makes importable from here (`@prosemirror-adapter/svelte`
+ * under `@prosekit/svelte`; `runed` and `svelte-toolbelt` under `bits-ui`),
+ * any compiled `.svelte` module, and this package's own canvas root (or any
+ * subpath but `./node`) reached by name. Every other `prosekit/*` subpath
+ * stays allowed: `./node` imports `prosekit/core`.
  */
 const SVELTE_OR_XYFLOW =
-  /^(?:svelte(?:\/|$)|@xyflow\/|bits-ui(?:\/|$)|@?prosekit\/svelte(?:\/|$)|@thomasfosterau\/prosekit-svelte(?:\/|$)|@thomasfosterau\/prosekit-flowchart(?:$|\/(?!node$)))|\.svelte(?:\.js)?$/;
+  /^(?:svelte(?:\/|$)|@xyflow\/|bits-ui(?:\/|$)|runed(?:\/|$)|svelte-toolbelt(?:\/|$)|@prosemirror-adapter\/svelte(?:\/|$)|@?prosekit\/svelte(?:\/|$)|@thomasfosterau\/prosekit-svelte(?:\/|$)|@thomasfosterau\/prosekit-flowchart(?:$|\/(?!node$)))|\.svelte(?:\.js)?$/;
 
 const CORE = 'packages/prosekit-utilities';
 const FLOWCHART = 'packages/prosekit-flowchart';
@@ -417,6 +430,471 @@ const walk = (distDir: string, entryFiles: ReadonlyArray<string>): Walk => {
   return { reached, problems };
 };
 
+// ---------------------------------------------------------------------------
+// The `"sideEffects": false` claim: evaluating any emitted module has no
+// observable effect, so a consumer's bundler may drop one whose exports go
+// unused.
+// ---------------------------------------------------------------------------
+
+/**
+ * Every workspace package, whose whole `dist/` the `"sideEffects": false`
+ * check reads — listed from `packages/`, so a new package is covered (and
+ * fails until built) without editing this file.
+ */
+const PUBLISHED: ReadonlyArray<string> = readdirSync(resolve(root, 'packages'), {
+  withFileTypes: true,
+})
+  .filter(
+    (entry) =>
+      entry.isDirectory() && existsSync(resolve(entry.parentPath, entry.name, 'package.json')),
+  )
+  .map((entry) => `packages/${entry.name}`)
+  .sort();
+
+/**
+ * The only bare side-effect imports `dist/` may carry: the stylesheets of
+ * another package, each inside the one component that owns it (see the root
+ * AGENTS.md on `"sideEffects": false`). Each is also a positive control — the
+ * check fails if it cannot see one, so a broken `<script>` extraction can
+ * never pass vacuously.
+ */
+const ALLOWED_BARE_IMPORTS: ReadonlyArray<{ readonly file: string; readonly specifier: string }> = [
+  {
+    file: 'packages/prosekit-svelte/dist/editor/Editor.svelte',
+    specifier: 'prosekit/basic/style.css',
+  },
+  {
+    file: 'packages/prosekit-svelte/dist/editor/Editor.svelte',
+    specifier: 'prosekit/basic/typography.css',
+  },
+  {
+    file: 'packages/prosekit-flowchart/dist/Flowchart.svelte',
+    specifier: '@xyflow/svelte/dist/style.css',
+  },
+];
+
+/** A module the purity check reads: emitted JavaScript or a shipped component. */
+const PURITY_CHECKED = /\.(?:m?js|svelte)$/;
+
+/**
+ * A top-level statement that only declares: evaluating it binds names and
+ * evaluates nothing else, except the initialisers and class members
+ * `loadTimeEffects` inspects. TypeScript-only declarations appear only in a
+ * `.svelte` `<script lang="ts">`, and erase.
+ */
+const DECLARATION = new Set([
+  'ImportDeclaration',
+  'ExportNamedDeclaration',
+  'ExportDefaultDeclaration',
+  'ExportAllDeclaration',
+  'FunctionDeclaration',
+  'ClassDeclaration',
+  'VariableDeclaration',
+  'EmptyStatement',
+  'TSTypeAliasDeclaration',
+  'TSInterfaceDeclaration',
+]);
+
+/** `import x from …` binding shapes, by local name, for judging a callee. */
+type Binding =
+  | { readonly kind: 'import'; readonly source: string; readonly imported: string }
+  | { readonly kind: 'local' };
+
+/** This workspace's own value factories `isPureCallee` trusts by name. */
+const OWN_PURE_FACTORIES: ReadonlySet<string> = new Set(['required', 'createMarkdownSerialiser']);
+
+/**
+ * Callees whose calls are pure by contract, so a module may call them while
+ * it loads without a `/* @__PURE__ *\/` annotation:
+ *
+ * - Effect's `Schema` and `Option` modules, which only build values;
+ * - the global `Symbol.for`, an idempotent registry read;
+ * - this workspace's own value factories, called by name: `required` (the
+ *   core's `./derive`, wraps a schema) and `createMarkdownSerialiser` (the
+ *   core's root, builds a serialiser object). Only a binding declared in the
+ *   same file, imported relatively or imported from
+ *   `@thomasfosterau/prosekit-utilities` counts.
+ *
+ * Anything else called at load — a global, any other import, an un-annotated
+ * local helper — fails until it is annotated in source or added here with a
+ * reason.
+ */
+const isPureCallee = (
+  root: string,
+  binding: Binding | undefined,
+  property: string | undefined,
+): boolean => {
+  if (binding === undefined) return root === 'Symbol' && property === 'for';
+  if (binding.kind === 'import') {
+    if (/^effect\/(?:Schema|Option)$/.test(binding.source) && binding.imported === '*') return true;
+    if (binding.source === 'effect' && ['Schema', 'Option'].includes(binding.imported)) return true;
+  }
+  const own =
+    binding.kind === 'local' ||
+    binding.source.startsWith('.') ||
+    /^@thomasfosterau\/prosekit-utilities(?:\/|$)/.test(binding.source);
+  return own && OWN_PURE_FACTORIES.has(root.replace(/\$\d+$/, ''));
+};
+
+/** A node's source, whitespace collapsed and cut to one short line, for a failure message. */
+const snippet = (source: string, node: AstNode): string => {
+  const flat = source.slice(node.start, node.end).replace(/\s+/g, ' ');
+  return flat.length > 60 ? `${flat.slice(0, 57)}...` : flat;
+};
+
+/** The 1-based line of `offset` in `source`. */
+const lineOf = (source: string, offset: number): number =>
+  source.slice(0, offset).split('\n').length;
+
+/** The children of an AST node, in no particular order. */
+const childrenOf = (node: AstNode): Array<{ key: string; child: AstNode }> =>
+  Object.entries(node).flatMap(([key, value]) => {
+    if (key === 'parent') return [];
+    const items: Array<unknown> = Array.isArray(value) ? value : [value];
+    return items.filter(isNode).map((child) => ({ key, child }));
+  });
+
+/** The identifier a callee chain (`a.b()`, `a.b()()`, `a?.b`) starts from, and its first property. */
+const calleeRoot = (
+  callee: AstNode,
+): { name: string; property: string | undefined } | undefined => {
+  let node: AstNode = callee;
+  let property: string | undefined;
+  for (;;) {
+    if (node.type === 'Identifier') return { name: String(node['name']), property };
+    const next =
+      node.type === 'MemberExpression'
+        ? node['object']
+        : node.type === 'CallExpression'
+          ? node['callee']
+          : node.type === 'ChainExpression' || node.type === 'ParenthesizedExpression'
+            ? node['expression']
+            : undefined;
+    if (!isNode(next)) return undefined;
+    if (node.type === 'MemberExpression') {
+      const key = node['property'];
+      property = node['computed'] === false && isNode(key) ? String(key['name']) : undefined;
+    }
+    node = next;
+  }
+};
+
+/**
+ * Every top-level binding of a parsed program: its imports (by local name,
+ * with their source and imported name) and its own declarations.
+ */
+const bindingsOf = (body: ReadonlyArray<AstNode>): Map<string, Binding> => {
+  const bindings = new Map<string, Binding>();
+  const declare = (node: unknown): void => {
+    if (isNode(node) && node.type === 'Identifier')
+      bindings.set(String(node['name']), { kind: 'local' });
+  };
+  for (const raw of body) {
+    const statement =
+      (raw.type === 'ExportNamedDeclaration' || raw.type === 'ExportDefaultDeclaration') &&
+      isNode(raw['declaration'])
+        ? raw['declaration']
+        : raw;
+    if (statement.type === 'ImportDeclaration') {
+      const source = isNode(statement['source']) ? String(statement['source']['value']) : '';
+      const specifiers = statement['specifiers'];
+      for (const specifier of Array.isArray(specifiers) ? specifiers : []) {
+        if (!isNode(specifier) || !isNode(specifier['local'])) continue;
+        const imported =
+          specifier.type === 'ImportNamespaceSpecifier'
+            ? '*'
+            : specifier.type === 'ImportDefaultSpecifier'
+              ? 'default'
+              : isNode(specifier['imported'])
+                ? String(specifier['imported']['name'] ?? specifier['imported']['value'])
+                : '';
+        bindings.set(String(specifier['local']['name']), { kind: 'import', source, imported });
+      }
+    } else if (statement.type === 'FunctionDeclaration' || statement.type === 'ClassDeclaration') {
+      declare(statement['id']);
+    } else if (statement.type === 'VariableDeclaration') {
+      const declarations = statement['declarations'];
+      for (const declarator of Array.isArray(declarations) ? declarations : []) {
+        if (isNode(declarator)) declare(declarator['id']);
+      }
+    }
+  }
+  return bindings;
+};
+
+/**
+ * The offsets just past each `/* @__PURE__ *\/` (or `#__PURE__`) comment: a
+ * call or `new` whose start follows one, whitespace aside, is annotated pure —
+ * the bundler's own contract, which rolldown emits for its `__exportAll`
+ * namespace objects.
+ */
+const pureAnnotationEnds = (
+  comments: ReadonlyArray<{ readonly value: string; readonly end: number }>,
+): Set<number> =>
+  new Set(comments.filter(({ value }) => /^\s*[@#]__PURE__\s*$/.test(value)).map(({ end }) => end));
+
+/**
+ * Why each expression a module evaluates while it loads may have an effect:
+ * walks a top-level declaration's initialisers, class heritage, static members,
+ * decorators and computed keys — never a function body or an instance member,
+ * which run later, if ever — and reports any `await`, assignment, update,
+ * `delete`, dynamic `import()`, static block, decorator, or a call, `new` or
+ * tagged template that is neither annotated pure nor on `isPureCallee`'s list.
+ */
+const loadTimeEffects = (
+  root: AstNode,
+  source: string,
+  bindings: ReadonlyMap<string, Binding>,
+  pure: ReadonlySet<number>,
+): Array<{ offset: number; reason: string }> => {
+  const found: Array<{ offset: number; reason: string }> = [];
+  const annotated = (node: AstNode): boolean => {
+    let at = node.start;
+    while (at > 0 && /\s/.test(source[at - 1] ?? '')) at -= 1;
+    return pure.has(at);
+  };
+  const text = (node: AstNode): string => snippet(source, node);
+  const stack: Array<AstNode> = [root];
+  for (let node = stack.pop(); node !== undefined; node = stack.pop()) {
+    switch (node.type) {
+      case 'FunctionExpression':
+      case 'ArrowFunctionExpression':
+      case 'FunctionDeclaration':
+        continue;
+      case 'AwaitExpression':
+        found.push({ offset: node.start, reason: 'a top-level `await`' });
+        break;
+      case 'AssignmentExpression':
+      case 'UpdateExpression':
+        found.push({ offset: node.start, reason: `an assignment at load: ${text(node)}` });
+        break;
+      case 'UnaryExpression':
+        if (node['operator'] === 'delete') {
+          found.push({ offset: node.start, reason: `a \`delete\` at load: ${text(node)}` });
+        }
+        break;
+      case 'ImportExpression':
+        found.push({ offset: node.start, reason: `a dynamic import() at load: ${text(node)}` });
+        break;
+      case 'StaticBlock':
+        found.push({ offset: node.start, reason: 'a class `static` block, which runs at load' });
+        continue;
+      case 'Decorator':
+        found.push({
+          offset: node.start,
+          reason: `a decorator, which runs at load: ${text(node)}`,
+        });
+        break;
+      case 'CallExpression':
+      case 'NewExpression':
+      case 'TaggedTemplateExpression': {
+        const callee = node.type === 'TaggedTemplateExpression' ? node['tag'] : node['callee'];
+        const named = isNode(callee) ? calleeRoot(callee) : undefined;
+        const allowed =
+          annotated(node) ||
+          (named !== undefined &&
+            isPureCallee(named.name, bindings.get(named.name), named.property));
+        if (!allowed) {
+          found.push({
+            offset: node.start,
+            reason: `a call at load that is not annotated /* @__PURE__ */ nor a known-pure factory: ${text(node)}`,
+          });
+        }
+        break;
+      }
+      case 'ClassBody': {
+        // Only static members and computed keys run when the class is defined.
+        const members = node['body'];
+        for (const member of Array.isArray(members) ? members : []) {
+          if (!isNode(member)) continue;
+          if (member['computed'] === true && isNode(member['key'])) stack.push(member['key']);
+          const decorators = member['decorators'];
+          for (const decorator of Array.isArray(decorators) ? decorators : []) {
+            if (isNode(decorator)) stack.push(decorator);
+          }
+          if (member.type === 'StaticBlock') stack.push(member);
+          else if (member['static'] === true && member.type !== 'MethodDefinition') {
+            if (isNode(member['value'])) stack.push(member['value']);
+          }
+        }
+        continue;
+      }
+      default:
+        break;
+    }
+    for (const { child } of childrenOf(node)) stack.push(child);
+  }
+  return found;
+};
+
+/**
+ * Why one parsed program is not side-effect-free. `bareAllowed` lists the
+ * bare imports this file may carry; `statements` is false for a `.svelte`
+ * instance script, whose top level runs per component, not at module load —
+ * only its imports are hoisted to the module.
+ */
+const programEffects = (
+  file: string,
+  source: string,
+  parsed: { program: unknown; comments: ReadonlyArray<{ value: string; end: number }> },
+  options: { statements: boolean; bareAllowed: ReadonlySet<string>; seen: Set<string> },
+): Array<string> => {
+  const problems: Array<string> = [];
+  const at = (offset: number): string => `${show(file)}:${lineOf(source, offset)}`;
+  const program = parsed.program;
+  const body: Array<AstNode> =
+    isNode(program) && Array.isArray(program['body']) ? program['body'].filter(isNode) : [];
+  const bindings = bindingsOf(body);
+  const pure = pureAnnotationEnds(parsed.comments);
+  for (const statement of body) {
+    const bareSource =
+      (statement.type === 'ImportDeclaration' ||
+        (statement.type === 'ExportNamedDeclaration' && isNode(statement['source']))) &&
+      Array.isArray(statement['specifiers']) &&
+      statement['specifiers'].length === 0 &&
+      statement['importKind'] !== 'type' &&
+      statement['exportKind'] !== 'type' &&
+      isNode(statement['source'])
+        ? String(statement['source']['value'])
+        : undefined;
+    if (bareSource !== undefined) {
+      if (options.bareAllowed.has(bareSource)) options.seen.add(bareSource);
+      else {
+        problems.push(
+          `${at(statement.start)}: bare side-effect import ${quote(bareSource)} — only the allow-listed stylesheets in Editor.svelte and Flowchart.svelte may be imported for their effect`,
+        );
+      }
+    }
+    if (!options.statements) continue;
+    if (statement.type === 'ExpressionStatement' && typeof statement['directive'] === 'string')
+      continue;
+    if (!DECLARATION.has(statement.type)) {
+      const reason =
+        statement.type === 'ExpressionStatement' &&
+        isNode(statement['expression']) &&
+        statement['expression'].type === 'AwaitExpression'
+          ? 'a top-level `await`'
+          : `a top-level ${statement.type}, which runs at load: ${snippet(source, statement)}`;
+      problems.push(`${at(statement.start)}: ${reason}`);
+      continue;
+    }
+    if (statement.type === 'VariableDeclaration' && /using/.test(String(statement['kind']))) {
+      problems.push(
+        `${at(statement.start)}: a top-level \`${String(statement['kind'])}\` declaration, which disposes at load`,
+      );
+      continue;
+    }
+    for (const effect of loadTimeEffects(statement, source, bindings, pure)) {
+      problems.push(`${at(effect.offset)}: ${effect.reason}`);
+    }
+  }
+  return problems;
+};
+
+/** Every file under `directory`, recursively. */
+const filesUnder = (directory: string): Array<string> =>
+  readdirSync(directory, { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .map((entry) => resolve(entry.parentPath, entry.name));
+
+/**
+ * The `<script>` blocks of a shipped component, each as the component's
+ * source with everything outside the block blanked — newlines kept — so
+ * offsets and line numbers stay the component's own.
+ */
+const scriptsOf = (
+  file: string,
+  source: string,
+): Array<{ context: 'default' | 'module'; masked: string }> | Error => {
+  let ast: ReturnType<typeof parseSvelte>;
+  try {
+    ast = parseSvelte(source, { filename: file, modern: true });
+  } catch (error) {
+    return new Error(`${show(file)}: svelte parse error: ${String(error)}`);
+  }
+  const blank = (text: string): string => text.replace(/[^\n]/g, ' ');
+  const scripts: Array<{ context: 'default' | 'module'; masked: string }> = [];
+  for (const script of [ast.module, ast.instance]) {
+    // The parser leaves an absent block `undefined` at runtime, though typed `null`.
+    if (script === null || script === undefined) continue;
+    const content: unknown = script.content;
+    if (!isNode(content) || typeof content.start !== 'number' || typeof content.end !== 'number') {
+      return new Error(`${show(file)}: the svelte parser gave a <script> block no source range`);
+    }
+    scripts.push({
+      context: script.context,
+      masked:
+        blank(source.slice(0, content.start)) +
+        source.slice(content.start, content.end) +
+        blank(source.slice(content.end)),
+    });
+  }
+  return scripts;
+};
+
+/**
+ * Checks every `.js` / `.mjs` / `.svelte` file of every published `dist/`:
+ * fails on a bare side-effect import outside `ALLOWED_BARE_IMPORTS`, on a
+ * top-level statement that is not a declaration, import or export, and on
+ * any load-time effect inside a declaration (`loadTimeEffects`). A `.svelte`
+ * file's `<script module>` block runs at load, so gets every rule; its
+ * instance `<script>` runs per component, so only its imports are checked.
+ */
+const sideEffects = (): { files: number; problems: Array<string> } => {
+  const problems: Array<string> = [];
+  const seen = new Map<string, Set<string>>();
+  let files = 0;
+  for (const packageDir of PUBLISHED) {
+    const dist = distOf(packageDir);
+    if (!existsSync(dist)) {
+      problems.push(`${packageDir}/dist does not exist — run \`vp run -r build\` first`);
+      continue;
+    }
+    for (const file of filesUnder(dist)
+      .filter((path) => PURITY_CHECKED.test(path))
+      .sort()) {
+      files += 1;
+      const source = readFileSync(file, 'utf8');
+      const bareAllowed = new Set(
+        ALLOWED_BARE_IMPORTS.filter((allowed) => resolve(root, allowed.file) === file).map(
+          (allowed) => allowed.specifier,
+        ),
+      );
+      const fileSeen = seen.get(show(file)) ?? new Set<string>();
+      seen.set(show(file), fileSeen);
+      const blocks = file.endsWith('.svelte')
+        ? scriptsOf(file, source)
+        : [{ context: 'module' as const, masked: source }];
+      if (blocks instanceof Error) {
+        problems.push(blocks.message);
+        continue;
+      }
+      for (const block of blocks) {
+        // A `.svelte` script parses as TypeScript (`lang="ts"` survives svelte-package).
+        const parsed = parseSync(file.endsWith('.svelte') ? `${file}.ts` : file, block.masked);
+        problems.push(
+          ...parsed.errors.map((error) => `${show(file)}: parse error: ${error.message}`),
+        );
+        problems.push(
+          ...programEffects(file, source, parsed, {
+            statements: block.context === 'module',
+            bareAllowed,
+            seen: fileSeen,
+          }),
+        );
+      }
+    }
+  }
+  for (const allowed of ALLOWED_BARE_IMPORTS) {
+    if (!seen.get(allowed.file)?.has(allowed.specifier)) {
+      problems.push(
+        `${allowed.file}: positive control failed — the allow-listed import ${quote(allowed.specifier)} was not seen, so the side-effect check cannot be trusted`,
+      );
+    }
+  }
+  return { files, problems };
+};
+
 const failures: Array<string> = [];
 let checked = 0;
 
@@ -454,6 +932,8 @@ for (const control of CONTROLS) {
   }
 }
 
+const purity = sideEffects();
+
 if (failures.length > 0) {
   console.error(`check:dist — ${failures.length} entry-point boundary failure(s):\n`);
   for (const failure of failures) console.error(`  ✗ ${failure}`);
@@ -461,5 +941,17 @@ if (failures.length > 0) {
 } else {
   console.log(
     `check:dist — ${checked} entry-point boundaries hold in dist/ (${CONTROLS.length} positive controls seen)`,
+  );
+}
+
+if (purity.problems.length > 0) {
+  console.error(
+    `check:dist — ${purity.problems.length} "sideEffects": false failure(s) in dist/:\n`,
+  );
+  for (const problem of purity.problems) console.error(`  ✗ ${problem}`);
+  process.exitCode = 1;
+} else {
+  console.log(
+    `check:dist — ${purity.files} dist/ modules are side-effect-free (${ALLOWED_BARE_IMPORTS.length} allow-listed stylesheet imports seen)`,
   );
 }

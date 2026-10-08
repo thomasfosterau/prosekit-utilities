@@ -8,7 +8,7 @@
 
 ## Invariants
 
-- **`Editor.svelte` carries the package's only side-effecting imports**, `prosekit/basic/style.css` and `prosekit/basic/typography.css` (see the root AGENTS.md on `"sideEffects": false`).
+- **`Editor.svelte` carries the package's only side-effecting imports**, `prosekit/basic/style.css` and `prosekit/basic/typography.css` (see the root AGENTS.md on `"sideEffects": false`); `vp run check:dist` fails on a bare import anywhere else.
 - **`.storybook/` is the workspace's one Storybook**, `packages/prosekit-flowchart`'s stories included; `preview.css` is the only place the Tailwind + daisyUI stack is built here. `tsconfig.json`'s `include` is `["src", "tests", ".storybook"]`, so a broken story or test fails `vp run check` exactly like a broken component does.
 - **Stay out of every always-loaded barrel.** `Editor.svelte`'s bare CSS imports mean that whatever imports this package's barrel pulls ProseKit's stylesheets — and, through `createEditor`, the ProseKit runtime, the largest client chunk in the consuming apps — into its chunk. A consumer imports a component from here by path from a route that genuinely edits a document, or through a dynamic `import()` from one that only sometimes does, and never re-exports it from a shared component barrel. The README says so; the app repos enforce it with bundle-boundary tests.
 - **The messages context is set per render site, never from a root layout.** Wiring it from the root layout would mean importing this barrel there, which is the leak above. When no provider is mounted (Storybook, tests, an app that never wires it) every string is its English default — silently un-translated, never broken.
