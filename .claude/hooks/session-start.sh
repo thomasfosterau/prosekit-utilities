@@ -270,11 +270,14 @@ fi
 # overrun the SessionStart timeout. On a cold container the CLI therefore
 # appears on PATH a little after the session starts; progress and failures go
 # to $ES_LOG (~/.cache/effect-solutions/provision.log), whose path the hook
-# logs. One job runs at a time per HOME: the job takes $ES_LOCK (flock, or a
-# lock directory where flock is missing) and a session that finds it held
-# leaves the work to the holder. Under the lock, the job first sweeps
-# `*.tmp.*` work dirs older than an hour (left by a job that was killed), and
-# an EXIT trap removes its own.
+# logs. One job runs at a time per HOME: the hook claims $ES_LOCK in the
+# FOREGROUND (flock, or a lock directory where flock is missing), starts a
+# fresh $ES_LOG, and only then forks the job, which inherits the lock. A
+# session that finds the lock held leaves the work, and the log, to the
+# holder. Under the lock, the job first sweeps `*.tmp.*` work dirs older than
+# an hour (left by a job that was killed), and an EXIT trap removes its own.
+# The job runs in its own process group (`set -m`), so a runner that kills the
+# hook's group once the hook returns does not take the job with it.
 #
 # The CLI. The npm package ships a `#!/usr/bin/env bun` launcher plus one
 # prebuilt, self-contained binary per platform; the launcher only picks the
@@ -284,7 +287,8 @@ fi
 # HERE, not taken from the registry or proxy that serves the tarball — keeps
 # just this platform's binary under a per-version cache dir, checks that
 # against its pinned sha256, and links it onto ~/.local/bin. Any mismatch logs
-# and skips; the binary is never run. The cached binary is re-hashed on every
+# and skips; the binary is never installed, linked or run (it may have been
+# extracted into the private temp dir, which the job then deletes). The cached binary is re-hashed on every
 # session start, so a tampered cache is discarded and fetched again.
 #
 # ES_VERSION is pinned EXACT and must be at least a day old on npm, matching
@@ -306,8 +310,10 @@ fi
 # HEAD must equal the commit pinned for that version in `effect_commit_for`;
 # a catalog version with no pinned commit is not cloned at all. BUMP THAT MAP
 # WITH THE CATALOG'S `effect` ENTRY: `git ls-remote
-# https://github.com/Effect-TS/effect 'refs/tags/effect@<ver>*'` gives the
-# commit (the `^{}` line, if the tag is annotated). A clone is renamed into
+# https://github.com/Effect-TS/effect 'refs/tags/effect@<ver>'
+# 'refs/tags/effect@<ver>^{}'` gives the commit — the `^{}` line's, if the tag
+# is annotated. Name the refs exactly: a glob would also match a pre-release
+# tag such as `effect@<ver>-beta.1`. A clone is renamed into
 # place only once complete and verified, so its directory existing means it is
 # usable. A real (non-symlink) `…/effect` directory is left alone: someone put
 # it there.
@@ -336,7 +342,11 @@ effect_commit_for() {
   esac
 }
 
-# `timeout` when coreutils has it; otherwise run the command unbounded.
+# `timeout` when coreutils has it; otherwise run the command unbounded. macOS
+# ships no `timeout`, so there a stalled fetch or clone can hang indefinitely;
+# the job is in the background, so the session never waits on it, and the
+# stale-lock rule below (a lock older than an hour is reclaimed) is the
+# backstop that lets a later session start a fresh job.
 bounded() {
   if command -v timeout >/dev/null 2>&1; then
     timeout "$NET_TIMEOUT" "$@"
@@ -498,28 +508,64 @@ provision_effect() {
   log "done"
 }
 
+# Start this session's log, only once the lock is ours: truncating before the
+# claim would wipe a running job's log whenever another session holds it. The
+# `started` line means a log ending in `done` is never one left over from an
+# earlier session, and a session that finds the lock held leaves that job's
+# log untouched.
+es_start_log() {
+  { printf 'started %s (pid %s)\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$$" >"$ES_LOG"; } 2>/dev/null \
+    || log "could not write $ES_LOG; the background job logs nowhere"
+  log "provisioning effect-solutions in the background; progress in $ES_LOG"
+}
+
+# `set -m` gives each `&` job its own process group, so a runner that kills the
+# hook's process group once the hook returns cannot kill the job too. Pure
+# bash, so it works on macOS as well; it is switched back off once forked.
+set -m
 if ! mkdir -p "$ES_ROOT" 2>/dev/null; then
   log "could not create $ES_ROOT; skipping effect-solutions"
 elif command -v flock >/dev/null 2>&1; then
-  log "provisioning effect-solutions in the background; progress in $ES_LOG"
-  (
-    flock -n 9 || exit 0
-    trap '' HUP
-    exec >"$ES_LOG" 2>&1
-    provision_effect
-  ) 9>"$ES_LOCK" </dev/null >/dev/null 2>&1 &
+  # The lock fd is opened and locked HERE, then inherited by the job; the
+  # hook's own copy is closed once the job is forked, so the lock lasts
+  # exactly as long as the job (and anything it spawned) holds the fd.
+  if { exec 9>"$ES_LOCK"; } 2>/dev/null && flock -n 9; then
+    es_start_log
+    (
+      trap '' HUP
+      exec >>"$ES_LOG" 2>&1
+      provision_effect
+    ) </dev/null >/dev/null 2>&1 &
+  else
+    log "effect-solutions is already being provisioned by another session; progress in $ES_LOG"
+  fi
+  exec 9>&- 2>/dev/null
 else
-  log "provisioning effect-solutions in the background; progress in $ES_LOG"
-  (
-    # No flock (macOS): an atomic mkdir is the lock. A lock older than an hour
-    # outlived a killed job; nothing live holds it that long.
-    find "$ES_LOCK.d" -maxdepth 0 -mmin +60 -exec rmdir {} \; 2>/dev/null
-    mkdir "$ES_LOCK.d" 2>/dev/null || exit 0
-    es_lockdir="$ES_LOCK.d"
-    trap '' HUP
-    exec >"$ES_LOG" 2>&1
-    provision_effect
-  ) </dev/null >/dev/null 2>&1 &
+  # No flock (macOS): an atomic mkdir is the lock, released by the job's EXIT
+  # trap. A lock older than an hour outlived a killed job; nothing live holds
+  # it that long. A stale lock is claimed by renaming it away first: of two
+  # sessions that both find it stale, only the one whose `mv` wins removes it
+  # and retries the mkdir, so they cannot both delete and both re-create it.
+  es_have_lock=""
+  if mkdir "$ES_LOCK.d" 2>/dev/null; then
+    es_have_lock=1
+  elif [ -n "$(find "$ES_LOCK.d" -maxdepth 0 -mmin +60 2>/dev/null)" ] \
+    && mv "$ES_LOCK.d" "$ES_LOCK.d.stale.$$" 2>/dev/null; then
+    rmdir "$ES_LOCK.d.stale.$$" 2>/dev/null
+    if mkdir "$ES_LOCK.d" 2>/dev/null; then es_have_lock=1; fi
+  fi
+  if [ -n "$es_have_lock" ]; then
+    es_start_log
+    (
+      es_lockdir="$ES_LOCK.d"
+      trap '' HUP
+      exec >>"$ES_LOG" 2>&1
+      provision_effect
+    ) </dev/null >/dev/null 2>&1 &
+  else
+    log "effect-solutions is already being provisioned by another session; progress in $ES_LOG"
+  fi
 fi
+set +m
 
 exit 0
