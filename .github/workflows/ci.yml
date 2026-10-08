@@ -6,9 +6,11 @@ name: CI
 # `needs:` graph.
 #
 # The one step that is CI-only is the Playwright browser install: the Svelte
-# packages' `test:unit` drives real Chromium, which a dev machine and the
-# agent image already carry (see the `playwright` entry in
-# pnpm-workspace.yaml) and a fresh runner does not.
+# packages' `test:unit` drives real Chromium, which a fresh runner lacks. A
+# dev machine installs it once; an agent session borrows the image's older
+# build, which the SessionStart hook (.claude/hooks/session-start.sh,
+# section 4) bridges to the revision the pinned `playwright` expects (see
+# that entry in pnpm-workspace.yaml).
 
 on:
   push:
@@ -44,7 +46,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 22.x
+          node-version: latest
           cache: pnpm
 
       # --ignore-scripts blocks dependency lifecycle scripts (a common
@@ -62,8 +64,9 @@ jobs:
         run: echo "$GITHUB_WORKSPACE/node_modules/.bin" >> "$GITHUB_PATH"
 
       # Chromium + its apt system libraries, at exactly the revision the pinned
-      # `playwright` expects. CI-only: everywhere else the browser is already
-      # present under PLAYWRIGHT_BROWSERS_PATH.
+      # `playwright` expects. CI-only: a dev machine runs `playwright install`
+      # once, and an agent session points PLAYWRIGHT_BROWSERS_PATH at the
+      # SessionStart hook's bridge to the image's older build (section 4).
       - name: Install Chromium for the browser suites
         run: pnpm exec playwright install --with-deps chromium
 
