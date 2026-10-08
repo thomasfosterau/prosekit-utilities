@@ -36,8 +36,10 @@ import { defineConfig } from 'vite-plus';
  *
  * The second workspace-relative exclusion drops each sibling package's
  * `node_modules/`. Resolving a bare import from a sibling's built `dist/`
- * probes that sibling's `node_modules/` first, and under `nodeLinker: hoisted`
- * the directory exists only as Vitest's `.vite` scratch, so its first
+ * probes that sibling's `node_modules/` first. Under `nodeLinker: hoisted` that
+ * directory holds only pnpm's workspace symlinks (`@thomasfosterau/*`, whose
+ * reads are fingerprinted at their real paths) and generated scratch (Vite's
+ * `.vite` / `.vite-temp`, `svelte-kit sync`'s `$app` types), so its first
  * appearance would otherwise miss `svelte-package` once. The lockfile still
  * stands in for every dependency.
  *

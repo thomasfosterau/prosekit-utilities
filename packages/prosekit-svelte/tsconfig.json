@@ -5,5 +5,9 @@
     // import a stylesheet for its side effect; those are Vite's, not Node's.
     "types": ["node", "vite/client"]
   },
-  "include": ["src", "tests", ".storybook"]
+  // `.storybook/**/*.ts`, not a bare `.storybook`: TypeScript expands a bare
+  // `include` entry to a directory only when its last segment holds no `.`,
+  // `*` or `?`, so `.storybook` alone names a file that doesn't exist and the
+  // Storybook config would go unchecked.
+  "include": ["src", "tests", ".storybook/**/*.ts"]
 }
