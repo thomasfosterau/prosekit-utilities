@@ -1,8 +1,9 @@
 /**
  * Root workspace config. Owns the repo-wide format/lint/staged passes (read
  * statically by `vp fmt` / `vp lint` / `vp staged`) and the two aggregate
- * tasks — `check`, the type-check gate over every package, and
- * `check:dist`, the entry-point boundary check over every built `dist/`.
+ * tasks — `check`, the type-check gate over every package and the root
+ * project, and `check:dist`, the entry-point boundary check over every
+ * built `dist/`.
  *
  * The Svelte plugin, the browser test suites, the `svelte-package` and
  * `vp pack` builds and the Storybook tasks all live in each package's own
@@ -23,11 +24,15 @@ export default defineConfig({
 
   run: {
     tasks: {
-      // The type-check gate, as one task: every package's `check` pipeline.
-      // A pure graph node — the root takes the three packages as
-      // dependencies purely so this edge reaches them.
+      // The type-check gate, as one task: every package's `check` pipeline
+      // (the root takes the three packages as dependencies so this edge
+      // reaches them), then the root project itself — `tsconfig.json`'s
+      // `vite.config.ts` and `scripts/**/*.ts`, which no package covers.
+      // `tsc` is TypeScript 7's native compiler, as in the core's `check`.
+      // Uncached: the root project is two files, and the package checks
+      // underneath keep their own caches.
       check: {
-        command: "echo 'check: all type gates green'",
+        command: 'tsc -p tsconfig.json',
         dependsOn: [{ from: 'dependencies', task: 'check' }],
         cache: false,
       },
