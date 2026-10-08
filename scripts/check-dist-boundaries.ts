@@ -2,16 +2,20 @@
  * Enforces the entry-point import boundaries against the BUILT `dist/` —
  * the files a consumer actually loads — rather than against `src/`.
  *
- * For each guarded entry point it resolves the entry's `default` file from
- * the package's `exports`, then walks the emitted module graph: every static
- * import, re-export and dynamic `import()` of a relative file is followed
- * into the shared chunks it reaches, and every bare specifier on the way is
- * checked against the entry's forbidden list. Specifiers are read with the
- * oxc parser Vite+ ships, so a comment or string that merely mentions a
- * package never counts, and a type-only import never survives into `.js`.
+ * For each guarded entry point it resolves every file the package's `exports`
+ * maps the entry to, under every condition but `types` (`import`, `node`,
+ * `browser`, `svelte`, `default`, …), then walks the emitted module graph
+ * from each: every static import, re-export and dynamic `import()` of a
+ * relative `.js` / `.mjs` / `.cjs` file is followed into the shared chunks it
+ * reaches, and every specifier on the way — bare or relative — is checked
+ * against the entry's forbidden list. Specifiers are read with the oxc parser
+ * Vite+ ships, so a comment or string that merely mentions a package never
+ * counts, and a type-only import never survives into `.js`.
  *
- * It fails — never skips — when a built entry is missing, when a dynamic
- * `import()` has no literal specifier (the boundary cannot be proven), and
+ * It is fail-closed: it fails — never skips — when a built entry is missing,
+ * when a dynamic `import()` has no literal specifier, when a relative import
+ * names a file it cannot open as a JavaScript module (extensionless, `.json`,
+ * anything but the `.svelte` and `.css` leaves) or that does not exist, and
  * when a positive control cannot see the import it must see (so the walk can
  * never pass vacuously).
  *
@@ -48,15 +52,21 @@ interface Control {
   readonly required: RegExp;
 }
 
-/** `prosekit`, any `prosekit/*` subpath, and any `@prosekit/*` package. */
-const PROSEKIT = /^(?:prosekit(?:\/|$)|@prosekit\/)/;
+/**
+ * `prosekit`, any `prosekit/*` subpath, any `@prosekit/*` package, and this
+ * package's own `./prosekit` entry reached by name. The core's `.`,
+ * `./derive` and `./drizzle` stay allowed.
+ */
+const PROSEKIT =
+  /^(?:prosekit(?:\/|$)|@prosekit\/|@thomasfosterau\/prosekit-utilities\/prosekit(?:\/|$))/;
 
 /**
  * Svelte itself, the xyflow engine, the Svelte component packages this
- * workspace depends on, and any compiled `.svelte` module.
+ * workspace depends on, any compiled `.svelte` module, and this package's own
+ * canvas root (or any subpath but `./node`) reached by name.
  */
 const SVELTE_OR_XYFLOW =
-  /^(?:svelte(?:\/|$)|@xyflow\/|bits-ui(?:\/|$)|@thomasfosterau\/prosekit-svelte(?:\/|$))|\.svelte(?:\.js)?$/;
+  /^(?:svelte(?:\/|$)|@xyflow\/|bits-ui(?:\/|$)|@thomasfosterau\/prosekit-svelte(?:\/|$)|@thomasfosterau\/prosekit-flowchart(?:$|\/(?!node$)))|\.svelte(?:\.js)?$/;
 
 const CORE = 'packages/prosekit-utilities';
 const FLOWCHART = 'packages/prosekit-flowchart';
@@ -96,24 +106,47 @@ interface Walk {
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const show = (file: string): string => relative(root, file);
 
-/** The `default` file of an `exports` entry, or an error message. */
-const resolveEntry = (packageDir: string, entry: string): string | Error => {
-  const manifestPath = resolve(root, packageDir, 'package.json');
-  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
-    exports?: Record<string, { default?: string } | undefined>;
-  };
-  const target = manifest.exports?.[entry]?.default;
-  if (target === undefined) {
-    return new Error(`${show(manifestPath)} has no exports["${entry}"].default`);
-  }
-  const file = resolve(root, packageDir, target);
-  if (!existsSync(file)) {
-    return new Error(
-      `${show(file)} (exports["${entry}"] of ${packageDir}) does not exist — run \`vp run -r build\` first`,
+/**
+ * Every runtime target of a conditional `exports` value: the strings under
+ * every condition except `types`, through nested conditions and fallback
+ * arrays.
+ */
+const runtimeTargets = (value: unknown): Array<string> => {
+  if (typeof value === 'string') return [value];
+  if (Array.isArray(value)) return value.flatMap(runtimeTargets);
+  if (typeof value === 'object' && value !== null) {
+    return Object.entries(value).flatMap(([condition, target]) =>
+      condition === 'types' ? [] : runtimeTargets(target),
     );
   }
-  return file;
+  return [];
 };
+
+/** Every file an `exports` entry resolves to at runtime, deduplicated, or an error message. */
+const resolveEntry = (packageDir: string, entry: string): Array<string> | Error => {
+  const manifestPath = resolve(root, packageDir, 'package.json');
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
+    exports?: Record<string, unknown>;
+  };
+  const targets = runtimeTargets(manifest.exports?.[entry]);
+  if (targets.length === 0) {
+    return new Error(`${show(manifestPath)} has no runtime target for exports["${entry}"]`);
+  }
+  const files = [...new Set(targets.map((target) => resolve(root, packageDir, target)))];
+  const missing = files.filter((file) => !existsSync(file));
+  if (missing.length > 0) {
+    return new Error(
+      `${missing.map(show).join(', ')} (exports["${entry}"] of ${packageDir}) does not exist — run \`vp run -r build\` first`,
+    );
+  }
+  return files;
+};
+
+/** A relative module the walk opens and follows. */
+const WALKED = /\.[cm]?js$/;
+
+/** A relative module the walk checks by name only: a compiled component or a stylesheet. */
+const LEAF = /\.(?:svelte|css)$/;
 
 /** Every module specifier one emitted file requests, in source order. */
 const specifiersOf = (file: string): { specifiers: Array<string>; problems: Array<string> } => {
@@ -141,28 +174,35 @@ const specifiersOf = (file: string): { specifiers: Array<string>; problems: Arra
   return { specifiers, problems };
 };
 
-/** Walks the relative-import graph from `entryFile`, collecting every bare specifier. */
-const walk = (entryFile: string): Walk => {
+/**
+ * Walks the relative-import graph from `entryFiles`, collecting every
+ * specifier it requests. A relative specifier is collected too (so a
+ * `.svelte` module is caught by name) and, unless it is a `.svelte` or `.css`
+ * leaf, must be a `.js` / `.mjs` / `.cjs` file that exists, or the walk
+ * reports that the boundary cannot be proven.
+ */
+const walk = (entryFiles: ReadonlyArray<string>): Walk => {
   const reached: Array<Reached> = [];
   const problems: Array<string> = [];
   const seen = new Set<string>();
-  const queue: Array<{ file: string; chain: ReadonlyArray<string> }> = [
-    { file: entryFile, chain: [show(entryFile)] },
-  ];
+  const queue: Array<{ file: string; chain: ReadonlyArray<string> }> = entryFiles.map((file) => ({
+    file,
+    chain: [show(file)],
+  }));
   for (let next = queue.shift(); next !== undefined; next = queue.shift()) {
     if (seen.has(next.file)) continue;
     seen.add(next.file);
     const parsed = specifiersOf(next.file);
     problems.push(...parsed.problems);
-    for (const specifier of parsed.specifiers) {
-      if (!specifier.startsWith('.')) {
-        reached.push({ specifier, chain: next.chain });
-        continue;
-      }
+    for (const specifier of new Set(parsed.specifiers)) {
+      reached.push({ specifier, chain: next.chain });
+      if (!specifier.startsWith('.')) continue;
       const target = resolve(dirname(next.file), specifier);
-      // A relative `.svelte` (or any non-JS) module is a leaf, checked by name.
-      if (!target.endsWith('.js')) {
-        reached.push({ specifier, chain: next.chain });
+      if (LEAF.test(target)) continue;
+      if (!WALKED.test(target)) {
+        problems.push(
+          `${show(next.file)}: imports "${specifier}": not a resolvable .js module, so the boundary cannot be proven`,
+        );
         continue;
       }
       if (!existsSync(target)) {
@@ -180,12 +220,12 @@ let checked = 0;
 
 for (const boundary of BOUNDARIES) {
   const label = `${boundary.packageDir} exports["${boundary.entry}"]`;
-  const entryFile = resolveEntry(boundary.packageDir, boundary.entry);
-  if (entryFile instanceof Error) {
-    failures.push(`${label}: ${entryFile.message}`);
+  const entryFiles = resolveEntry(boundary.packageDir, boundary.entry);
+  if (entryFiles instanceof Error) {
+    failures.push(`${label}: ${entryFiles.message}`);
     continue;
   }
-  const result = walk(entryFile);
+  const result = walk(entryFiles);
   failures.push(...result.problems.map((problem) => `${label}: ${problem}`));
   for (const { specifier, chain } of result.reached) {
     if (boundary.forbidden.test(specifier)) {
@@ -199,12 +239,12 @@ for (const boundary of BOUNDARIES) {
 
 for (const control of CONTROLS) {
   const label = `${control.packageDir} exports["${control.entry}"]`;
-  const entryFile = resolveEntry(control.packageDir, control.entry);
-  if (entryFile instanceof Error) {
-    failures.push(`${label}: ${entryFile.message}`);
+  const entryFiles = resolveEntry(control.packageDir, control.entry);
+  if (entryFiles instanceof Error) {
+    failures.push(`${label}: ${entryFiles.message}`);
     continue;
   }
-  const result = walk(entryFile);
+  const result = walk(entryFiles);
   if (!result.reached.some(({ specifier }) => control.required.test(specifier))) {
     failures.push(
       `${label}: positive control failed — the walk found no import matching ${String(control.required)}, so the boundary checks cannot be trusted`,
