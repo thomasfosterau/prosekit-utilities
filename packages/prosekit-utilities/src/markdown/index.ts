@@ -29,4 +29,4 @@ export {
  * node with no serialiser falls back to its inline text — readable, but not
  * a faithful rendering of a figure or a sidenote.
  */
-export const toMarkdown: MarkdownSerialiser = createMarkdownSerialiser();
+export const toMarkdown: MarkdownSerialiser = /* @__PURE__ */ createMarkdownSerialiser();

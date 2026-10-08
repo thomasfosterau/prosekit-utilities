@@ -56,5 +56,5 @@ type AttributeOverrides = Readonly<
  * and required.
  */
 export const FLOWCHART_ATTRIBUTE_OVERRIDES: AttributeOverrides = {
-  flowchart: { data: required(FlowchartData) },
+  flowchart: { data: /* @__PURE__ */ required(FlowchartData) },
 };

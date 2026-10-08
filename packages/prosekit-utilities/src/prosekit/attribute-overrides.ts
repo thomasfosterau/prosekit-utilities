@@ -51,17 +51,17 @@ const TABLE_CELL_COLWIDTH = Schema.NullOr(Schema.Array(Schema.Finite));
  * wrapped: a cell that has never been resized genuinely has none.
  */
 export const STANDARD_ATTRIBUTE_OVERRIDES: AttributeOverrides = {
-  heading: { level: required(Schema.Literals([1, 2, 3, 4, 5, 6])) },
+  heading: { level: /* @__PURE__ */ required(Schema.Literals([1, 2, 3, 4, 5, 6])) },
   list: {
-    kind: required(Schema.Literals(['bullet', 'ordered', 'task', 'toggle'])),
+    kind: /* @__PURE__ */ required(Schema.Literals(['bullet', 'ordered', 'task', 'toggle'])),
     order: Schema.NullOr(Schema.Finite),
   },
   image: {
-    src: required(Schema.NullOr(Schema.String)),
-    width: required(Schema.NullOr(Schema.Finite)),
-    height: required(Schema.NullOr(Schema.Finite)),
+    src: /* @__PURE__ */ required(Schema.NullOr(Schema.String)),
+    width: /* @__PURE__ */ required(Schema.NullOr(Schema.Finite)),
+    height: /* @__PURE__ */ required(Schema.NullOr(Schema.Finite)),
   },
-  codeBlock: { language: required(Schema.String) },
+  codeBlock: { language: /* @__PURE__ */ required(Schema.String) },
   tableCell: { colwidth: TABLE_CELL_COLWIDTH },
   tableHeaderCell: { colwidth: TABLE_CELL_COLWIDTH },
 };
@@ -76,7 +76,10 @@ export const STANDARD_ATTRIBUTE_OVERRIDES: AttributeOverrides = {
  * resolves to nothing.
  */
 export const MENTION_ATTRIBUTE_OVERRIDES: AttributeOverrides = {
-  mention: { id: required(Schema.String), label: required(Schema.String) },
+  mention: {
+    id: /* @__PURE__ */ required(Schema.String),
+    label: /* @__PURE__ */ required(Schema.String),
+  },
 };
 
 /**
