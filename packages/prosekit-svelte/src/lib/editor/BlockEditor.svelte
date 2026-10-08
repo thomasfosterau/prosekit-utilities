@@ -40,8 +40,10 @@
 
   // The wrapper's native attributes (`id`, `data-*`, `aria-*`, …) pass
   // through to `Editor`, which spreads them on its `<div>`. `children` is
-  // omitted and redeclared for the reason `Editor` gives.
-  interface Props extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
+  // omitted and redeclared, and `aria-label` / `aria-labelledby` omitted
+  // because `label` owns the accessible name, for the reasons `Editor` gives.
+  interface Props
+    extends Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'aria-label' | 'aria-labelledby'> {
     /**
      * The grammar. Omitted, `defineBlockDocumentExtension()` — built lazily,
      * so an application passing its own never constructs the default.

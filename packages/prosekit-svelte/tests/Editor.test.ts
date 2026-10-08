@@ -5,11 +5,12 @@
  */
 
 import { defineBlockDocumentExtension } from '@thomasfosterau/prosekit-utilities/prosekit';
+import type { ComponentProps } from 'svelte';
 import { expect, test } from 'vite-plus/test';
 import { render } from 'vitest-browser-svelte';
 import Editor from '../src/lib/editor/Editor.svelte';
 import EditorFixture from './fixtures/EditorFixture.svelte';
-import { boundContent, proseMirror, typeInEditor } from './helpers.ts';
+import { boundContent, labellingElement, proseMirror, typeInEditor } from './helpers.ts';
 
 test('mounts a contenteditable ProseMirror node', async () => {
   await render(Editor, { extension: defineBlockDocumentExtension() });
@@ -73,4 +74,32 @@ test('merges the caller `class` onto the wrapper and spreads native attributes',
   const group = screen.getByRole('group').element();
   expect(group).toHaveClass('ring-2');
   expect(group.getAttribute('data-surface')).toBe('post');
+});
+
+test('`label` owns the accessible name: `aria-label` / `aria-labelledby` are no props, and lose at runtime', async () => {
+  // The type half: neither is a prop. `svelte-check` runs over `tests/`, so
+  // `vp run check` fails if either directive goes unused — that is, if the
+  // props type ever accepts the attribute again.
+  const withAriaLabel: Omit<ComponentProps<typeof Editor>, 'extension'> = {
+    // @ts-expect-error -- `label` owns the wrapper's accessible name.
+    'aria-label': 'Ignored',
+  };
+  const withAriaLabelledBy: Omit<ComponentProps<typeof Editor>, 'extension'> = {
+    // @ts-expect-error -- `label` owns the wrapper's accessible name.
+    'aria-labelledby': 'editor-hijack',
+  };
+  labellingElement('editor-hijack', 'Hijacked');
+
+  // The runtime half: an untyped caller still gets `label`.
+  const screen = await render(Editor, {
+    ...withAriaLabel,
+    ...withAriaLabelledBy,
+    extension: defineBlockDocumentExtension(),
+    label: 'Body',
+  });
+
+  const group = screen.getByRole('group');
+  await expect.element(group).toHaveAccessibleName('Body');
+  await expect.element(group).toHaveAttribute('aria-label', 'Body');
+  await expect.element(group).not.toHaveAttribute('aria-labelledby');
 });

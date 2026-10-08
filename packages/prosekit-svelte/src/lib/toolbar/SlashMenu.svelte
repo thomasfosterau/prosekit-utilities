@@ -36,11 +36,18 @@
   // an `aria-*` attribute means something; on the `role="none"` list it
   // would turn the list back into one and come between the menu and its
   // items. `class` stays on the list, which carries the daisyUI styling.
-  // Spread first, so `menuLabel` keeps owning the accessible name. `id` is
-  // redeclared without `null`, which bits-ui's primitives do not accept;
-  // `dir` is left out: on `DropdownMenu.Content` bits-ui types it as its own
-  // `Direction` (no `auto`) and overwrites it with the menu root's `dir`.
-  interface Props extends Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'class' | 'id' | 'dir'> {
+  // Spread first, so `menuLabel` keeps owning the accessible name; for the
+  // same reason `aria-label` and `aria-labelledby` are left out of the props,
+  // and the markup clears an untyped caller's `aria-labelledby`, which would
+  // otherwise outrank `aria-label`. `id` is redeclared without `null`, which
+  // bits-ui's primitives do not accept; `dir` is left out: on
+  // `DropdownMenu.Content` bits-ui types it as its own `Direction` (no
+  // `auto`) and overwrites it with the menu root's `dir`.
+  interface Props
+    extends Omit<
+      HTMLAttributes<HTMLDivElement>,
+      'children' | 'class' | 'id' | 'dir' | 'aria-label' | 'aria-labelledby'
+    > {
     /** The menu element's `id`. */
     id?: string | undefined;
     /** The entries. */
@@ -144,6 +151,7 @@
       align="start"
       sideOffset={6}
       aria-label={menuLabel}
+      aria-labelledby={undefined}
       onCloseAutoFocus={closeAutoFocus}
       class="z-50"
     >
