@@ -34,11 +34,28 @@
 -->
 <script lang="ts">
   import { Dialog } from 'bits-ui';
+  import type { HTMLAttributes } from 'svelte/elements';
   import type Flowchart from './Flowchart.svelte';
   import { EMPTY_FLOWCHART } from './node/data.ts';
   import type { FlowchartData } from './node/schema.ts';
 
-  interface Props {
+  // The native attributes (`id`, `data-*`, `aria-*`, …) go on the dialog
+  // element itself, bits-ui's `Dialog.Content` (`role="dialog"`), which is
+  // also where `class` lands. Spread first, and the modal contract still
+  // wins: bits-ui merges its own `role`, `aria-modal`, `aria-labelledby`
+  // (the `Dialog.Title`) and `aria-describedby` after the caller's props,
+  // keeping a caller value only where its own is `undefined`.
+  // `id` is redeclared without `null`, which bits-ui's primitives do not
+  // accept, and passed only when defined. None of `Dialog.Content`'s
+  // behaviour props (`onEscapeKeydown`, `onInteractOutside`,
+  // `onOpenAutoFocus`, `trapFocus`, `forceMount`, …) shares a name with an
+  // HTML attribute, so nothing else needs leaving out; they stay off this
+  // API because the component owns the dialog's behaviour.
+  // Here `aria-describedby` is the help text's (`Dialog.Description`), so a
+  // caller's loses.
+  interface Props extends Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'class' | 'id'> {
+    /** The dialog element's `id`. */
+    id?: string | undefined;
     /** Whether the dialog is shown. Bindable. */
     open?: boolean | undefined;
     /** The payload the canvas opens with, when `open(data)` is not given one. */
@@ -90,6 +107,8 @@
     nodeLabelLabel = 'Node label',
     untitledLabel = 'Untitled',
     class: className,
+    id,
+    ...rest
   }: Props = $props();
 
   // A `bind:this` target, so the declared type must literally be `T |
@@ -186,6 +205,8 @@
          same scrim as an element bits-ui can dismiss from. -->
     <Dialog.Overlay class="bg-base-300/60 fixed inset-0 z-40" />
     <Dialog.Content
+      {...rest}
+      {...(id === undefined ? {} : { id })}
       class={[
         'modal-box fixed top-1/2 left-1/2 z-50 max-h-[calc(100svh-2rem)] w-[calc(100vw-2rem)] max-w-6xl -translate-x-1/2 -translate-y-1/2',
         className,

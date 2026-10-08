@@ -72,6 +72,37 @@ test('opens as a dialog named by the title and described by the help text', asyn
     );
 });
 
+test('spreads native attributes on the dialog element, merges `class`, and keeps the modal wiring', async () => {
+  const screen = await render(FlowchartEditDialog, {
+    open: true,
+    initialData: ONE_NODE,
+    onSave: vi.fn(),
+    class: 'max-w-4xl',
+    id: 'flowchart-dialog',
+    'data-surface': 'flowchart',
+    'aria-keyshortcuts': 'Delete',
+    // Competing values for what the modal contract owns: each one loses.
+    role: 'region',
+    'aria-modal': 'false',
+    'aria-labelledby': 'ignored',
+    'aria-describedby': 'ignored',
+    'aria-label': 'Ignored',
+  });
+
+  const dialog = screen.getByRole('dialog');
+  await expect.element(dialog).toHaveAttribute('id', 'flowchart-dialog');
+  await expect.element(dialog).toHaveAttribute('data-surface', 'flowchart');
+  await expect.element(dialog).toHaveAttribute('aria-keyshortcuts', 'Delete');
+  await expect.element(dialog).toHaveAttribute('aria-modal', 'true');
+  await expect.element(dialog).toHaveAccessibleName('Edit flowchart');
+  await expect
+    .element(dialog)
+    .toHaveAccessibleDescription(
+      "Drag from a node's bottom to another's top to connect. Double-click a node to edit its label. Select and press Delete to remove.",
+    );
+  await expect.element(dialog).toHaveClass('max-w-4xl', 'modal-box');
+});
+
 test('every string is a prop', async () => {
   const screen = await render(FlowchartEditDialog, {
     open: true,

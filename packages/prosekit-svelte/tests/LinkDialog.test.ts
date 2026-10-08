@@ -151,3 +151,29 @@ test('every label is a prop', async () => {
     await expect.element(screen.getByRole('button', { name })).toBeInTheDocument();
   }
 });
+
+test('spreads native attributes on the dialog element, merges `class`, and keeps the modal wiring', async () => {
+  const screen = await render(LinkDialog, {
+    open: true,
+    onSubmit: () => undefined,
+    class: 'max-w-lg',
+    id: 'link-dialog',
+    'data-surface': 'link',
+    'aria-describedby': 'link-dialog-hint',
+    // Competing values for what the modal contract owns: each one loses.
+    role: 'region',
+    'aria-modal': 'false',
+    'aria-labelledby': 'ignored',
+    'aria-label': 'Ignored',
+  });
+
+  const dialog = screen.getByRole('dialog');
+  await expect.element(dialog).toHaveAttribute('id', 'link-dialog');
+  await expect.element(dialog).toHaveAttribute('data-surface', 'link');
+  // No `Dialog.Description` here, so the caller's description is the one.
+  await expect.element(dialog).toHaveAttribute('aria-describedby', 'link-dialog-hint');
+  await expect.element(dialog).toHaveAttribute('aria-modal', 'true');
+  await expect.element(dialog).toHaveAccessibleName('Link');
+  expect(dialog.element().getAttribute('aria-labelledby')).not.toBe('ignored');
+  await expect.element(dialog).toHaveClass('max-w-lg', 'modal-box');
+});
