@@ -26,6 +26,7 @@
     "@changesets/cli": "catalog:",
     "@types/node": "catalog:",
     "@typescript/native": "catalog:",
+    "svelte": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-plus": "catalog:",
