@@ -276,3 +276,16 @@ test('`label` owns the accessible name: `aria-label` / `aria-labelledby` are no 
   await expect.element(toolbar).toHaveAttribute('aria-label', 'Note toolbar');
   await expect.element(toolbar).not.toHaveAttribute('aria-labelledby');
 });
+
+test('`labelledBy` names the toolbar by a visible heading, over the default `label`', async () => {
+  labellingElement('toolbar-heading', 'Formatting', 'h2');
+
+  const screen = await render(ToolbarFixture, {
+    attributes: { labelledBy: 'toolbar-heading' },
+  });
+
+  const toolbar = screen.getByRole('toolbar');
+  await expect.element(toolbar).toHaveAccessibleName('Formatting');
+  await expect.element(toolbar).toHaveAttribute('aria-labelledby', 'toolbar-heading');
+  await expect.element(toolbar).not.toHaveAttribute('aria-label');
+});

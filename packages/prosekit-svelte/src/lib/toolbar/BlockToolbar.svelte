@@ -49,10 +49,13 @@
 
   // The toolbar's native attributes (`id`, `data-*`, `aria-*`, …) are
   // spread on bits-ui's `Toolbar.Root` `<div>` before `aria-label` and
-  // `class`. `label` owns the accessible name, so `aria-label` and
-  // `aria-labelledby` are omitted from the props, and the markup clears an
-  // untyped caller's `aria-labelledby`, which would otherwise outrank
-  // `aria-label`. `children` is omitted: the toolbar renders its own. `id` is
+  // `class`. `label` / `labelledBy` own the accessible name, so `aria-label`
+  // and `aria-labelledby` are omitted from the props, and the markup sets
+  // both after the spread: an untyped caller's `aria-labelledby`, which
+  // would otherwise outrank `aria-label`, is cleared unless `labelledBy` sets
+  // it, and given `labelledBy`, `aria-label` is left off (`labelledBy` wins
+  // over `label` and its default; `Editor` says why that is not a union).
+  // bits-ui sets no `aria-labelledby` of its own on the toolbar. `children` is omitted: the toolbar renders its own. `id` is
   // redeclared without `null`, which bits-ui's primitives do not accept (they
   // key node lookups on it).
   interface Props
@@ -68,6 +71,11 @@
     slashCommands?: ReadonlyArray<SlashCommand> | undefined;
     /** Accessible name of the toolbar. */
     label?: string | undefined;
+    /**
+     * The `id` (or space-separated `id`s) of the visible element that names
+     * the toolbar, rendered as `aria-labelledby`. Wins over `label`.
+     */
+    labelledBy?: string | undefined;
     /** Visible text and accessible name of the insert button. */
     insertLabel?: string | undefined;
     /** Accessible name of the open insert menu. */
@@ -108,6 +116,7 @@
     items = createDefaultToolbarItems(messages),
     slashCommands = createDefaultSlashCommands(messages),
     label = messages.toolbarLabel,
+    labelledBy,
     insertLabel = messages.insertLabel,
     insertMenuLabel = messages.insertMenuLabel,
     linkDialog,
@@ -188,8 +197,8 @@
 <Toolbar.Root
   {...rest}
   {...(id === undefined ? {} : { id })}
-  aria-label={label}
-  aria-labelledby={undefined}
+  aria-label={labelledBy === undefined ? label : undefined}
+  aria-labelledby={labelledBy}
   class={[
     'border-base-300 bg-base-100 flex flex-wrap items-center gap-1.5 rounded border p-2',
     className,

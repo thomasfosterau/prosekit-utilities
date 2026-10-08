@@ -41,7 +41,8 @@
   // The wrapper's native attributes (`id`, `data-*`, `aria-*`, …) pass
   // through to `Editor`, which spreads them on its `<div>`. `children` is
   // omitted and redeclared, and `aria-label` / `aria-labelledby` omitted
-  // because `label` owns the accessible name, for the reasons `Editor` gives.
+  // because `label` / `labelledBy` own the accessible name, for the reasons
+  // `Editor` gives.
   interface Props
     extends Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'aria-label' | 'aria-labelledby'> {
     /**
@@ -65,6 +66,11 @@
     toolbar?: boolean | Snippet<[]> | undefined;
     /** Accessible name of the wrapper. */
     label?: string | undefined;
+    /**
+     * The `id` (or space-separated `id`s) of the visible element that names
+     * the wrapper, rendered as `aria-labelledby`. Wins over `label`.
+     */
+    labelledBy?: string | undefined;
     /** Extra classes on the wrapper. */
     class?: string | undefined;
     /** Rendered after the toolbar, inside the editor's provider. */
@@ -81,6 +87,7 @@
     slashCommands,
     toolbar = true,
     label,
+    labelledBy,
     class: className,
     children,
     ...rest
@@ -110,6 +117,7 @@
   extension={resolvedExtension}
   defaultContent={editorDefaultContent}
   {label}
+  {labelledBy}
   class={className}
 >
   {#if toolbar === true}

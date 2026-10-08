@@ -13,8 +13,9 @@
   through a dynamic `import()` from one that only sometimes does, and never
   re-export it from a barrel an application loads on every page.
 
-  The wrapper is a `role="group"` only when `label` is given: a group with no
-  accessible name is noise in the accessibility tree, and the thing that
+  The wrapper is a `role="group"` only when it is named, by `label` or
+  `labelledBy`: a group with no accessible name is noise in the
+  accessibility tree, and the thing that
   matters — the `contenteditable` textbox ProseMirror builds — is named by
   the application either way. `children` renders inside `<ProseKit>`, after
   the mount node, which is where a toolbar goes: it needs the editor context
@@ -32,9 +33,14 @@
   // `children` is omitted and redeclared because Svelte's own
   // `HTMLAttributes` writes it `children?: Snippet` — legal only without
   // `exactOptionalPropertyTypes`, which this workspace compiles with.
-  // `aria-label` and `aria-labelledby` are omitted because `label` owns the
-  // wrapper's accessible name: the markup sets `aria-label` after the spread
-  // and clears `aria-labelledby`, which would otherwise outrank it.
+  // `aria-label` and `aria-labelledby` are omitted because the component
+  // owns the wrapper's accessible name, through `label` or `labelledBy`: the
+  // markup sets both after the spread, so an untyped caller's
+  // `aria-labelledby`, which would outrank `aria-label`, is cleared unless
+  // `labelledBy` sets it. Given both, `labelledBy` wins and `aria-label` is
+  // left off. Not a type-level union: `Omit<ComponentProps<…>, …>`, the
+  // usual wrapper's props type, is not distributive, so it would collapse
+  // the union and the wrapper's `{...rest}` would no longer type-check.
   interface Props
     extends Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'aria-label' | 'aria-labelledby'> {
     /** The grammar and behaviour this editor is built from. */
@@ -47,8 +53,16 @@
      * the user types.
      */
     defaultContent?: NodeJSON | undefined;
-    /** Accessible name of the wrapper. Omitted, the wrapper has no role. */
+    /**
+     * Accessible name of the wrapper. With neither this nor `labelledBy`, the
+     * wrapper has no role.
+     */
     label?: string | undefined;
+    /**
+     * The `id` (or space-separated `id`s) of the visible element that names
+     * the wrapper, rendered as `aria-labelledby`. Wins over `label`.
+     */
+    labelledBy?: string | undefined;
     /** Extra classes on the wrapper. */
     class?: string | undefined;
     /** Rendered inside the provider, before the mount node — the toolbar's place. */
@@ -60,6 +74,7 @@
     content = $bindable(),
     defaultContent,
     label,
+    labelledBy,
     class: className,
     children,
     ...rest
@@ -88,9 +103,9 @@
 
 <div
   {...rest}
-  role={label === undefined ? undefined : 'group'}
-  aria-label={label}
-  aria-labelledby={undefined}
+  role={label === undefined && labelledBy === undefined ? undefined : 'group'}
+  aria-label={labelledBy === undefined ? label : undefined}
+  aria-labelledby={labelledBy}
   class={['flex flex-col gap-2', className]}
 >
   <ProseKit {editor}>

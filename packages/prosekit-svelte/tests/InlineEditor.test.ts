@@ -111,3 +111,14 @@ test('`label` owns the accessible name: `aria-label` / `aria-labelledby` are no 
   await expect.element(group).toHaveAttribute('aria-label', 'Title');
   await expect.element(group).not.toHaveAttribute('aria-labelledby');
 });
+
+test('`labelledBy` names the wrapper group by a visible heading, through `Editor`', async () => {
+  labellingElement('inline-editor-heading', 'Title', 'h2');
+
+  const screen = await render(InlineEditor, { labelledBy: 'inline-editor-heading' });
+
+  const group = screen.getByRole('group');
+  await expect.element(group).toHaveAccessibleName('Title');
+  await expect.element(group).toHaveAttribute('aria-labelledby', 'inline-editor-heading');
+  await expect.element(group).not.toHaveAttribute('aria-label');
+});

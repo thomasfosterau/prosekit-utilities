@@ -42,12 +42,13 @@ export function hiddenInputValue(name: string): unknown {
 }
 
 /**
- * Puts a `<span id={id}>` reading `text` in the document for the rest of the
- * test, so an `aria-labelledby` that pointed at it would name its element
- * `text`: the proof that a component's own label won.
+ * Puts a `<span id={id}>` (or another `tag`) reading `text` in the document
+ * for the rest of the test, so an `aria-labelledby` pointing at it names its
+ * element `text`: a visible heading for `labelledBy`, or the proof that a
+ * component's own label won over a caller's `aria-labelledby`.
  */
-export function labellingElement(id: string, text: string): void {
-  const element = document.createElement('span');
+export function labellingElement(id: string, text: string, tag: 'span' | 'h2' = 'span'): void {
+  const element = document.createElement(tag);
   element.id = id;
   element.textContent = text;
   document.body.append(element);
