@@ -34,16 +34,14 @@ updates:
           - svelte
           - svelte-check
           - '@sveltejs/*'
-      # vite-plus pins `vitest` (and oxlint / oxfmt) exactly, the browser
-      # provider pins `vitest` exactly — see the comments on each in the
-      # catalog. Moving any one alone breaks the exact-peer chain.
-      # (`playwright` is deliberately NOT here: it is ignored below.)
+      # `vite` is vite-plus's own core republished under an alias, so the two
+      # move as one. `vitest` and `@vitest/*` are deliberately NOT here: they
+      # are ignored below and follow vite-plus's exact pin by hand (see that
+      # ignore). `playwright` is ignored below too.
       vitest-toolchain:
         patterns:
           - vite
           - vite-plus
-          - vitest
-          - '@vitest/*'
           - vitest-browser-svelte
       storybook:
         patterns:
@@ -78,6 +76,26 @@ updates:
       # entry in pnpm-workspace.yaml), so a bump moves the hook's revision
       # with it and is made by a person. Same update-type scoping as above.
       - dependency-name: playwright
+        update-types:
+          - 'version-update:semver-major'
+          - 'version-update:semver-minor'
+          - 'version-update:semver-patch'
+      # vite-plus pins `vitest` and the `@vitest/*` runtime packages EXACTLY,
+      # and the catalog's `vitest`, `@vitest/browser-playwright` and
+      # `@vitest/coverage-istanbul` must equal that pin (see the `vite-plus`
+      # entry in pnpm-workspace.yaml). A group only moves what has a newer
+      # release, so a vitest release that no vite-plus pins yet would arrive
+      # alone and leave the tree split (#60). So they never move on their own:
+      # when Dependabot proposes a vite-plus bump, the same PR gets a hand edit
+      # moving the vitest set in the catalog to the new vite-plus's
+      # `dependencies.vitest`, plus the regenerated lockfile. Same update-type
+      # scoping as above, so security updates stay enabled.
+      - dependency-name: vitest
+        update-types:
+          - 'version-update:semver-major'
+          - 'version-update:semver-minor'
+          - 'version-update:semver-patch'
+      - dependency-name: '@vitest/*'
         update-types:
           - 'version-update:semver-major'
           - 'version-update:semver-minor'
