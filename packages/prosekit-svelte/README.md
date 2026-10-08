@@ -2,7 +2,7 @@
 
 Svelte 5 rich-text editing on [ProseKit](https://prosekit.dev): `Editor`, `BlockEditor`, `InlineEditor`, a declarative `BlockToolbar` with an insert menu, and the link and image dialogs — all built on [bits-ui](https://bits-ui.com), all styled with daisyUI's semantic classes, every user-facing string a prop with an English default.
 
-Requires Tailwind 4 + daisyUI in the consuming app (see [Peer requirements](#peer-requirements)). Accessible-name props end in `Label`. `Editor`, `BlockEditor`, `InlineEditor`, `BlockToolbar` and `SlashMenu` spread the native attributes you pass (`id`, `data-*`, `aria-*`, …) on the element they render — `SlashMenu` on its `role="menu"` element — with the component's own accessible name (`label`, `menuLabel`) winning; `LinkDialog` and `ImageDialog` take `class` only. Every component merges the caller's `class` last.
+Requires Tailwind 4 + daisyUI in the consuming app (see [Peer requirements](#peer-requirements)). Accessible-name props end in `Label`. `Editor`, `BlockEditor`, `InlineEditor`, `BlockToolbar` and `SlashMenu` spread the native attributes you pass (`id`, `data-*`, `aria-*`, …) on the element they render — `SlashMenu` on its `role="menu"` element — with the component's own `aria-label` (`label`, `menuLabel`) winning; `LinkDialog` and `ImageDialog` take `class` only. Every component merges the caller's `class` last.
 
 ## Installation
 
