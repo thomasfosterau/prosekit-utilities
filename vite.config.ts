@@ -1,7 +1,8 @@
 /**
  * Root workspace config. Owns the repo-wide format/lint/staged passes (read
- * statically by `vp fmt` / `vp lint` / `vp staged`) and the one aggregate
- * task — `check`, the type-check gate over every package.
+ * statically by `vp fmt` / `vp lint` / `vp staged`) and the two aggregate
+ * tasks — `check`, the type-check gate over every package, and
+ * `check:dist`, the entry-point boundary check over every built `dist/`.
  *
  * The Svelte plugin, the browser test suites, the `svelte-package` and
  * `vp pack` builds and the Storybook tasks all live in each package's own
@@ -28,6 +29,16 @@ export default defineConfig({
       check: {
         command: "echo 'check: all type gates green'",
         dependsOn: [{ from: 'dependencies', task: 'check' }],
+        cache: false,
+      },
+      // The entry-point import boundaries, checked against the BUILT dist/:
+      // the core's `.`, `./derive` and `./drizzle` reach no ProseKit, and the
+      // flowchart's `./node` reaches no Svelte or xyflow. It reads every
+      // package's dist/, so it depends on every package's `build`. Uncached:
+      // it is a fast read of files another task wrote.
+      'check:dist': {
+        command: 'node scripts/check-dist-boundaries.ts',
+        dependsOn: [{ from: 'dependencies', task: 'build' }],
         cache: false,
       },
     },
