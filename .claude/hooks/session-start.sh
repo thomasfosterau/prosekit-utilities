@@ -338,6 +338,8 @@ NET_TIMEOUT="300"
 effect_commit_for() {
   case "$1" in
     4.0.0) printf '%s' "67ba4e46a11ccda0b6761578bfd22c04ae00167d" ;;
+    4.0.1) printf '%s' "460272d30457f4697d8b8c52cad41caccbcace08" ;;
+    4.0.2) printf '%s' "269a7c864351231d42e6e95b7fa8f32050df3691" ;;
     *) return 1 ;;
   esac
 }
