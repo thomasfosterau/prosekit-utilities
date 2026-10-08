@@ -110,6 +110,9 @@ catalog:
   # catalog singleton, a mismatch breaks the browser provider's exact peer,
   # and vite-plus refuses to start `test:coverage` when the coverage provider
   # differs from its pin. Bump vite-plus first, then the vitest set to its pin.
+  # Dependabot never proposes `vitest` / `@vitest/*` on their own (they are
+  # ignored in .github/dependabot.yml, #60): on its vite-plus PR, set all
+  # three to the new vite-plus's `dependencies.vitest` by hand, in that PR.
   # `vite` is the same release published under its aliased core package.
   vite-plus: 1.1.0
   vite: npm:@voidzero-dev/vite-plus-core@1.1.0
