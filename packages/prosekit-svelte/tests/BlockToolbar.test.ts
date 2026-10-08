@@ -226,3 +226,23 @@ test('the image item opens the image dialog and inserts what it accepts', async 
     'https://example.com/leaf.png',
   );
 });
+
+test('spreads native attributes on the toolbar, merges `class`, and `label` keeps the name', async () => {
+  const screen = await render(ToolbarFixture, {
+    label: 'Note toolbar',
+    attributes: {
+      class: 'sticky',
+      id: 'note-toolbar',
+      'data-surface': 'note',
+      'aria-describedby': 'note-toolbar-hint',
+      'aria-label': 'Ignored',
+    },
+  });
+
+  const toolbar = screen.getByRole('toolbar');
+  await expect.element(toolbar).toHaveAttribute('id', 'note-toolbar');
+  await expect.element(toolbar).toHaveAttribute('data-surface', 'note');
+  await expect.element(toolbar).toHaveAttribute('aria-describedby', 'note-toolbar-hint');
+  await expect.element(toolbar).toHaveAccessibleName('Note toolbar');
+  await expect.element(toolbar).toHaveClass('sticky', 'flex', 'border');
+});

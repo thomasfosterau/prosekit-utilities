@@ -67,3 +67,19 @@ test('renders no toolbar', async () => {
 
   expect(screen.getByRole('toolbar').elements()).toHaveLength(0);
 });
+
+test('spreads native attributes on the wrapper and merges the caller `class`', async () => {
+  const screen = await render(InlineEditor, {
+    label: 'Title',
+    class: 'ring-2',
+    id: 'post-title',
+    'data-surface': 'title',
+    'aria-describedby': 'post-title-hint',
+  });
+
+  const group = screen.getByRole('group');
+  await expect.element(group).toHaveAttribute('id', 'post-title');
+  await expect.element(group).toHaveAttribute('data-surface', 'title');
+  await expect.element(group).toHaveAttribute('aria-describedby', 'post-title-hint');
+  await expect.element(group).toHaveClass('ring-2', 'flex', 'flex-col');
+});

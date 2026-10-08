@@ -27,10 +27,22 @@
   import { DropdownMenu } from 'bits-ui';
   import { useEditor } from 'prosekit/svelte';
   import type { Snippet } from 'svelte';
+  import type { HTMLAttributes } from 'svelte/elements';
   import { getEditorMessages } from '../messages.svelte.ts';
   import type { SlashCommand, ToolbarRunContext } from './items.ts';
 
-  interface Props {
+  // The native attributes (`id`, `data-*`, `aria-*`, …) go on the menu
+  // element itself, bits-ui's `DropdownMenu.Content` (`role="menu"`), where
+  // an `aria-*` attribute means something; on the `role="none"` list it
+  // would turn the list back into one and come between the menu and its
+  // items. `class` stays on the list, which carries the daisyUI styling.
+  // Spread first, so `menuLabel` keeps owning the accessible name. `id` is
+  // redeclared without `null`, which bits-ui's primitives do not accept;
+  // `dir` is left out because on bits-ui's menu it is the keyboard direction,
+  // a behaviour prop rather than the attribute.
+  interface Props extends Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'class' | 'id' | 'dir'> {
+    /** The menu element's `id`. */
+    id?: string | undefined;
     /** The entries. */
     commands: ReadonlyArray<SlashCommand>;
     /** Whether the menu is open. Bindable. */
@@ -61,6 +73,8 @@
     dialogs,
     class: className,
     trigger,
+    id,
+    ...rest
   }: Props = $props();
 
   // `update: true` so the store re-emits on every editor state change; the
@@ -124,6 +138,8 @@
   </DropdownMenu.Trigger>
   <DropdownMenu.Portal>
     <DropdownMenu.Content
+      {...rest}
+      {...(id === undefined ? {} : { id })}
       side="bottom"
       align="start"
       sideOffset={6}

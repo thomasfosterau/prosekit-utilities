@@ -121,3 +121,29 @@ test('the `trigger` snippet replaces the default button', async () => {
 
   await expect.element(screen.getByRole('menu')).toBeInTheDocument();
 });
+
+test('spreads native attributes on the menu element; `class` stays on the styling list', async () => {
+  const screen = await render(SlashMenuFixture, {
+    commands: commands(() => undefined),
+    attributes: {
+      class: 'w-72',
+      id: 'insert-menu',
+      'data-surface': 'insert',
+      'aria-describedby': 'insert-menu-hint',
+    },
+  });
+
+  const trigger = screen.getByRole('button', { name: 'Insert' });
+  await trigger.click();
+
+  const menu = screen.getByRole('menu');
+  await expect.element(menu).toHaveAttribute('id', 'insert-menu');
+  await expect.element(menu).toHaveAttribute('data-surface', 'insert');
+  await expect.element(menu).toHaveAttribute('aria-describedby', 'insert-menu-hint');
+  await expect.element(menu).toHaveAccessibleName('Insert block');
+  await expect.element(trigger).toHaveAttribute('aria-controls', 'insert-menu');
+
+  const list = menu.element().querySelector('ul');
+  expect(list).toHaveClass('w-72', 'menu');
+  expect(list?.getAttribute('role')).toBe('none');
+});

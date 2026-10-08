@@ -31,6 +31,7 @@
   import { Toolbar } from 'bits-ui';
   import { getMarkRange } from 'prosekit/core';
   import { useEditor } from 'prosekit/svelte';
+  import type { HTMLAttributes } from 'svelte/elements';
   import { getEditorMessages } from '../messages.svelte.ts';
   import ImageDialog from './ImageDialog.svelte';
   import {
@@ -46,7 +47,14 @@
   import LinkDialog from './LinkDialog.svelte';
   import SlashMenu from './SlashMenu.svelte';
 
-  interface Props {
+  // The toolbar's native attributes (`id`, `data-*`, `aria-*`, …) are
+  // spread on bits-ui's `Toolbar.Root` `<div>` before `aria-label` and
+  // `class`, so `label` keeps owning the accessible name. `children` is
+  // omitted: the toolbar renders its own. `id` is redeclared without `null`,
+  // which bits-ui's primitives do not accept (they key node lookups on it).
+  interface Props extends Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'id'> {
+    /** The toolbar element's `id`. */
+    id?: string | undefined;
     /** The buttons and separators, in order. */
     items?: ReadonlyArray<ToolbarItem | ToolbarSeparator> | undefined;
     /** The insert menu's entries. */
@@ -98,6 +106,8 @@
     linkDialog,
     imageDialog,
     class: className,
+    id,
+    ...rest
   }: Props = $props();
 
   const editorStore = useEditor({ update: true });
@@ -169,6 +179,8 @@
 </script>
 
 <Toolbar.Root
+  {...rest}
+  {...(id === undefined ? {} : { id })}
   aria-label={label}
   class={[
     'border-base-300 bg-base-100 flex flex-wrap items-center gap-1.5 rounded border p-2',

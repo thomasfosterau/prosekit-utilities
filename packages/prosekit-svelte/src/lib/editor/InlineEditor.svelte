@@ -27,9 +27,13 @@
   import { defineInlineDocumentExtension } from '@thomasfosterau/prosekit-utilities/prosekit';
   import { defineKeymap, union, type Extension } from 'prosekit/core';
   import type { Snippet } from 'svelte';
+  import type { HTMLAttributes } from 'svelte/elements';
   import EditorMount from './Editor.svelte';
 
-  interface Props {
+  // The wrapper's native attributes (`id`, `data-*`, `aria-*`, …) pass
+  // through to `Editor`, which spreads them on its `<div>`. `children` is
+  // omitted and redeclared for the reason `Editor` gives.
+  interface Props extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
     /**
      * The grammar. Omitted, `defineInlineDocumentExtension()` plus the
      * Enter binding — built lazily, so an application passing its own never
@@ -61,6 +65,7 @@
     label,
     class: className,
     children,
+    ...rest
   }: Props = $props();
 
   // Returning `true` claims the key: ProseKit runs the most recently added
@@ -83,6 +88,7 @@
 </script>
 
 <EditorMount
+  {...rest}
   bind:content
   extension={resolvedExtension}
   defaultContent={editorDefaultContent}

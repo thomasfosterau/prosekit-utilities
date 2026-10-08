@@ -88,3 +88,19 @@ test('a custom item set reaches the default toolbar', async () => {
   await expect.element(screen.getByRole('button', { name: 'Shout' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Bold' }).elements()).toHaveLength(0);
 });
+
+test('spreads native attributes on the wrapper and merges the caller `class`', async () => {
+  const screen = await render(BlockEditor, {
+    label: 'Body',
+    class: 'ring-2',
+    id: 'post-body',
+    'data-surface': 'post',
+    'aria-describedby': 'post-body-hint',
+  });
+
+  const group = screen.getByRole('group');
+  await expect.element(group).toHaveAttribute('id', 'post-body');
+  await expect.element(group).toHaveAttribute('data-surface', 'post');
+  await expect.element(group).toHaveAttribute('aria-describedby', 'post-body-hint');
+  await expect.element(group).toHaveClass('ring-2', 'flex', 'flex-col');
+});
