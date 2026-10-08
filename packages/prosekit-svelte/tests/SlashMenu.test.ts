@@ -130,6 +130,7 @@ test('spreads native attributes on the menu element; `class` stays on the stylin
       id: 'insert-menu',
       'data-surface': 'insert',
       'aria-describedby': 'insert-menu-hint',
+      'aria-label': 'Ignored',
     },
   });
 

@@ -38,8 +38,8 @@
   // items. `class` stays on the list, which carries the daisyUI styling.
   // Spread first, so `menuLabel` keeps owning the accessible name. `id` is
   // redeclared without `null`, which bits-ui's primitives do not accept;
-  // `dir` is left out because on bits-ui's menu it is the keyboard direction,
-  // a behaviour prop rather than the attribute.
+  // `dir` is left out: on `DropdownMenu.Content` bits-ui types it as its own
+  // `Direction` (no `auto`) and overwrites it with the menu root's `dir`.
   interface Props extends Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'class' | 'id' | 'dir'> {
     /** The menu element's `id`. */
     id?: string | undefined;
