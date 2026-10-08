@@ -117,6 +117,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.3
+      '@typescript/native':
+        specifier: 'catalog:'
+        version: typescript@7.0.2
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
