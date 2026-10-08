@@ -19,11 +19,13 @@ import { defineConfig } from 'vite-plus';
  * appearing (written by `storybook:build`) or disappearing would otherwise miss
  * `svelte-package`, `svelte-check` and the browser suite. A negative glob
  * filters tracked paths, not the entries inside a listing, so
- * `'!storybook-static/**'` cannot do this; no task here reads a file under
- * `storybook-static/` either. Every file a task does read (`package.json`,
- * `tsconfig.json`, `svelte.config.js`, this config, `src/`, `tests/`,
- * `.storybook/`) is still fingerprinted, and so are those directories'
- * listings.
+ * `'!storybook-static/**'` alone cannot do this. It is here as well because
+ * `svelte-check` walks the package for `.svelte` files and so lists every
+ * directory under `storybook-static/`, whose chunk names change with each
+ * Storybook build; nothing there is a `.svelte` file or in `tsconfig.json`'s
+ * `include`. Every file a task does read (`package.json`, `tsconfig.json`,
+ * `svelte.config.js`, this config, `src/`, `tests/`, `.storybook/`) is still
+ * fingerprinted, and so are those directories' listings.
  *
  * The second workspace-relative exclusion drops each sibling package's
  * `node_modules/`. Resolving a bare import from a sibling's built `dist/`
@@ -38,6 +40,7 @@ import { defineConfig } from 'vite-plus';
 const cacheInputs = [
   { auto: true },
   '!.',
+  '!storybook-static/**',
   '!node_modules/**',
   { pattern: '!node_modules/**', base: 'workspace' as const },
   { pattern: '!packages/*/node_modules/**', base: 'workspace' as const },
