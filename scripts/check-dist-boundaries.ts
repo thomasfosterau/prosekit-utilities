@@ -32,10 +32,10 @@
  * side-effect import but the three allow-listed stylesheets, no top-level
  * statement other than a declaration, import or export, and no load-time
  * effect inside a declaration — an `await`, an assignment, or a call that is
- * not `/* @__PURE__ *\/`-annotated (the one exception is a direct call of the
- * global `Symbol.for`, `isSymbolFor`). A component's `<script module>` gets
- * every rule; its instance `<script>` runs per component, so only its imports
- * are checked.
+ * not `/* @__PURE__ *\/`-annotated (the one exception, `isSymbolFor`, is a
+ * direct `Symbol.for` call with a single string-literal key, where `Symbol`
+ * isn't shadowed). A component's `<script module>` gets every rule; its
+ * instance `<script>` runs per component, so only its imports are checked.
  *
  * Run it after the build: `vp run check:dist` (the root task depends on every
  * package's `build`). The boundaries themselves are documented in each
@@ -497,18 +497,25 @@ const DECLARATION = new Set([
 ]);
 
 /**
- * Whether a call's callee is the global `Symbol.for`, the one callee this check
- * trusts by name, so a module may call it while it loads without a
- * `/* @__PURE__ *\/` annotation. It is an idempotent read-or-insert on the
- * engine's symbol registry, which no code can enumerate: dropping an unused
- * call is unobservable, because a later `Symbol.for` of the same key returns
- * the same symbol either way. Bundlers know this too: esbuild drops an unused
- * `const k = Symbol.for('…')` without an annotation (and keeps an unused
- * `Object.freeze({})` or `Symbol.keyFor(…)`), so trusting it here hides
- * nothing a consumer's bundle would keep.
+ * Whether a call is a direct `Symbol.for` call with a single string-literal key,
+ * where `Symbol` isn't shadowed — the one call this check trusts by name, so a
+ * module may make it while it loads without a `/* @__PURE__ *\/` annotation.
+ * It is an idempotent read-or-insert on the engine's symbol registry, which no
+ * code can enumerate: dropping an unused call is unobservable, because a later
+ * `Symbol.for` of the same key returns the same symbol either way. Bundlers
+ * know this too: esbuild drops an unused `const k = Symbol.for('…')` without an
+ * annotation, so trusting exactly that shape hides nothing a consumer's bundle
+ * would keep.
  *
- * Only a direct, non-computed `Symbol.for(…)` counts — not a call of its
- * result, nor a module whose top level declares or imports its own `Symbol`.
+ * The shape is narrow because esbuild's is: it keeps the call (and its
+ * constant) when the key is an identifier, an object (whose `toString` could
+ * run anything), a template with an expression, or there is more than one
+ * argument, and when `Symbol` is any module-level binding — an import, a
+ * function or class declaration, or a name inside a destructuring pattern.
+ * So only `Symbol.for('…')`, or a template key with no `${}`, counts — written
+ * with a plain `.for`, no optional chaining — and only in a module with no
+ * top-level `Symbol` (`topLevelNamesOf`).
+ *
  * Everything else called at load — Effect's `Schema` / `Option`, any other
  * import, the workspace's own factories (`required`, `createMarkdownSerialiser`),
  * a local helper — fails until it is annotated `/* @__PURE__ *\/` in source:
@@ -516,17 +523,34 @@ const DECLARATION = new Set([
  * initialises) whatever this check believes, so only the annotation at the
  * call site counts.
  */
-const isSymbolFor = (callee: AstNode, topLevel: ReadonlySet<string>): boolean => {
-  if (callee.type !== 'MemberExpression' || callee['computed'] !== false) return false;
+const isSymbolFor = (call: AstNode, topLevel: ReadonlySet<string>): boolean => {
+  const callee = call['callee'];
+  const args = call['arguments'];
+  if (!isNode(callee) || callee.type !== 'MemberExpression') return false;
+  if (callee['computed'] !== false || callee['optional'] === true || call['optional'] === true)
+    return false;
   const object = callee['object'];
   const property = callee['property'];
+  if (
+    !isNode(object) ||
+    object.type !== 'Identifier' ||
+    object['name'] !== 'Symbol' ||
+    topLevel.has('Symbol') ||
+    !isNode(property) ||
+    property.type !== 'Identifier' ||
+    property['name'] !== 'for'
+  )
+    return false;
+  if (!Array.isArray(args) || args.length !== 1) return false;
+  const key: unknown = args[0];
+  if (!isNode(key)) return false;
+  if (key.type === 'Literal' || key.type === 'StringLiteral') {
+    return typeof key['value'] === 'string';
+  }
   return (
-    isNode(object) &&
-    object.type === 'Identifier' &&
-    object['name'] === 'Symbol' &&
-    !topLevel.has('Symbol') &&
-    isNode(property) &&
-    property['name'] === 'for'
+    key.type === 'TemplateLiteral' &&
+    Array.isArray(key['expressions']) &&
+    key['expressions'].length === 0
   );
 };
 
@@ -549,13 +573,49 @@ const childrenOf = (node: AstNode): Array<{ key: string; child: AstNode }> =>
   });
 
 /**
- * The name of every top-level binding of a parsed program — its imports and
- * its own declarations — so a module-level `Symbol` shadows the global.
+ * The name of every top-level binding of a parsed program — its imports
+ * (default, named and namespace), its function and class declarations, and
+ * every name its variable declarations bind, destructuring patterns included —
+ * so a module-level `Symbol` of any kind shadows the global.
  */
 const topLevelNamesOf = (body: ReadonlyArray<AstNode>): Set<string> => {
   const names = new Set<string>();
+  // Walks a binding pattern down to the identifiers it binds: an object
+  // pattern's property values and rest, an array pattern's elements, a rest
+  // element's argument and a default's left-hand side.
   const declare = (node: unknown): void => {
-    if (isNode(node) && node.type === 'Identifier') names.add(String(node['name']));
+    if (!isNode(node)) return;
+    switch (node.type) {
+      case 'Identifier':
+        names.add(String(node['name']));
+        break;
+      case 'ObjectPattern': {
+        const properties = node['properties'];
+        for (const property of Array.isArray(properties) ? properties : []) {
+          if (!isNode(property)) continue;
+          declare(property.type === 'RestElement' ? property : property['value']);
+        }
+        const rest = node['rest'];
+        if (isNode(rest)) declare(rest);
+        break;
+      }
+      case 'ArrayPattern': {
+        const elements = node['elements'];
+        for (const element of Array.isArray(elements) ? elements : []) declare(element);
+        const rest = node['rest'];
+        if (isNode(rest)) declare(rest);
+        break;
+      }
+      case 'RestElement':
+      case 'BindingRestElement':
+        declare(node['argument']);
+        break;
+      case 'AssignmentPattern':
+        declare(node['left']);
+        break;
+      default:
+        break;
+    }
   };
   for (const raw of body) {
     const statement =
@@ -569,6 +629,7 @@ const topLevelNamesOf = (body: ReadonlyArray<AstNode>): Set<string> => {
         if (isNode(specifier)) declare(specifier['local']);
       }
     } else if (statement.type === 'FunctionDeclaration' || statement.type === 'ClassDeclaration') {
+      // `export default function Symbol() {}` is a declaration, so it lands here too.
       declare(statement['id']);
     } else if (statement.type === 'VariableDeclaration') {
       const declarations = statement['declarations'];
@@ -597,7 +658,8 @@ const pureAnnotationEnds = (
  * decorators and computed keys — never a function body or an instance member,
  * which run later, if ever — and reports any `await`, assignment, update,
  * `delete`, dynamic `import()`, static block, decorator, or a call, `new` or
- * tagged template that is not annotated pure (bar a direct `Symbol.for` call).
+ * tagged template that is not annotated pure (bar the `Symbol.for` shape
+ * `isSymbolFor` admits).
  */
 const loadTimeEffects = (
   root: AstNode,
@@ -646,10 +708,8 @@ const loadTimeEffects = (
       case 'CallExpression':
       case 'NewExpression':
       case 'TaggedTemplateExpression': {
-        const callee = node.type === 'TaggedTemplateExpression' ? node['tag'] : node['callee'];
         const allowed =
-          annotated(node) ||
-          (node.type === 'CallExpression' && isNode(callee) && isSymbolFor(callee, topLevel));
+          annotated(node) || (node.type === 'CallExpression' && isSymbolFor(node, topLevel));
         if (!allowed) {
           found.push({
             offset: node.start,
