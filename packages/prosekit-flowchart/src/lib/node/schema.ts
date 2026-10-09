@@ -27,23 +27,23 @@ import * as Schema from 'effect/Schema';
  * {@link FlowchartNode}'s `position` field instead, so there is no dead
  * export to carry.
  */
-const FlowchartPosition = Schema.Struct({
+const FlowchartPosition = /* @__PURE__ */ Schema.Struct({
   x: Schema.Finite,
   y: Schema.Finite,
 });
 
 /** Persisted shape of a single flowchart node. */
-export const FlowchartNode = Schema.Struct({
+export const FlowchartNode = /* @__PURE__ */ Schema.Struct({
   id: Schema.String,
   position: FlowchartPosition,
-  data: Schema.Struct({ label: Schema.String }),
+  data: /* @__PURE__ */ Schema.Struct({ label: Schema.String }),
 });
 
 /** The decoded type of {@link FlowchartNode}. */
 export type FlowchartNode = typeof FlowchartNode.Type;
 
 /** Persisted shape of a single flowchart edge. */
-export const FlowchartEdge = Schema.Struct({
+export const FlowchartEdge = /* @__PURE__ */ Schema.Struct({
   id: Schema.String,
   source: Schema.String,
   target: Schema.String,
@@ -55,9 +55,9 @@ export type FlowchartEdge = typeof FlowchartEdge.Type;
 /**
  * Persisted payload stored on the ProseMirror `flowchart` node's `data` attr.
  */
-export const FlowchartData = Schema.Struct({
-  nodes: Schema.Array(FlowchartNode),
-  edges: Schema.Array(FlowchartEdge),
+export const FlowchartData = /* @__PURE__ */ Schema.Struct({
+  nodes: /* @__PURE__ */ Schema.Array(FlowchartNode),
+  edges: /* @__PURE__ */ Schema.Array(FlowchartEdge),
 });
 
 /** The decoded type of {@link FlowchartData}. */

@@ -23,7 +23,9 @@ import type { FlowchartData } from './schema.ts';
  * JSON encoder for the `data` attr payload. Built once at module scope —
  * `toDOM` runs per flowchart node on every editor render.
  */
-const encodeJson = Schema.encodeSync(Schema.fromJsonString(Schema.Unknown));
+const encodeJson = /* @__PURE__ */ Schema.encodeSync(
+  /* @__PURE__ */ Schema.fromJsonString(Schema.Unknown),
+);
 
 /**
  * JSON encoding with HTML-sensitive characters unicode-escaped so the result

@@ -32,8 +32,9 @@
  * side-effect import but the three allow-listed stylesheets, no top-level
  * statement other than a declaration, import or export, and no load-time
  * effect inside a declaration — an `await`, an assignment, or a call that is
- * neither `/* @__PURE__ *\/`-annotated nor a known-pure factory
- * (`isPureCallee`). A component's `<script module>` gets every rule; its
+ * not `/* @__PURE__ *\/`-annotated (the one exception, `isSymbolFor`, is a
+ * direct `Symbol.for` call with a single string-literal key, where `Symbol`
+ * isn't shadowed). A component's `<script module>` gets every rule; its
  * instance `<script>` runs per component, so only its imports are checked.
  *
  * Run it after the build: `vp run check:dist` (the root task depends on every
@@ -495,37 +496,62 @@ const DECLARATION = new Set([
   'TSInterfaceDeclaration',
 ]);
 
-/** `import x from …` binding shapes, by local name, for judging a callee. */
-type Binding =
-  | { readonly kind: 'import'; readonly source: string; readonly imported: string }
-  | { readonly kind: 'local' };
-
 /**
- * Callees whose calls are pure by contract, so a module may call them while
- * it loads without a `/* @__PURE__ *\/` annotation:
+ * Whether a call is a direct `Symbol.for` call with a single string-literal key,
+ * where `Symbol` isn't shadowed — the one call this check trusts by name, so a
+ * module may make it while it loads without a `/* @__PURE__ *\/` annotation.
+ * It is an idempotent read-or-insert on the engine's symbol registry, which no
+ * code can enumerate: dropping an unused call is unobservable, because a later
+ * `Symbol.for` of the same key returns the same symbol either way. Bundlers
+ * know this too: esbuild drops an unused `const k = Symbol.for('…')` without an
+ * annotation, so trusting exactly that shape hides nothing a consumer's bundle
+ * would keep.
  *
- * - Effect's `Schema` and `Option` modules, which only build values;
- * - the global `Symbol.for`, an idempotent registry read.
+ * The shape is narrow because esbuild's is: it keeps the call (and its
+ * constant) when the key is an identifier, an object (whose `toString` could
+ * run anything), a template with an expression, or there is more than one
+ * argument, and when `Symbol` is any module-level binding — an import, a
+ * function or class declaration, or a name inside a destructuring pattern.
+ * So only `Symbol.for('…')`, or a template key with no `${}`, counts — written
+ * with a plain `.for`, no optional chaining — and only in a module with no
+ * top-level `Symbol` (`topLevelNamesOf`).
  *
- * Trust covers the whole call chain rooted at one of these (`Schema.X(a)(b)`),
- * callbacks it invokes included; implicit getters and iterators are invisible
- * to this syntax check either way.
- *
- * Anything else called at load — a global, any other import, the workspace's
- * own factories (`required`, `createMarkdownSerialiser`), a local helper —
- * fails until it is annotated `/* @__PURE__ *\/` in source or added here with
- * a reason. Nothing is trusted by name: a same-file or relatively imported
- * function can be redefined, so only the annotation at the call site counts.
+ * Everything else called at load — Effect's `Schema` / `Option`, any other
+ * import, the workspace's own factories (`required`, `createMarkdownSerialiser`),
+ * a local helper — fails until it is annotated `/* @__PURE__ *\/` in source:
+ * a consumer's bundler keeps an unannotated call (and the constant it
+ * initialises) whatever this check believes, so only the annotation at the
+ * call site counts.
  */
-const isPureCallee = (
-  root: string,
-  binding: Binding | undefined,
-  property: string | undefined,
-): boolean => {
-  if (binding === undefined) return root === 'Symbol' && property === 'for';
-  if (binding.kind !== 'import') return false;
-  if (/^effect\/(?:Schema|Option)$/.test(binding.source)) return binding.imported === '*';
-  return binding.source === 'effect' && ['Schema', 'Option'].includes(binding.imported);
+const isSymbolFor = (call: AstNode, topLevel: ReadonlySet<string>): boolean => {
+  const callee = call['callee'];
+  const args = call['arguments'];
+  if (!isNode(callee) || callee.type !== 'MemberExpression') return false;
+  if (callee['computed'] !== false || callee['optional'] === true || call['optional'] === true)
+    return false;
+  const object = callee['object'];
+  const property = callee['property'];
+  if (
+    !isNode(object) ||
+    object.type !== 'Identifier' ||
+    object['name'] !== 'Symbol' ||
+    topLevel.has('Symbol') ||
+    !isNode(property) ||
+    property.type !== 'Identifier' ||
+    property['name'] !== 'for'
+  )
+    return false;
+  if (!Array.isArray(args) || args.length !== 1) return false;
+  const key: unknown = args[0];
+  if (!isNode(key)) return false;
+  if (key.type === 'Literal' || key.type === 'StringLiteral') {
+    return typeof key['value'] === 'string';
+  }
+  return (
+    key.type === 'TemplateLiteral' &&
+    Array.isArray(key['expressions']) &&
+    key['expressions'].length === 0
+  );
 };
 
 /** A node's source, whitespace collapsed and cut to one short line, for a failure message. */
@@ -546,40 +572,50 @@ const childrenOf = (node: AstNode): Array<{ key: string; child: AstNode }> =>
     return items.filter(isNode).map((child) => ({ key, child }));
   });
 
-/** The identifier a callee chain (`a.b()`, `a.b()()`, `a?.b`) starts from, and its first property. */
-const calleeRoot = (
-  callee: AstNode,
-): { name: string; property: string | undefined } | undefined => {
-  let node: AstNode = callee;
-  let property: string | undefined;
-  for (;;) {
-    if (node.type === 'Identifier') return { name: String(node['name']), property };
-    const next =
-      node.type === 'MemberExpression'
-        ? node['object']
-        : node.type === 'CallExpression'
-          ? node['callee']
-          : node.type === 'ChainExpression' || node.type === 'ParenthesizedExpression'
-            ? node['expression']
-            : undefined;
-    if (!isNode(next)) return undefined;
-    if (node.type === 'MemberExpression') {
-      const key = node['property'];
-      property = node['computed'] === false && isNode(key) ? String(key['name']) : undefined;
-    }
-    node = next;
-  }
-};
-
 /**
- * Every top-level binding of a parsed program: its imports (by local name,
- * with their source and imported name) and its own declarations.
+ * The name of every top-level binding of a parsed program — its imports
+ * (default, named and namespace), its function and class declarations, and
+ * every name its variable declarations bind, destructuring patterns included —
+ * so a module-level `Symbol` of any kind shadows the global.
  */
-const bindingsOf = (body: ReadonlyArray<AstNode>): Map<string, Binding> => {
-  const bindings = new Map<string, Binding>();
+const topLevelNamesOf = (body: ReadonlyArray<AstNode>): Set<string> => {
+  const names = new Set<string>();
+  // Walks a binding pattern down to the identifiers it binds: an object
+  // pattern's property values and rest, an array pattern's elements, a rest
+  // element's argument and a default's left-hand side.
   const declare = (node: unknown): void => {
-    if (isNode(node) && node.type === 'Identifier')
-      bindings.set(String(node['name']), { kind: 'local' });
+    if (!isNode(node)) return;
+    switch (node.type) {
+      case 'Identifier':
+        names.add(String(node['name']));
+        break;
+      case 'ObjectPattern': {
+        const properties = node['properties'];
+        for (const property of Array.isArray(properties) ? properties : []) {
+          if (!isNode(property)) continue;
+          declare(property.type === 'RestElement' ? property : property['value']);
+        }
+        const rest = node['rest'];
+        if (isNode(rest)) declare(rest);
+        break;
+      }
+      case 'ArrayPattern': {
+        const elements = node['elements'];
+        for (const element of Array.isArray(elements) ? elements : []) declare(element);
+        const rest = node['rest'];
+        if (isNode(rest)) declare(rest);
+        break;
+      }
+      case 'RestElement':
+      case 'BindingRestElement':
+        declare(node['argument']);
+        break;
+      case 'AssignmentPattern':
+        declare(node['left']);
+        break;
+      default:
+        break;
+    }
   };
   for (const raw of body) {
     const statement =
@@ -588,21 +624,12 @@ const bindingsOf = (body: ReadonlyArray<AstNode>): Map<string, Binding> => {
         ? raw['declaration']
         : raw;
     if (statement.type === 'ImportDeclaration') {
-      const source = isNode(statement['source']) ? String(statement['source']['value']) : '';
       const specifiers = statement['specifiers'];
       for (const specifier of Array.isArray(specifiers) ? specifiers : []) {
-        if (!isNode(specifier) || !isNode(specifier['local'])) continue;
-        const imported =
-          specifier.type === 'ImportNamespaceSpecifier'
-            ? '*'
-            : specifier.type === 'ImportDefaultSpecifier'
-              ? 'default'
-              : isNode(specifier['imported'])
-                ? String(specifier['imported']['name'] ?? specifier['imported']['value'])
-                : '';
-        bindings.set(String(specifier['local']['name']), { kind: 'import', source, imported });
+        if (isNode(specifier)) declare(specifier['local']);
       }
     } else if (statement.type === 'FunctionDeclaration' || statement.type === 'ClassDeclaration') {
+      // `export default function Symbol() {}` is a declaration, so it lands here too.
       declare(statement['id']);
     } else if (statement.type === 'VariableDeclaration') {
       const declarations = statement['declarations'];
@@ -611,7 +638,7 @@ const bindingsOf = (body: ReadonlyArray<AstNode>): Map<string, Binding> => {
       }
     }
   }
-  return bindings;
+  return names;
 };
 
 /**
@@ -631,12 +658,13 @@ const pureAnnotationEnds = (
  * decorators and computed keys — never a function body or an instance member,
  * which run later, if ever — and reports any `await`, assignment, update,
  * `delete`, dynamic `import()`, static block, decorator, or a call, `new` or
- * tagged template that is neither annotated pure nor on `isPureCallee`'s list.
+ * tagged template that is not annotated pure (bar the `Symbol.for` shape
+ * `isSymbolFor` admits).
  */
 const loadTimeEffects = (
   root: AstNode,
   source: string,
-  bindings: ReadonlyMap<string, Binding>,
+  topLevel: ReadonlySet<string>,
   pure: ReadonlySet<number>,
 ): Array<{ offset: number; reason: string }> => {
   const found: Array<{ offset: number; reason: string }> = [];
@@ -680,16 +708,12 @@ const loadTimeEffects = (
       case 'CallExpression':
       case 'NewExpression':
       case 'TaggedTemplateExpression': {
-        const callee = node.type === 'TaggedTemplateExpression' ? node['tag'] : node['callee'];
-        const named = isNode(callee) ? calleeRoot(callee) : undefined;
         const allowed =
-          annotated(node) ||
-          (named !== undefined &&
-            isPureCallee(named.name, bindings.get(named.name), named.property));
+          annotated(node) || (node.type === 'CallExpression' && isSymbolFor(node, topLevel));
         if (!allowed) {
           found.push({
             offset: node.start,
-            reason: `a call at load that is not annotated /* @__PURE__ */ nor a known-pure factory: ${text(node)}`,
+            reason: `a call at load that is not annotated /* @__PURE__ */: ${text(node)}`,
           });
         }
         break;
@@ -736,7 +760,7 @@ const programEffects = (
   const program = parsed.program;
   const body: Array<AstNode> =
     isNode(program) && Array.isArray(program['body']) ? program['body'].filter(isNode) : [];
-  const bindings = bindingsOf(body);
+  const topLevel = topLevelNamesOf(body);
   const pure = pureAnnotationEnds(parsed.comments);
   for (const statement of body) {
     const bareSource =
@@ -776,7 +800,7 @@ const programEffects = (
       );
       continue;
     }
-    for (const effect of loadTimeEffects(statement, source, bindings, pure)) {
+    for (const effect of loadTimeEffects(statement, source, topLevel, pure)) {
       problems.push(`${at(effect.offset)}: ${effect.reason}`);
     }
   }

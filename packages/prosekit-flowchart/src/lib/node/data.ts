@@ -33,13 +33,15 @@ export type FlowchartPosition = FlowchartNodeSchema['position'];
  * `parseFlowchartData` runs per flowchart block on every server render, so
  * none of these decoders must be rebuilt per call.
  */
-const decodeJson = Schema.decodeUnknownOption(Schema.fromJsonString(Schema.Unknown));
+const decodeJson = /* @__PURE__ */ Schema.decodeUnknownOption(
+  /* @__PURE__ */ Schema.fromJsonString(Schema.Unknown),
+);
 
 /** Decodes a single node, dropping it (via `Option.none()`) if malformed. */
-const decodeFlowchartNode = Schema.decodeUnknownOption(FlowchartNodeSchema);
+const decodeFlowchartNode = /* @__PURE__ */ Schema.decodeUnknownOption(FlowchartNodeSchema);
 
 /** Decodes a single edge, dropping it (via `Option.none()`) if malformed. */
-const decodeFlowchartEdge = Schema.decodeUnknownOption(FlowchartEdgeSchema);
+const decodeFlowchartEdge = /* @__PURE__ */ Schema.decodeUnknownOption(FlowchartEdgeSchema);
 
 /** Empty flowchart payload — used as the default attr value and on parse failure. */
 export const EMPTY_FLOWCHART: FlowchartDataSchema = { nodes: [], edges: [] };
