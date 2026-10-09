@@ -64,13 +64,11 @@ import { lazySchema } from './lazy-schema.ts';
  * through `Schema.Defect()`, which is JSON-encodable, so the error survives a
  * wire hop to a client or a log sink.
  */
-export class DocumentDecodeError extends Schema.TaggedError<DocumentDecodeError>()(
-  'DocumentDecodeError',
-  {
+export class DocumentDecodeError
+  extends /* @__PURE__ */ Schema.TaggedError<DocumentDecodeError>()('DocumentDecodeError', {
     document: Schema.String,
-    issue: Schema.Defect(),
-  },
-) {}
+    issue: /* @__PURE__ */ Schema.Defect(),
+  }) {}
 
 /** How {@link defineDocumentSchema} builds a document schema. */
 export interface DocumentSchemaOptions {

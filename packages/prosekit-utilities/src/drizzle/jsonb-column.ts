@@ -19,9 +19,9 @@ import { customType } from 'drizzle-orm/pg-core';
  * (`JSON.stringify`) and decoding runs it as a total operation whose `None`
  * replaces the `catch` a hand-rolled `JSON.parse` would need.
  */
-const JsonText = Schema.fromJsonString(Schema.Unknown);
-const encodeJson = Schema.encodeSync(JsonText);
-const decodeJson = Schema.decodeUnknownOption(JsonText);
+const JsonText = /* @__PURE__ */ Schema.fromJsonString(Schema.Unknown);
+const encodeJson = /* @__PURE__ */ Schema.encodeSync(JsonText);
+const decodeJson = /* @__PURE__ */ Schema.decodeUnknownOption(JsonText);
 
 /**
  * Builds a typed JSONB Drizzle custom column backed by an Effect Schema

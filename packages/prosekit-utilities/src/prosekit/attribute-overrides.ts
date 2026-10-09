@@ -27,7 +27,9 @@ export type AttributeOverrides = Readonly<
 >;
 
 /** The value schema both table cell types' `colwidth` attribute carries. */
-const TABLE_CELL_COLWIDTH = Schema.NullOr(Schema.Array(Schema.Finite));
+const TABLE_CELL_COLWIDTH = /* @__PURE__ */ Schema.NullOr(
+  /* @__PURE__ */ Schema.Array(Schema.Finite),
+);
 
 /**
  * The overlay for ProseKit's stock nodes — the default when
@@ -51,15 +53,17 @@ const TABLE_CELL_COLWIDTH = Schema.NullOr(Schema.Array(Schema.Finite));
  * wrapped: a cell that has never been resized genuinely has none.
  */
 export const STANDARD_ATTRIBUTE_OVERRIDES: AttributeOverrides = {
-  heading: { level: /* @__PURE__ */ required(Schema.Literals([1, 2, 3, 4, 5, 6])) },
+  heading: { level: /* @__PURE__ */ required(/* @__PURE__ */ Schema.Literals([1, 2, 3, 4, 5, 6])) },
   list: {
-    kind: /* @__PURE__ */ required(Schema.Literals(['bullet', 'ordered', 'task', 'toggle'])),
-    order: Schema.NullOr(Schema.Finite),
+    kind: /* @__PURE__ */ required(
+      /* @__PURE__ */ Schema.Literals(['bullet', 'ordered', 'task', 'toggle']),
+    ),
+    order: /* @__PURE__ */ Schema.NullOr(Schema.Finite),
   },
   image: {
-    src: /* @__PURE__ */ required(Schema.NullOr(Schema.String)),
-    width: /* @__PURE__ */ required(Schema.NullOr(Schema.Finite)),
-    height: /* @__PURE__ */ required(Schema.NullOr(Schema.Finite)),
+    src: /* @__PURE__ */ required(/* @__PURE__ */ Schema.NullOr(Schema.String)),
+    width: /* @__PURE__ */ required(/* @__PURE__ */ Schema.NullOr(Schema.Finite)),
+    height: /* @__PURE__ */ required(/* @__PURE__ */ Schema.NullOr(Schema.Finite)),
   },
   codeBlock: { language: /* @__PURE__ */ required(Schema.String) },
   tableCell: { colwidth: TABLE_CELL_COLWIDTH },

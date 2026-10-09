@@ -68,7 +68,7 @@ export type DocumentGrammarGuard = (value: unknown) => boolean;
  * and JSON-safe by construction — and a non-JSON value (a `Date`, a
  * function) is still rejected rather than waved through.
  */
-const ContentShape = Schema.Array(Schema.Json);
+const ContentShape = /* @__PURE__ */ Schema.Array(Schema.Json);
 
 /**
  * Splits a camel-case shape name into the words a violation message reads
