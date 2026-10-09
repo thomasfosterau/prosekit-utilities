@@ -327,7 +327,10 @@ fi
 # deletes the last working copy, and nothing else in those directories — the
 # lock, the log, the `effect` link, a real `…/effect` directory, `*.tmp.*` work
 # dirs (the age sweep's), anything a person put there — is touched. Each
-# removal is logged to $ES_LOG.
+# removal is logged to $ES_LOG. Sessions sharing one $HOME but pinning
+# different versions (two branches in one container) each prune the other's
+# copy and refetch it on their next start; that costs bandwidth, not
+# correctness.
 #
 # Offline, both steps log and the job ends; the session never waits on it.
 ES_VERSION="0.5.3"
@@ -397,7 +400,8 @@ es_is_version() {
 # Remove $1/$2, a version directory an earlier pin left behind, and nothing
 # else. Every guard must hold: the parent is $ES_ROOT (names `<ver>`) or
 # $ES_SHARE (names `effect@<ver>`), as a non-empty absolute path ending in the
-# expected suffix; the name has no slash and its version passes
+# expected suffix, and is not itself a symlink (a cache dir pointed elsewhere
+# is never pruned through); the name has no slash and its version passes
 # es_is_version; and the target is a real directory, not a symlink. So an
 # unset variable, the lock, the log, the `effect` link or anything else that
 # lands here is skipped, never removed.
@@ -415,6 +419,7 @@ es_prune_dir() {
   else
     return 0
   fi
+  [ ! -L "$parent" ] || return 0
   es_is_version "$ver" || return 0
   dir="$parent/$name"
   [ -d "$dir" ] && [ ! -L "$dir" ] || return 0
@@ -489,15 +494,17 @@ provision_effect_solutions() {
     fi
     # Only now, with this version's binary cached and verified (re-hashed
     # above, or hash-checked before it was moved in), drop the binaries of
-    # earlier pins. One the PATH entry still points at is kept, so a failed
-    # relink never leaves a dangling link.
+    # earlier pins, but only when the PATH entry is absent or already points
+    # at this version's binary: if the relink failed, nothing is pruned, so the
+    # entry is never left dangling (compared with $ES_BIN, not re-spelled).
     local entry name
-    for entry in "$ES_ROOT"/*; do
-      name="${entry##*/}"
-      [ "$name" != "$ES_VERSION" ] || continue
-      [ "$(readlink "$dest" 2>/dev/null)" != "$entry/effect-solutions" ] || continue
-      es_prune_dir "$ES_ROOT" "$name"
-    done
+    if [ ! -L "$dest" ] || [ "$(readlink "$dest" 2>/dev/null)" = "$ES_BIN" ]; then
+      for entry in "$ES_ROOT"/*; do
+        name="${entry##*/}"
+        [ "$name" != "$ES_VERSION" ] || continue
+        es_prune_dir "$ES_ROOT" "$name"
+      done
+    fi
   fi
 }
 
