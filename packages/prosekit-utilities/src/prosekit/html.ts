@@ -36,10 +36,11 @@ import { isSafeHref } from '../url-safety.ts';
  * which is what `htmlFromJSON` throws on. `cause` carries the original through
  * `Schema.Defect()`, so the error is JSON-encodable and survives a log sink.
  */
-export class HtmlRenderError extends Schema.TaggedError<HtmlRenderError>()('HtmlRenderError', {
-  reason: Schema.Literals(['dom-unavailable', 'serialise']),
-  cause: Schema.Defect(),
-}) {}
+export class HtmlRenderError
+  extends /* @__PURE__ */ Schema.TaggedError<HtmlRenderError>()('HtmlRenderError', {
+    reason: /* @__PURE__ */ Schema.Literals(['dom-unavailable', 'serialise']),
+    cause: /* @__PURE__ */ Schema.Defect(),
+  }) {}
 
 // ---------------------------------------------------------------------------
 // URL sanitisation
@@ -96,7 +97,7 @@ export function sanitiseDocument(node: NodeJSON): NodeJSON {
  * The promise, not the document, is cached: concurrent first renders share one
  * import rather than racing several.
  */
-let defaultDocument: Option.Option<Promise<Document>> = Option.none();
+let defaultDocument: Option.Option<Promise<Document>> = /* @__PURE__ */ Option.none();
 
 const resolveDefaultDocument = (): Promise<Document> => {
   if (Option.isNone(defaultDocument)) {

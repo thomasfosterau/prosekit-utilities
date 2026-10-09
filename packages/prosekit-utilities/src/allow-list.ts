@@ -89,15 +89,13 @@ export const defineAllowList = (options: {
  * human-readable form both source applications emitted, unchanged, because
  * it is what an API returns to the author.
  */
-export class DocumentViolation extends Schema.TaggedError<DocumentViolation>()(
-  'DocumentViolation',
-  {
+export class DocumentViolation
+  extends /* @__PURE__ */ Schema.TaggedError<DocumentViolation>()('DocumentViolation', {
     label: Schema.String,
-    kind: Schema.Literals(['node', 'mark', 'href']),
+    kind: /* @__PURE__ */ Schema.Literals(['node', 'mark', 'href']),
     name: Schema.String,
     message: Schema.String,
-  },
-) {}
+  }) {}
 
 /** A document as the walk needs to see it: an envelope with `content`. */
 interface WithContent {
