@@ -11,6 +11,7 @@
 ## Invariants
 
 - **`./node` follows the core's Effect house style** — `Schema.TaggedError` errors, `Option`/`Result`, plain functions for total computations; see [`packages/prosekit-utilities/CLAUDE.md` § Invariants](../prosekit-utilities/CLAUDE.md#invariants).
+- **Every module-load call in `./node` carries `/* @__PURE__ */`** — the `Schema.Struct` / `Schema.Array` payload schemas in `schema.ts` and the decoders and encoder built once in `data.ts` and `flowchart-node.ts`, nested argument calls included — so a bundle that imports only `EMPTY_FLOWCHART`, `generateFlowchartSvg` or `flowchartMarkdown` carries none of Effect's `Schema` machinery. `vp run check:dist` fails on an unannotated one; the rule and its purity bar are in the root [AGENTS.md](../../AGENTS.md) `"sideEffects": false` bullet.
 - **No Storybook here.** This package's stories (`src/stories/`) are rendered by the one Storybook in `packages/prosekit-svelte`, whose `stories` glob reaches across; there is no `.storybook/` in this package.
 - **`tests/node/` runs in Chromium too**, so a mounted ProseMirror view is available to the `./node` tests.
 
