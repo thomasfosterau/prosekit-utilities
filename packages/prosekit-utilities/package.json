@@ -1,7 +1,7 @@
 {
   "$schema": "https://www.schemastore.org/package",
   "name": "@thomasfosterau/prosekit-utilities",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "ProseKit document grammars as Effect Schemas: browser-cheap document shapes, node/mark allow-lists, an Effect Schema derived from a compiled ProseMirror schema, HTML and Markdown serialisation, and Drizzle jsonb document columns",
   "keywords": [
     "drizzle",
