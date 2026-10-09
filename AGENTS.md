@@ -77,7 +77,7 @@ Effect is used by the core package and by `prosekit-flowchart`'s `./node` entry 
 
 ## Agent sessions
 
-- The SessionStart hook ([`.claude/hooks/session-start.sh`](.claude/hooks/session-start.sh)) syncs dependencies against the lockfile, writes a `vp` shim on `~/.local/bin` that resolves the nearest project's `vite-plus`, repairs a broken bare `node`, runs `svelte-kit sync` on a first checkout, bridges the image's Chromium to the revision the pinned `playwright` expects, and provisions `effect-solutions` plus a shallow Effect source clone in the background (§ Effect). It hydrates no secrets, and there are none to hydrate.
+- The SessionStart hook ([`.claude/hooks/session-start.sh`](.claude/hooks/session-start.sh)) syncs dependencies against the lockfile, writes a `vp` shim on `~/.local/bin` that resolves the nearest project's `vite-plus`, repairs a broken bare `node`, runs `svelte-kit sync` on a first checkout, bridges the image's Chromium to the revision the pinned `playwright` expects, and provisions `effect-solutions` plus a shallow Effect source clone in the background (§ Effect), removing the copies earlier pins left once the current ones are in place and verified. It hydrates no secrets, and there are none to hydrate.
 - A PostToolUse hook runs `vp fmt --write` on each `.ts`/`.tsx`/`.js`/`.css`/`.json`/`.md`/`.yaml` file an Edit or Write touches. It skips `.svelte`: Oxfmt can't format it, so keep `.svelte` files in the same style by hand (two-space indent, single quotes); the pre-commit hook lints them (`vp lint --fix`).
 - Won't run in an agent session: publishing (only the release workflow can mint the OIDC token). Everything in § Verification runs here, given a Chromium for the browser suites.
 

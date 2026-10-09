@@ -318,6 +318,20 @@ fi
 # usable. A real (non-symlink) `…/effect` directory is left alone: someone put
 # it there.
 #
+# Earlier pins. Both caches are keyed by version, so a bump fetches the new
+# copy beside the old one (~98 MB a binary, ~58 MB a clone). Under the lock,
+# and only once the CURRENT version is in place, verified and linked, the job
+# removes the other version directories: `$ES_ROOT/<ver>` and
+# `$ES_SHARE/effect@<ver>`, real directories whose names are bare semvers
+# (es_prune_dir holds every guard). A failed or offline fetch therefore never
+# deletes the last working copy, and nothing else in those directories — the
+# lock, the log, the `effect` link, a real `…/effect` directory, `*.tmp.*` work
+# dirs (the age sweep's), anything a person put there — is touched. Each
+# removal is logged to $ES_LOG. Sessions sharing one $HOME but pinning
+# different versions (two branches in one container) each prune the other's
+# copy and refetch it on their next start; that costs bandwidth, not
+# correctness.
+#
 # Offline, both steps log and the job ends; the session never waits on it.
 ES_VERSION="0.5.3"
 ES_INTEGRITY="sha512-JIG7XV0gJF5eVV+9un5Yp7MEFMGNfuTYxbiV/HzS80zH/9qx9ZOoXd6Mlw0FXdbC41LGcpWYZJG3MnzxYawEWg=="
@@ -372,6 +386,47 @@ digest_of() {
       process.stdout.write(c.createHash(process.argv[1])
         .update(f.readFileSync(process.argv[2]))
         .digest(process.argv[1] === "sha512" ? "base64" : "hex"))' "$1" "$2"
+  fi
+}
+
+# Is $1 the name of one of this section's version directories? A bare semver,
+# the same pattern the catalog version must match, and never a work dir: a
+# pre-release pin's `<ver>.tmp.XXXXXX` would otherwise match too, and work dirs
+# belong to the age sweep in provision_effect.
+es_is_version() {
+  [[ "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]] && [[ "$1" != *.tmp.* ]]
+}
+
+# Remove $1/$2, a version directory an earlier pin left behind, and nothing
+# else. Every guard must hold: the parent is $ES_ROOT (names `<ver>`) or
+# $ES_SHARE (names `effect@<ver>`), as a non-empty absolute path ending in the
+# expected suffix, and is not itself a symlink (a cache dir pointed elsewhere
+# is never pruned through); the name has no slash and its version passes
+# es_is_version; and the target is a real directory, not a symlink. So an
+# unset variable, the lock, the log, the `effect` link or anything else that
+# lands here is skipped, never removed.
+es_prune_dir() {
+  local parent="$1" name="$2" ver dir
+  case "$name" in
+    "" | */*) return 0 ;;
+  esac
+  if [ -n "$ES_ROOT" ] && [ "$parent" = "$ES_ROOT" ]; then
+    case "$parent" in /?*/.cache/effect-solutions) ;; *) return 0 ;; esac
+    ver="$name"
+  elif [ -n "$ES_SHARE" ] && [ "$parent" = "$ES_SHARE" ]; then
+    case "$parent" in /?*/.local/share/effect-solutions) ;; *) return 0 ;; esac
+    case "$name" in effect@?*) ver="${name#effect@}" ;; *) return 0 ;; esac
+  else
+    return 0
+  fi
+  [ ! -L "$parent" ] || return 0
+  es_is_version "$ver" || return 0
+  dir="$parent/$name"
+  [ -d "$dir" ] && [ ! -L "$dir" ] || return 0
+  if rm -rf -- "$dir" 2>/dev/null; then
+    log "removed $dir, left by an earlier pin"
+  else
+    log "could not remove $dir; continuing"
   fi
 }
 
@@ -437,6 +492,19 @@ provision_effect_solutions() {
     elif [ "$(readlink "$dest" 2>/dev/null)" != "$ES_BIN" ]; then
       ln -sfn "$ES_BIN" "$dest" 2>/dev/null || log "could not link effect-solutions"
     fi
+    # Only now, with this version's binary cached and verified (re-hashed
+    # above, or hash-checked before it was moved in), drop the binaries of
+    # earlier pins, but only when the PATH entry is absent or already points
+    # at this version's binary: if the relink failed, nothing is pruned, so the
+    # entry is never left dangling (compared with $ES_BIN, not re-spelled).
+    local entry name
+    if [ ! -L "$dest" ] || [ "$(readlink "$dest" 2>/dev/null)" = "$ES_BIN" ]; then
+      for entry in "$ES_ROOT"/*; do
+        name="${entry##*/}"
+        [ "$name" != "$ES_VERSION" ] || continue
+        es_prune_dir "$ES_ROOT" "$name"
+      done
+    fi
   fi
 }
 
@@ -492,6 +560,20 @@ provision_effect_source() {
       ln -sfn "effect@$effect_version" "$effect_link" 2>/dev/null \
         || log "could not link $effect_link"
     fi
+  fi
+  # Only once this version's clone is in place, at its pinned commit, and
+  # linked, drop the clones of earlier pins. A real `…/effect` directory or a
+  # failed relink means the current clone is not what agents read, so nothing
+  # is removed. `effect` itself never matches `effect@<semver>`.
+  if [ -d "$effect_src" ] && [ -L "$effect_link" ] \
+    && [ "$(readlink "$effect_link" 2>/dev/null)" = "effect@$effect_version" ] \
+    && [ "$(git -C "$effect_src" rev-parse HEAD 2>/dev/null)" = "$effect_commit" ]; then
+    local entry name
+    for entry in "$ES_SHARE"/effect@*; do
+      name="${entry##*/}"
+      [ "$name" != "effect@$effect_version" ] || continue
+      es_prune_dir "$ES_SHARE" "$name"
+    done
   fi
 }
 
