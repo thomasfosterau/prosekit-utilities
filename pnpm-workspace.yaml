@@ -43,8 +43,8 @@ catalog:
   # SvelteKit is a BUILD-TIME dependency here, not a runtime one: `svelte-kit
   # sync` generates the package's ambient types and `svelte-package` emits
   # `dist/`. Nothing in `src/lib/` may import `$app/*`.
-  '@sveltejs/kit': 3.0.1
-  '@sveltejs/package': 3.0.0
+  '@sveltejs/kit': 3.1.0
+  '@sveltejs/package': 3.0.1
   '@sveltejs/vite-plugin-svelte': ^7.3.1
   '@tailwindcss/vite': ^4.3.3
   '@testing-library/jest-dom': ^7.0.1
