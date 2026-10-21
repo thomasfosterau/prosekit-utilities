@@ -101,7 +101,7 @@ catalog:
   # still launches under the new release; drop the bridge once the image
   # carries the wanted revision.
   playwright: 1.60.0
-  prosekit: ^0.22.3
+  prosekit: ^0.22.4
   storybook: ^10.6.1
   svelte-check: ^4.7.6
   svelte: ^5.57.2
