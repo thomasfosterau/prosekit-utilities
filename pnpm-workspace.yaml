@@ -48,7 +48,7 @@ catalog:
   '@sveltejs/vite-plugin-svelte': ^7.3.1
   '@tailwindcss/vite': ^4.3.3
   '@testing-library/jest-dom': ^7.0.1
-  '@types/node': ^26.6.4
+  '@types/node': ^26.6.5
   # TypeScript 7 (the native Go compiler, bin `tsc`) type-checks the pure-TS
   # core package, 8–12× faster than TS6; svelte-check still needs the TS6 JS
   # API (the `typescript` alias below). The same split the app repos run.
