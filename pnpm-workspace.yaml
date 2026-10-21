@@ -77,7 +77,7 @@ catalog:
   # Effect 4. A PEER of every package here that uses it, never a dependency:
   # the consuming app owns the singleton.
   effect: 4.0.0
-  happy-dom: ^20.14.0
+  happy-dom: ^21.0.1
   # The server-side DOM the HTML renderer reaches through a dynamic import
   # when `globalThis.document` is absent. linkedom, not happy-dom: happy-dom
   # pulls `node:child_process` / `node:vm`, which workerd does not provide.
