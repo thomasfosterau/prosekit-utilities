@@ -69,7 +69,7 @@ catalog:
   # the insert menu and the dialogs are built on these rather than on
   # hand-rolled keyboard and focus handling. A runtime `dependency` of the
   # Svelte packages, not a peer: consumers should not have to know it exists.
-  bits-ui: ^2.19.4
+  bits-ui: ^2.19.5
   daisyui: ^5.7.50
   # A peer of `@thomasfosterau/prosekit-utilities/drizzle` only. The app
   # repos are on this release candidate; the peer range is `^1.0.0-rc.5`.
