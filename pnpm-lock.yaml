@@ -52,8 +52,8 @@ catalogs:
       specifier: ^2.19.4
       version: 2.19.4
     daisyui:
-      specifier: ^5.7.47
-      version: 5.7.47
+      specifier: ^5.7.50
+      version: 5.7.50
     drizzle-orm:
       specifier: 1.0.0-rc.5-5935859
       version: 1.0.0-rc.5-5935859
@@ -238,7 +238,7 @@ importers:
         version: 5.0.3(@voidzero-dev/vite-plus-core@1.1.0(@types/node@26.6.4)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))(playwright@1.60.0)(vitest@5.0.3)
       daisyui:
         specifier: 'catalog:'
-        version: 5.7.47
+        version: 5.7.50
       playwright:
         specifier: 'catalog:'
         version: 1.60.0
@@ -2350,8 +2350,8 @@ packages:
     resolution: {integrity: sha512-b8AmV3kfQaqWAuacbPuNbL6vahnOJflOhexLzMMNLga62+/nh0JzvJ0aO/5a5MVgUFGS7Hu1P9P03o3fJkDCyw==}
     engines: {node: '>=12'}
 
-  daisyui@5.7.47:
-    resolution: {integrity: sha512-NOl4vPifelRqB3CMzoU751zc44KCDD9HdHMTTqQ30uiYVpIyK7+s94/ySDWgYqjdl1tQCaCrgGBx4KCizm+a3Q==}
+  daisyui@5.7.50:
+    resolution: {integrity: sha512-+/LRqnTCoc7s/bJEKKwtJSwzeXCVdAmRdNmZeZzgHCaQ9PJyl7j+2V2U32GQDMyD+VDkP9e/+JGoC72Y1hLk7w==}
 
   dedent-js@1.0.1:
     resolution: {integrity: sha512-OUepMozQULMLUmhxS95Vudo0jb0UchLimi3+pQ2plj61Fcy8axbP9hbiD4Sz6DPqn6XG3kfmziVfQ1rSys5AJQ==}
@@ -5474,7 +5474,7 @@ snapshots:
       d3-selection: 3.0.0
       d3-transition: 3.0.1(d3-selection@3.0.0)
 
-  daisyui@5.7.47: {}
+  daisyui@5.7.50: {}
 
   dedent-js@1.0.1: {}
 
