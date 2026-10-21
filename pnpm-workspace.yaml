@@ -121,7 +121,7 @@ catalog:
   # ignored in .github/dependabot.yml, #60): on its vite-plus PR, set all
   # three to the new vite-plus's `dependencies.vitest` by hand, in that PR.
   # `vite` is the same release published under its aliased core package.
-  vite-plus: 1.1.0
+  vite-plus: 1.3.0
   vite: npm:@voidzero-dev/vite-plus-core@1.1.0
   vitest: 5.0.3
   # `render` + locators for Svelte components under Vitest browser mode.
