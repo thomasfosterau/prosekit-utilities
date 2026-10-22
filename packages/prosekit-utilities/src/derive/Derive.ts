@@ -133,6 +133,8 @@ export function deriveDocumentSchemas<Specs extends Record<string, DocumentSchem
   options?: DeriveOptions,
 ): { readonly [K in keyof Specs]: Schema.Codec<DerivedNodeJSON> } {
   const cache = createRegistryCache();
+  // SAFETY: `Record.map` keeps exactly the keys of `schemas` and maps each to
+  // a `Schema.Codec<DerivedNodeJSON>`; its return type only loses the key set.
   return Record.map(schemas, ({ schema, topTypeName }) =>
     documentNode(new Registry(schema, options, cache), schema, Option.fromNullishOr(topTypeName)),
   ) as { readonly [K in keyof Specs]: Schema.Codec<DerivedNodeJSON> };

@@ -104,7 +104,9 @@ export const MENTION_ATTRIBUTE_OVERRIDES: AttributeOverrides = {
  */
 export const mergeAttributeOverrides = (
   ...overrides: ReadonlyArray<AttributeOverrides>
-): AttributeOverrides =>
-  Array.reduce(overrides, {} as AttributeOverrides, (merged, current) =>
+): AttributeOverrides => {
+  const none: AttributeOverrides = {};
+  return Array.reduce(overrides, none, (merged, current) =>
     Record.union(merged, current, (left, right) => ({ ...left, ...right })),
   );
+};

@@ -92,12 +92,14 @@ export function defineMention() {
       {
         tag: 'span[data-mention-id]',
         getAttrs: (dom) => ({
-          id: (dom as HTMLElement).getAttribute('data-mention-id') ?? '',
-          label: (dom as HTMLElement).getAttribute('data-mention-label') ?? '',
+          id: dom.getAttribute('data-mention-id') ?? '',
+          label: dom.getAttribute('data-mention-label') ?? '',
         }),
       },
     ],
     toDOM(node) {
+      // SAFETY: `id` and `label` have string defaults and `parseDOM` only ever
+      // yields strings, so ProseMirror's loosely typed `attrs` holds two here.
       const { id, label } = node.attrs as { id: string; label: string };
       return [
         'span',

@@ -31,6 +31,7 @@ import * as Array from 'effect/Array';
 import * as Effect from 'effect/Effect';
 import * as HashSet from 'effect/HashSet';
 import * as Option from 'effect/Option';
+import * as Predicate from 'effect/Predicate';
 import * as Result from 'effect/Result';
 import * as Schema from 'effect/Schema';
 import type * as SchemaAST from 'effect/SchemaAST';
@@ -121,13 +122,8 @@ interface ContentCarrier {
  * walk. The walk runs on values a structural check has only proved to be
  * JSON, so that case is reachable.
  */
-const typeNameOf = (value: unknown): string => {
-  const type: unknown =
-    value === null || typeof value !== 'object'
-      ? undefined
-      : (value as Record<string, unknown>).type;
-  return typeof type === 'string' ? type : '';
-};
+const typeNameOf = (value: MarkJSON | NodeJSON): string =>
+  Predicate.isObjectOrArray(value) && Predicate.isString(value.type) ? value.type : '';
 
 const nodeViolationOf = (allowList: AllowList, type: string): DocumentViolation =>
   new DocumentViolation({
@@ -243,6 +239,10 @@ export const checkAllowList =
 export const allowListFilter = (allowList: AllowList): SchemaAST.Filter<ContentCarrier> =>
   Schema.makeFilter(
     (value: ContentCarrier) =>
+      // SAFETY: the walk reads an entry's `marks` / `content` only after
+      // `typeNameOf` has found its `type` in the vocabulary, which no `null`,
+      // stray string or type-less entry can pass, so a non-node entry is
+      // reported as a violation before anything else is read from it.
       Option.match(allowListViolation(allowList, value as WithContent), {
         onNone: () => true,
         onSome: (violation) => violation.message,

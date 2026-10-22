@@ -19,6 +19,7 @@ import * as Array from 'effect/Array';
 import * as Effect from 'effect/Effect';
 import * as Option from 'effect/Option';
 import * as Predicate from 'effect/Predicate';
+import * as Result from 'effect/Result';
 import * as Schema from 'effect/Schema';
 import { htmlFromJSON, type NodeJSON as PkNodeJSON } from 'prosekit/core';
 import type { Schema as PmSchema } from '@prosekit/pm/model';
@@ -60,18 +61,24 @@ export class HtmlRenderError
  * to something which will render it, not only to {@link createHtmlRenderer}.
  */
 export function sanitiseDocument(node: NodeJSON): NodeJSON {
-  const next: { -readonly [K in keyof NodeJSON]: NodeJSON[K] } = { ...node };
   // `NodeJSON` already declares `marks` and `content`; the array guards stay
   // because a hand-crafted document can carry a non-array value in either.
-  if (Array.isArray(node.marks)) {
-    next.marks = node.marks.filter((mark) => mark.type !== 'link' || isSafeHref(mark.attrs?.href));
-  }
-  if (Array.isArray(node.content)) {
-    next.content = node.content
-      .filter((child) => child.type !== 'image' || isSafeHref(child.attrs?.src))
-      .map(sanitiseDocument);
-  }
-  return next;
+  // A key the node does not carry stays absent from the copy.
+  const copy = { ...node };
+  const marked = Array.isArray(node.marks)
+    ? {
+        ...copy,
+        marks: node.marks.filter((mark) => mark.type !== 'link' || isSafeHref(mark.attrs?.href)),
+      }
+    : copy;
+  return Array.isArray(node.content)
+    ? {
+        ...marked,
+        content: node.content
+          .filter((child) => child.type !== 'image' || isSafeHref(child.attrs?.src))
+          .map(sanitiseDocument),
+      }
+    : marked;
 }
 
 // ---------------------------------------------------------------------------
@@ -104,10 +111,11 @@ const resolveDefaultDocument = (): Promise<Document> => {
     const loading = (async (): Promise<Document> => {
       if (!Predicate.isUndefined(globalThis.document)) return globalThis.document;
       const { parseHTML } = await import('linkedom');
-      // linkedom's `Document` is a structurally similar but nominally distinct
-      // class from lib.dom's; ProseKit only ever calls the shared subset on
-      // it. There is no schema to decode through — it is a live DOM object.
-      return parseHTML('<!doctype html><html><body></body></html>').document as unknown as Document;
+      // SAFETY: linkedom's `Document` is a structurally similar but nominally
+      // distinct class from lib.dom's; ProseKit only ever calls the shared
+      // subset on it. There is no schema to decode through — it is a live DOM
+      // object.
+      return parseHTML('<!doctype html><html><body></body></html>').document as Document;
     })();
     defaultDocument = Option.some(loading);
     return loading;
@@ -187,29 +195,38 @@ export function createHtmlRenderer(options: HtmlRendererOptions): HtmlRenderer {
   };
 
   const serialise = (doc: NodeJSON | DocumentJSON, host: Document): string => {
-    const editorDocument = toEditorDocument(sanitiseDocument(doc as NodeJSON));
-    // `NodeJSON` here is deeply readonly and ProseKit's is not; the two are
-    // structural twins otherwise, and nothing downstream mutates the tree.
-    const html = htmlFromJSON(editorDocument as unknown as PkNodeJSON, {
+    const editorDocument = toEditorDocument(sanitiseDocument(doc));
+    // SAFETY: `NodeJSON` here is deeply readonly and ProseKit's is not; the
+    // two are structural twins otherwise, and nothing downstream mutates the
+    // tree.
+    const html = htmlFromJSON(editorDocument as PkNodeJSON, {
       schema: options.schema(),
       document: host,
     });
     return postProcess === undefined ? html : postProcess(html, host);
   };
 
-  const renderPromise = async (doc: NodeJSON | DocumentJSON): Promise<string> => {
-    let host: Document;
-    try {
-      host = await documentPromise();
-    } catch (cause) {
-      throw new HtmlRenderError({ reason: 'dom-unavailable', cause });
-    }
-    try {
-      return serialise(doc, host);
-    } catch (cause) {
-      throw new HtmlRenderError({ reason: 'serialise', cause });
-    }
-  };
+  // A synchronous throw from the `document` thunk is a rejection like any
+  // other, so both reach the `dom-unavailable` branch below.
+  const hostPromise = (): Promise<Document> =>
+    Result.match(Result.try(documentPromise), {
+      onSuccess: (loading) => loading,
+      onFailure: (cause) => Promise.reject(cause),
+    });
+
+  const renderPromise = (doc: NodeJSON | DocumentJSON): Promise<string> =>
+    hostPromise().then(
+      (host) =>
+        Result.match(
+          Result.try(() => serialise(doc, host)),
+          {
+            onSuccess: (html) => html,
+            onFailure: (cause) =>
+              Promise.reject(new HtmlRenderError({ reason: 'serialise', cause })),
+          },
+        ),
+      (cause) => Promise.reject(new HtmlRenderError({ reason: 'dom-unavailable', cause })),
+    );
 
   return {
     renderPromise,

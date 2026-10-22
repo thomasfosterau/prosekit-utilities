@@ -138,6 +138,30 @@ export default defineConfig({
           // `DocumentShape.narrow` are published API that consumers' apps
           // name. Renaming them is a major break for no behavioural gain.
           'effect/no-shape-in-symbol-names': 'off',
+
+          // ---- Rules this workspace's conventions cut across --------------
+          // As in effect-web: each stays visible as a warning, so a NEW site
+          // is still read, while the published surface it fires on today
+          // keeps its shape.
+          //
+          // Fires on `?: T | undefined`, the ONLY spelling of an optional
+          // member `exactOptionalPropertyTypes` lets a caller forward an
+          // optional of its own into (AGENTS.md § Conventions), and on the
+          // one deliberately nullable public parameter (`extractDocumentText`
+          // takes a nullable database column). Every site today is one of
+          // the two; switching to `Option` would break the published API.
+          'effect/prefer-option-over-null': 'warn',
+          // `NodeJSON` / `MarkJSON` and the derive options mirror
+          // ProseMirror's JSON model, whose `attrs` is an open record of
+          // `unknown`. That is deliberate: a caller must narrow a value
+          // before using it, which is what keeps an `href` from skipping
+          // `isSafeHref`.
+          'effect/no-unsafe-dictionary-type': 'warn',
+          // `unknown` is the honest type at a decode boundary: the public
+          // `DocumentGrammarGuard` and `DocumentSchema.decode` exist to take
+          // unparsed input, and `schemaFromDefault` reads ProseMirror's
+          // `any`-typed `AttributeSpec.default`.
+          'effect/no-unknown-parameters': 'warn',
         },
       },
       // The test suites are the boundary where an Effect is run to a value

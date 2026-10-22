@@ -9,6 +9,9 @@
  * @module
  */
 
+import * as Arr from 'effect/Array';
+import * as Predicate from 'effect/Predicate';
+import * as String from 'effect/String';
 import type { DocumentJSON, MarkJSON, NodeJSON } from '../json.ts';
 import { isSafeHref } from '../url-safety.ts';
 import type { BlockSerialiser, InlineSerialiser, MarkSerialiser } from './serialiser.ts';
@@ -20,31 +23,31 @@ import type { BlockSerialiser, InlineSerialiser, MarkSerialiser } from './serial
  * children, so a missing `content` is one empty array rather than a
  * different guard in each case.
  */
-export const childrenOf = (node: NodeJSON | DocumentJSON | undefined): ReadonlyArray<NodeJSON> =>
-  node?.content === undefined ? [] : node.content;
+export const childrenOf = (node: NodeJSON | DocumentJSON): ReadonlyArray<NodeJSON> =>
+  node.content ?? [];
 
 // ---------------------------------------------------------------------------
 // Marks
 // ---------------------------------------------------------------------------
 
 /** `` `code` `` — verbatim, so the engine skips escaping and other emphasis. */
-export const codeMarkdown: MarkSerialiser = (text) => `\`${text}\``;
+const codeMarkdown: MarkSerialiser = (text) => `\`${text}\``;
 
 /** `~~strike~~`. */
-export const strikeMarkdown: MarkSerialiser = (text) => `~~${text}~~`;
+const strikeMarkdown: MarkSerialiser = (text) => `~~${text}~~`;
 
 /** `*italic*`. */
-export const italicMarkdown: MarkSerialiser = (text) => `*${text}*`;
+const italicMarkdown: MarkSerialiser = (text) => `*${text}*`;
 
 /** `**bold**`. */
-export const boldMarkdown: MarkSerialiser = (text) => `**${text}**`;
+const boldMarkdown: MarkSerialiser = (text) => `**${text}**`;
 
 /**
  * `[text](href)`, but only for an `href` the safe-URL allow-list admits — an
  * unsafe scheme degrades to the plain (still styled) link text rather than
  * emitting an executable URI.
  */
-export const linkMarkdown: MarkSerialiser = (text, mark: MarkJSON) => {
+const linkMarkdown: MarkSerialiser = (text, mark: MarkJSON) => {
   const href = mark.attrs?.href;
   return isSafeHref(href) ? `[${text}](${href.trim()})` : text;
 };
@@ -56,13 +59,13 @@ export const linkMarkdown: MarkSerialiser = (text, mark: MarkJSON) => {
  * CommonMark has no form for them, and a mark with no entry passes its text
  * through unchanged, which is what both source applications do.
  */
-export const stockMarks: Record<string, MarkSerialiser> = {
+export const stockMarks = {
   bold: boldMarkdown,
   code: codeMarkdown,
   italic: italicMarkdown,
   link: linkMarkdown,
   strike: strikeMarkdown,
-};
+} satisfies Record<string, MarkSerialiser>;
 
 // ---------------------------------------------------------------------------
 // Inline nodes
@@ -73,34 +76,34 @@ export const stockMarks: Record<string, MarkSerialiser> = {
  * trailing spaces (an editor or a diff tool that trims trailing whitespace
  * cannot silently delete it).
  */
-export const hardBreakMarkdown: InlineSerialiser = () => '\\\n';
+const hardBreakMarkdown: InlineSerialiser = () => '\\\n';
 
 /** The inline nodes in the shared base grammar. */
-export const stockInlines: Record<string, InlineSerialiser> = {
+export const stockInlines = {
   hardBreak: hardBreakMarkdown,
-};
+} satisfies Record<string, InlineSerialiser>;
 
 // ---------------------------------------------------------------------------
 // Block nodes
 // ---------------------------------------------------------------------------
 
 /** A paragraph: its inline content, nothing more. */
-export const paragraphMarkdown: BlockSerialiser = (node, context) =>
+const paragraphMarkdown: BlockSerialiser = (node, context) =>
   context.serialiseInline(childrenOf(node));
 
 /** `## Heading`, clamped into the 1..6 range CommonMark defines. */
-export const headingMarkdown: BlockSerialiser = (node, context) => {
-  const declared = typeof node.attrs?.level === 'number' ? node.attrs.level : 1;
+const headingMarkdown: BlockSerialiser = (node, context) => {
+  const declared = Predicate.isNumber(node.attrs?.level) ? node.attrs.level : 1;
   const level = Math.min(Math.max(declared, 1), 6);
   return `${'#'.repeat(level)} ${context.serialiseInline(childrenOf(node))}`;
 };
 
 /** `> quoted`, with a bare `>` on the blank lines between inner blocks. */
-export const blockquoteMarkdown: BlockSerialiser = (node, context) =>
+const blockquoteMarkdown: BlockSerialiser = (node, context) =>
   context
     .serialiseBlocks(childrenOf(node))
     .split('\n')
-    .map((line) => (line.length > 0 ? `> ${line}` : '>'))
+    .map((line) => (String.isNonEmpty(line) ? `> ${line}` : '>'))
     .join('\n');
 
 /**
@@ -111,8 +114,8 @@ export const blockquoteMarkdown: BlockSerialiser = (node, context) =>
  * backtick longer than the longest run inside the code, so embedded triple
  * backticks cannot close the block early.
  */
-export const codeBlockMarkdown: BlockSerialiser = (node) => {
-  const declared = typeof node.attrs?.language === 'string' ? node.attrs.language : '';
+const codeBlockMarkdown: BlockSerialiser = (node) => {
+  const declared = Predicate.isString(node.attrs?.language) ? node.attrs.language : '';
   const language = declared.replace(/[\n\r`]/g, '');
   const code = childrenOf(node)
     .map((child) => child.text ?? '')
@@ -123,13 +126,13 @@ export const codeBlockMarkdown: BlockSerialiser = (node) => {
 };
 
 /** `---`. */
-export const horizontalRuleMarkdown: BlockSerialiser = () => '---';
+const horizontalRuleMarkdown: BlockSerialiser = () => '---';
 
 /**
  * `![](src)` for a `src` the safe-URL allow-list admits; the empty string
  * otherwise, which drops the block from the output entirely.
  */
-export const imageMarkdown: BlockSerialiser = (node) => {
+const imageMarkdown: BlockSerialiser = (node) => {
   const src = node.attrs?.src;
   return isSafeHref(src) ? `![](${src.trim()})` : '';
 };
@@ -140,22 +143,26 @@ export const imageMarkdown: BlockSerialiser = (node) => {
  * cell's own block structure is flattened onto one line with its pipes
  * escaped.
  */
-export const tableMarkdown: BlockSerialiser = (node, context) => {
-  const rows = childrenOf(node).filter((row) => row.type === 'tableRow');
-  if (rows.length === 0) return '';
+const tableMarkdown: BlockSerialiser = (node, context) => {
   const cellText = (cell: NodeJSON): string =>
     context.serialiseBlocks(childrenOf(cell)).trim().replace(/\n+/g, ' ').replace(/\|/g, '\\|');
-  const rendered = rows.map((row) => childrenOf(row).map(cellText));
-  const columns = Math.max(...rendered.map((row) => row.length), 1);
-  const pad = (cells: ReadonlyArray<string>): string => {
-    const filled = [...cells];
-    while (filled.length < columns) filled.push('');
-    return `| ${filled.join(' | ')} |`;
-  };
-  const lines = [pad(rendered[0] ?? [])];
-  lines.push(`| ${Array.from({ length: columns }, () => '---').join(' | ')} |`);
-  for (const row of rendered.slice(1)) lines.push(pad(row));
-  return lines.join('\n');
+  return Arr.match(
+    childrenOf(node).filter((row) => row.type === 'tableRow'),
+    {
+      onEmpty: () => '',
+      onNonEmpty: (rows) => {
+        const [header, ...body] = Arr.map(rows, (row) => childrenOf(row).map(cellText));
+        const columns = Math.max(header.length, ...body.map((row) => row.length), 1);
+        const pad = (cells: Array<string>): string =>
+          `| ${Arr.pad(cells, columns, '').join(' | ')} |`;
+        return [
+          pad(header),
+          `| ${Arr.replicate('---', columns).join(' | ')} |`,
+          ...body.map(pad),
+        ].join('\n');
+      },
+    },
+  );
 };
 
 /**
@@ -165,7 +172,7 @@ export const tableMarkdown: BlockSerialiser = (node, context) => {
  * the prosemirror-flat-list model, so the run, not the node, is the unit of
  * serialisation and the engine owns it.
  */
-export const stockBlocks: Record<string, BlockSerialiser> = {
+export const stockBlocks = {
   blockquote: blockquoteMarkdown,
   codeBlock: codeBlockMarkdown,
   heading: headingMarkdown,
@@ -173,4 +180,4 @@ export const stockBlocks: Record<string, BlockSerialiser> = {
   image: imageMarkdown,
   paragraph: paragraphMarkdown,
   table: tableMarkdown,
-};
+} satisfies Record<string, BlockSerialiser>;
