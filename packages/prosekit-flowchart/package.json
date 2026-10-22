@@ -44,6 +44,7 @@
   },
   "devDependencies": {
     "@prosekit/pm": "catalog:",
+    "@storybook/addon-svelte-csf": "catalog:",
     "@storybook/sveltekit": "catalog:",
     "@sveltejs/kit": "catalog:",
     "@sveltejs/package": "catalog:",

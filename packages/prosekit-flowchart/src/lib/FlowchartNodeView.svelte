@@ -36,6 +36,9 @@
     editLabel?: string | undefined;
   }
 
+  // `node` is read as `$node` (store auto-subscription), which fallow's
+  // component-prop check does not follow.
+  // fallow-ignore-next-line unused-component-prop
   let { node, selected, setAttrs, editLabel = 'Edit' }: Props = $props();
 
   // A `bind:this` target, so the declared type must literally be `T |

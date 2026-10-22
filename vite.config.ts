@@ -63,6 +63,30 @@ export default defineConfig({
         dependsOn: [{ from: 'dependencies', task: 'build' }],
         cache: false,
       },
+      // Every package's suite — the core's node suite and both Svelte
+      // packages' browser suites — under ONE istanbul map at
+      // `coverage/coverage-final.json`, which `fallow audit` reads for exact
+      // per-function CRAP scores (`health.coverage` in .fallowrc.json).
+      // Without it fallow estimates every function as uncovered, and any
+      // function with cyclomatic complexity ≥ 5 fails the gate on its own.
+      // Run this before `fallow audit`: the PreToolUse fallow gate audits the
+      // map on disk and never refreshes it.
+      //
+      // Not the core's threshold gate: that stays the core's own
+      // `test:coverage`, which CI runs. One vitest process runs every
+      // project here, so no `from: 'dependencies'` edge builds the siblings a
+      // suite imports through `exports` (→ `dist/`), nor runs the Svelte
+      // packages' `svelte-kit sync`: each is named explicitly (cached, so a
+      // warm tree pays nothing).
+      'test:coverage': {
+        command: 'vp test run --coverage',
+        dependsOn: [
+          '@thomasfosterau/prosekit-utilities#build',
+          '@thomasfosterau/prosekit-svelte#build',
+          '@thomasfosterau/prosekit-flowchart#sync',
+        ],
+        cache: false,
+      },
     },
   },
 
@@ -133,6 +157,19 @@ export default defineConfig({
     options: {
       typeAware: false,
       typeCheck: false,
+    },
+  },
+
+  // The root `test:coverage` run above: each package's vite.config.ts is a
+  // vitest project, so one run and one coverage map cover them all.
+  test: {
+    projects: ['packages/*/vite.config.ts'],
+    coverage: {
+      provider: 'istanbul',
+      reporter: ['text-summary', 'json-summary', 'json'],
+      reportsDirectory: './coverage',
+      include: ['packages/*/src/lib/**/*.{ts,svelte}', 'packages/prosekit-utilities/src/**/*.ts'],
+      exclude: ['**/*.d.ts'],
     },
   },
 

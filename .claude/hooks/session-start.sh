@@ -170,8 +170,13 @@ if [ -f "$PROJECT_DIR/pnpm-lock.yaml" ]; then
 fi
 
 # node_modules/.bin only exists after the install, so link what it provides
-# afterwards.
+# afterwards. `fallow` is what the PreToolUse fallow gate
+# (.claude/hooks/fallow-gate.sh) runs before every agent `git commit` /
+# `git push`; it is a plain link because it reads only the repo's config, not
+# a worktree's own node_modules. There is no `tsx` here: nothing in this
+# workspace runs TypeScript outside `vp` or Node's own type stripping.
 write_vp_shim
+link_tool "$PROJECT_DIR/node_modules/.bin/fallow"
 
 # ── 3. First-checkout codegen ────────────────────────────────────────────────
 # `svelte-kit sync` writes the package's ambient types under `.svelte-kit/`.
