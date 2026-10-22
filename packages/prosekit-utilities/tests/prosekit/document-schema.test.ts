@@ -10,11 +10,13 @@
  * @module
  */
 
-import { describe, expect, it } from 'vite-plus/test';
+import { assert, describe, expect, it } from 'vite-plus/test';
+import * as Arr from 'effect/Array';
 import * as Effect from 'effect/Effect';
 import * as Exit from 'effect/Exit';
 import * as Schema from 'effect/Schema';
 import { defineDocumentShape } from '../../src/document-shape.ts';
+import type { NodeJSON } from '../../src/json.ts';
 import {
   defineDocumentSchema,
   DocumentDecodeError,
@@ -39,7 +41,7 @@ describe('defineDocumentSchema', () => {
 
   it('carries the shape it was declared against and its grammar factory', () => {
     expect(block.shape).toBe(blockShape);
-    expect(typeof block.extension).toBe('function');
+    expect(block.extension).toBeTypeOf('function');
   });
 
   it('compiles the ProseMirror schema once, on demand', () => {
@@ -77,10 +79,11 @@ describe('is', () => {
     // into `false`; a genuine defect (stack exhaustion while walking the
     // recursive struct/union graph) propagates as a raw exception, and this
     // runs on render paths where an uncaught throw takes the page down.
-    let deep: unknown = { type: 'paragraph', content: [{ type: 'text', text: 'x' }] };
-    for (let depth = 0; depth < 60_000; depth += 1) {
-      deep = { type: 'blockquote', content: [deep] };
-    }
+    const deep = Arr.reduce(
+      Arr.range(1, 60_000),
+      { type: 'paragraph', content: [{ type: 'text', text: 'x' }] } satisfies NodeJSON,
+      (inner: NodeJSON): NodeJSON => ({ type: 'blockquote', content: [inner] }),
+    );
     expect(block.is({ type: 'blockDocument', content: [deep] })).toBe(false);
   });
 });
@@ -173,9 +176,7 @@ describe('installDocumentGrammars', () => {
     // extension factory would throw still installs cleanly.
     const shape = defineDocumentShape({ name: 'blockDocument' });
     const schema = defineDocumentSchema(shape, {
-      extension: () => {
-        throw new Error('the grammar must not be compiled by install()');
-      },
+      extension: () => assert.fail('the grammar must not be compiled by install()'),
     });
     expect(() => installDocumentGrammars(schema)).not.toThrow();
     expect(shape.isInstalled()).toBe(true);

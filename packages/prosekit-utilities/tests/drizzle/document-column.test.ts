@@ -1,6 +1,7 @@
+import * as Predicate from 'effect/Predicate';
 import * as Schema from 'effect/Schema';
 import { pgTable } from 'drizzle-orm/pg-core';
-import { describe, expect, it } from 'vite-plus/test';
+import { assert, describe, expect, it } from 'vite-plus/test';
 import { documentColumn } from '../../src/drizzle/document-column.ts';
 
 /**
@@ -25,12 +26,16 @@ const table = pgTable('t', {
 describe('documentColumn', () => {
   it('delegates to the Document codec: a valid document round-trips', () => {
     const value: FakeDocument = { type: 'doc', content: [] };
-    const driver = table.document.mapToDriverValue(value) as string;
+    const driver = table.document.mapToDriverValue(value);
+    assert(Predicate.isString(driver), 'toDriver writes JSON text');
     expect(table.document.mapFromDriverValue(driver)).toEqual(value);
   });
 
   it('delegates to the Document codec: an invalid document throws on read', () => {
-    const driver = JSON.stringify({ type: 'not-a-doc', content: [] });
+    const driver = Schema.encodeSync(Schema.fromJsonString(Schema.Unknown))({
+      type: 'not-a-doc',
+      content: [],
+    });
     expect(() => table.document.mapFromDriverValue(driver)).toThrow();
   });
 });

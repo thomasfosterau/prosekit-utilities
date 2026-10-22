@@ -55,6 +55,6 @@ type AttributeOverrides = Readonly<
  * The flowchart node's attribute overlay: `data` typed as {@link FlowchartData}
  * and required.
  */
-export const FLOWCHART_ATTRIBUTE_OVERRIDES: AttributeOverrides = {
+export const FLOWCHART_ATTRIBUTE_OVERRIDES = {
   flowchart: { data: /* @__PURE__ */ required(FlowchartData) },
-};
+} as const satisfies AttributeOverrides;

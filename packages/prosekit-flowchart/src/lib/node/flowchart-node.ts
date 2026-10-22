@@ -32,7 +32,7 @@ const encodeJson = /* @__PURE__ */ Schema.encodeSync(
  * can be embedded in an HTML attribute value without breaking out, regardless
  * of which quote the serializer chooses.
  */
-function htmlSafeStringify(value: unknown): string {
+function htmlSafeStringify(value: FlowchartData): string {
   return encodeJson(value)
     .replace(/</g, '\\u003c')
     .replace(/>/g, '\\u003e')
@@ -54,8 +54,7 @@ function defineFlowchartNodeSpec() {
     parseDOM: [
       {
         tag: 'div[data-flowchart]',
-        getAttrs: (node) => {
-          const el = node as HTMLElement;
+        getAttrs: (el) => {
           // Prefer the `data-payload` attribute (current emit format). Fall
           // back to text content for older serialised documents where the
           // JSON lived inside the element.
@@ -67,8 +66,12 @@ function defineFlowchartNodeSpec() {
     toDOM: (node) => {
       // ProseMirror `attrs` is a foreign plain object; convert at the
       // boundary rather than pushing `Option` into the node spec.
-      const raw = Option.fromNullishOr((node.attrs as { data?: unknown }).data);
-      const data = Option.isNone(raw) ? EMPTY_FLOWCHART : (raw.value as FlowchartData);
+      // SAFETY: `data` is only ever written by this spec's default
+      // (`EMPTY_FLOWCHART`), by `parseDOM` (`parseFlowchartData`) and by
+      // `updateFlowchartData`, all of which produce a `FlowchartData`; a
+      // caller-supplied nullish `data` is still caught below.
+      const attrs = node.attrs as { readonly data: FlowchartData };
+      const data = Option.getOrElse(Option.fromNullishOr(attrs.data), () => EMPTY_FLOWCHART);
       // Persist the JSON in an attribute so the element's inner content is
       // free for the post-rendered SVG (see `./html.ts`). The JSON is
       // unicode-escaped so user-supplied labels containing `<`, `>`, `&`, `'`

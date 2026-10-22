@@ -15,11 +15,14 @@
  */
 
 import { describe, expect, it } from 'vite-plus/test';
+import * as Schema from 'effect/Schema';
 import { EMPTY_FLOWCHART, parseFlowchartData } from '../../src/lib/node/data.ts';
+
+const toJson = Schema.encodeSync(Schema.fromJsonString(Schema.Unknown));
 
 describe('parseFlowchartData', () => {
   it('parses a well-formed payload, keeping valid nodes and edges', () => {
-    const json = JSON.stringify({
+    const json = toJson({
       nodes: [{ id: 'a', position: { x: 1, y: 2 }, data: { label: 'A' } }],
       edges: [{ id: 'e', source: 'a', target: 'b' }],
     });
@@ -39,15 +42,15 @@ describe('parseFlowchartData', () => {
   });
 
   it('defaults missing or non-array nodes/edges to empty arrays', () => {
-    expect(parseFlowchartData(JSON.stringify({}))).toEqual({ nodes: [], edges: [] });
-    expect(parseFlowchartData(JSON.stringify({ nodes: 'x', edges: 3 }))).toEqual({
+    expect(parseFlowchartData(toJson({}))).toEqual({ nodes: [], edges: [] });
+    expect(parseFlowchartData(toJson({ nodes: 'x', edges: 3 }))).toEqual({
       nodes: [],
       edges: [],
     });
   });
 
   it('drops malformed nodes (bad id / position / data)', () => {
-    const json = JSON.stringify({
+    const json = toJson({
       nodes: [
         { id: 1, position: { x: 0, y: 0 }, data: { label: 'bad id' } },
         { id: 'ok', position: { x: 0, y: 'no' }, data: { label: 'bad y' } },
@@ -64,7 +67,7 @@ describe('parseFlowchartData', () => {
   });
 
   it('drops malformed edges (missing source / target / id)', () => {
-    const json = JSON.stringify({
+    const json = toJson({
       nodes: [],
       edges: [
         { id: 'e1', source: 'a', target: 'b' },

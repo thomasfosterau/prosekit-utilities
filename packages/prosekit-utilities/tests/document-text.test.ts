@@ -11,9 +11,19 @@
  * @module
  */
 
+import type * as Schema from 'effect/Schema';
 import { describe, expect, it } from 'vite-plus/test';
 import { extractDocumentText, inlineDocumentText } from '../src/document-text.ts';
 import type { DocumentJSON } from '../src/json.ts';
+
+/**
+ * A stored-row value the envelope type rules out — no content array, a
+ * non-string `text`, `null` entries — typed as a document on purpose, so a
+ * case can pin how tolerant the walk is of what a jsonb column can hold.
+ */
+const malformed = (value: Schema.Json): DocumentJSON =>
+  // SAFETY: deliberately ill-typed input is the point of every caller.
+  value as DocumentJSON;
 
 describe('extractDocumentText', () => {
   it('returns the empty string for null / undefined', () => {
@@ -22,7 +32,7 @@ describe('extractDocumentText', () => {
   });
 
   it('returns the empty string for a document with no content array', () => {
-    expect(extractDocumentText({ type: 'blockDocument' } as unknown as DocumentJSON)).toBe('');
+    expect(extractDocumentText(malformed({ type: 'blockDocument' }))).toBe('');
   });
 
   it('returns the empty string for an empty content array', () => {
@@ -58,7 +68,7 @@ describe('extractDocumentText', () => {
   });
 
   it('ignores non-text leaves and nodes without a string `text`', () => {
-    const doc = {
+    const doc = malformed({
       type: 'blockDocument',
       content: [
         // Image node: no text, no content — contributes nothing.
@@ -67,19 +77,19 @@ describe('extractDocumentText', () => {
         { type: 'text', text: 42 },
         { type: 'paragraph', content: [{ type: 'text', text: 'kept' }] },
       ],
-    } as unknown as DocumentJSON;
+    });
     expect(extractDocumentText(doc)).toBe('kept');
   });
 
   it('tolerates non-object / null entries inside content without throwing', () => {
-    const doc = {
+    const doc = malformed({
       type: 'blockDocument',
       content: [
         null,
         'a stray string',
         { type: 'paragraph', content: [null, { type: 'text', text: 'survives' }] },
       ],
-    } as unknown as DocumentJSON;
+    });
     expect(extractDocumentText(doc)).toBe('survives');
   });
 
@@ -149,7 +159,7 @@ describe('inlineDocumentText', () => {
   });
 
   it('returns an empty string for a document with no content array', () => {
-    expect(inlineDocumentText({ type: 'inlineDocument' } as unknown as DocumentJSON)).toBe('');
+    expect(inlineDocumentText(malformed({ type: 'inlineDocument' }))).toBe('');
   });
 
   it('differs from extractDocumentText exactly in the join', () => {

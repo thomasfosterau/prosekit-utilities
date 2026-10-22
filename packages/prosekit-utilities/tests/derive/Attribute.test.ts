@@ -13,6 +13,8 @@ const owner: AttributeOwner = { kind: 'node', name: 'test' };
 
 /** `decodeUnknownSync` over an erased `Schema.Top` — see effect-forms/src/Command.ts's identical cast. */
 const decodeSync = (schema: Schema.Top) =>
+  // SAFETY: every schema these cases build is a context-free codec; `Top`
+  // only erases its type parameters, which a sync decode never reads.
   Schema.decodeUnknownSync(schema as Schema.Codec<unknown>);
 
 describe('parseValidateGrammar', () => {

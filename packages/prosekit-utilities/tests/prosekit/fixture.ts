@@ -15,6 +15,8 @@
  * installs needs shapes nobody else is watching.
  */
 
+import { assert } from 'vite-plus/test';
+import * as Predicate from 'effect/Predicate';
 import { defineDocumentShape, type DocumentShape } from '../../src/document-shape.ts';
 import { createRegistryCache, type RegistryCache } from '../../src/derive/index.ts';
 import {
@@ -88,4 +90,13 @@ export const createDocumentFixture = (): DocumentFixture =>
 export const createSharedCacheFixture = (): DocumentFixture => {
   const cache = createRegistryCache();
   return createPair(false, cache, cache);
+};
+
+/**
+ * `value`, asserted present: a missing node, mark, child or spec hook fails the
+ * case by name instead of surfacing later as a `TypeError`.
+ */
+export const present = <A>(value: A, what: string): NonNullable<A> => {
+  assert(Predicate.isNotNullish(value), `${what} is present`);
+  return value;
 };

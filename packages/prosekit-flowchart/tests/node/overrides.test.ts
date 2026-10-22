@@ -15,24 +15,25 @@
  * @module
  */
 
-import { describe, expect, it } from 'vite-plus/test';
+import { assert, describe, expect, it } from 'vite-plus/test';
+import * as Record from 'effect/Record';
 import { isRequiredAttribute } from '@thomasfosterau/prosekit-utilities/derive';
 import { FLOWCHART_ATTRIBUTE_OVERRIDES } from '../../src/lib/node/overrides.ts';
 import { FlowchartData } from '../../src/lib/node/schema.ts';
 
 describe('FLOWCHART_ATTRIBUTE_OVERRIDES', () => {
   it('carries exactly one entry: flowchart.data', () => {
-    expect(Object.keys(FLOWCHART_ATTRIBUTE_OVERRIDES)).toEqual(['flowchart']);
-    expect(Object.keys(FLOWCHART_ATTRIBUTE_OVERRIDES.flowchart!)).toEqual(['data']);
+    expect(Record.keys(FLOWCHART_ATTRIBUTE_OVERRIDES)).toEqual(['flowchart']);
+    expect(Record.keys(FLOWCHART_ATTRIBUTE_OVERRIDES.flowchart)).toEqual(['data']);
   });
 
   it('wraps the schema in required(...)', () => {
-    expect(isRequiredAttribute(FLOWCHART_ATTRIBUTE_OVERRIDES.flowchart!.data)).toBe(true);
+    expect(isRequiredAttribute(FLOWCHART_ATTRIBUTE_OVERRIDES.flowchart.data)).toBe(true);
   });
 
   it('wraps exactly the FlowchartData schema', () => {
-    const wrapped = FLOWCHART_ATTRIBUTE_OVERRIDES.flowchart!.data;
-    if (!isRequiredAttribute(wrapped)) throw new Error('expected a RequiredAttribute');
+    const wrapped = FLOWCHART_ATTRIBUTE_OVERRIDES.flowchart.data;
+    assert(isRequiredAttribute(wrapped), 'expected a RequiredAttribute');
     expect(wrapped.schema).toBe(FlowchartData);
   });
 });

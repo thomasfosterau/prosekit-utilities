@@ -12,7 +12,7 @@ import {
 } from '../../src/derive/index.ts';
 import { figureTestSchema, inlineTestSchema, testSchema } from './fixture.ts';
 
-const decodes = (schema: Schema.Codec<unknown>, value: unknown): boolean =>
+const decodes = <Input>(schema: Schema.Codec<unknown>, value: Input): boolean =>
   Result.isSuccess(Result.try(() => Schema.decodeUnknownSync(schema)(value)));
 
 describe('deriveMarkSchema', () => {
