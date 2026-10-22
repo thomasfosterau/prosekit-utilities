@@ -125,7 +125,7 @@ catalog:
   playwright: 1.60.0
   prosekit: ^0.22.4
   storybook: ^10.6.2
-  svelte-check: ^4.7.6
+  svelte-check: ^4.7.7
   svelte: ^5.57.2
   tailwindcss: ^4.3.3
   # The TS6 JS compiler (bin `tsc6`), aliased so the package stays importable
