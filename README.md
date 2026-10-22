@@ -38,9 +38,9 @@ The Svelte suites drive a real browser: Vitest browser mode over Playwright Chro
 The pipeline is `.github/workflows/release.yml` plus [`scripts/release.sh`](scripts/release.sh); their comments carry the reason for each step. One-time owner setup, none of which an agent can do:
 
 1. On npmjs.com, each of the three packages → Settings → Trusted Publisher → GitHub Actions: repository `thomasfosterau/prosekit-utilities`, workflow `release.yml`, environment `release`. If npm still requires a package to exist before a trusted publisher can be added, bootstrap each one by hand first.
-2. GitHub Settings → Environments → `release` → required reviewers, deployments restricted to `main`.
+2. GitHub Settings → Environments → `release` → required reviewers, deployments restricted to `trunk`.
 3. GitHub Settings → Actions → General → allow GitHub Actions to create and approve pull requests, or the "Version Packages" PR cannot be opened.
-4. Protect `main`, and allow squash merging only (#30).
+4. Protect `trunk`, and allow squash merging only (#30).
 
 ## License
 
