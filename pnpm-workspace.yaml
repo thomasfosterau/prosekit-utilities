@@ -163,7 +163,10 @@ overrides:
   # decode identically while the model it was derived from is the same. The
   # app repos pin these two exactly for that reason; so does this one.
   prosemirror-model: 1.25.7
-  prosemirror-view: 1.41.8
+  # 1.42.3 is the first release fixing GHSA-c8x8-7fp4-3x9w (an XSS in paste
+  # handling); raised from 1.41.8 by the owner's decision so `pnpm audit
+  # --audit-level high` passes. `@prosekit/pm` declares `^1.42.4`.
+  prosemirror-view: 1.42.3
 
 nodeLinker: hoisted
 
