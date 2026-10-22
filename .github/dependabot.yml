@@ -1,6 +1,13 @@
 # Dependabot reads the pnpm catalog in pnpm-workspace.yaml, which is where
 # every external version lives (package.json files carry only `catalog:`), so
 # a bump here is a bump for the whole workspace at once.
+#
+# Dependabot puts a dependency in the FIRST group that matches it, so the
+# groups run from the most specific lockstep set to the catch-all, and
+# `exclude-patterns` keeps a package out of a broader group it would
+# otherwise also match. Every lockstep group takes every update type,
+# majors included, so its members never land in separate PRs; outside them,
+# majors stay individual PRs and minors / patches share the catch-all.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -8,58 +15,132 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    commit-message:
+      prefix: chore
     # The same supply-chain delay pnpm applies at install (`minimumReleaseAge:
     # 1440`, one day, in pnpm-workspace.yaml): a newly published version has
     # a window to be pulled before Dependabot proposes it. First-party
-    # releases are exempt on both sides, so this workspace can pick up an
-    # app-repo or sibling-library release the day it lands.
+    # releases are exempt on both sides (`minimumReleaseAgeExclude`), so this
+    # workspace can pick up a sibling-library release the day it lands.
     cooldown:
       default-days: 1
       exclude:
         - '@thomasfosterau/*'
-    # Packages that only work as a set are grouped so one PR moves them
-    # together; a lone bump of any of them fails install or the browser suite.
     groups:
-      # `prosekit` and `@prosekit/pm` (ProseMirror re-published as one
-      # package) move together — the node and mark specs here are written
-      # against both.
-      prosekit:
+      # The toolchain moves as ONE set: vite-plus pins the `oxlint`, `oxfmt`,
+      # `vitest` and `@vitest/*` it carries exactly; `@effect/tsgo`'s
+      # `prepare` patch hard-errors at install on any `tsc`
+      # (`@typescript/native`) or `oxlint` it was not built for; the TS6
+      # alias (`typescript`) pairs with TS7; the Effect lint plugin loads into
+      # that oxlint. `@vitest/browser-playwright` is here rather than with
+      # playwright because vitest pins it exactly. See the catalog comments
+      # on `vite-plus`, `@effect/tsgo` and `@typescript/native`.
+      toolchain:
+        applies-to: version-updates
         patterns:
-          - prosekit
-          - '@prosekit/*'
+          - vite-plus
+          - vite
+          - vitest
+          - '@vitest/*'
+          - vitest-browser-svelte
+          - oxlint
+          - oxfmt
+          - oxlint-tsgolint
+          - '@effect/tsgo'
+          - '@typescript/native'
+          - typescript
+          - '@typescript/typescript6'
+          - '@mpsuesser/oxlint-plugin-effect'
+        update-types: [major, minor, patch]
+      # `effect` is a singleton peer of every Effect package here.
+      effect:
+        applies-to: version-updates
+        patterns:
+          - effect
+          - '@effect/*'
+        exclude-patterns:
+          - '@effect/tsgo'
+        update-types: [major, minor, patch]
       # The Svelte compiler, SvelteKit (`svelte-kit sync` + `svelte-package`),
       # the Vite plugin and svelte-check all pin against one another.
       svelte:
+        applies-to: version-updates
         patterns:
           - svelte
-          - svelte-check
           - '@sveltejs/*'
-      # `vite` is vite-plus's own core republished under an alias, so the two
-      # move as one. `vitest` and `@vitest/*` are deliberately NOT here: they
-      # are ignored below and follow vite-plus's exact pin by hand (see that
-      # ignore). `playwright` is ignored below too.
-      vitest-toolchain:
+          - svelte-check
+          - svelte2tsx
+        update-types: [major, minor, patch]
+      # `playwright` and the SessionStart hook's Chromium bridge move together
+      # (PW_WANT_REV in .claude/hooks/session-start.sh); see the ignore below.
+      playwright:
+        applies-to: version-updates
         patterns:
-          - vite
-          - vite-plus
-          - vitest-browser-svelte
+          - playwright
+          - '@playwright/*'
+        update-types: [major, minor, patch]
       storybook:
+        applies-to: version-updates
         patterns:
           - storybook
           - '@storybook/*'
+        update-types: [major, minor, patch]
+      drizzle:
+        applies-to: version-updates
+        patterns:
+          - drizzle-orm
+          - drizzle-kit
+        update-types: [major, minor, patch]
+      changesets:
+        applies-to: version-updates
+        patterns:
+          - '@changesets/*'
+        update-types: [major, minor, patch]
+      # `prosekit` and `@prosekit/pm` (ProseMirror re-published as one
+      # package) move together — the node and mark specs here are written
+      # against both — with the ProseMirror modules they carry.
+      prosekit:
+        applies-to: version-updates
+        patterns:
+          - prosekit
+          - '@prosekit/*'
+          - prosemirror-*
+        update-types: [major, minor, patch]
       # The flowchart package's required peer, plus its dev copy.
       xyflow:
+        applies-to: version-updates
         patterns:
           - '@xyflow/*'
-    # `prosemirror-model` and `prosemirror-view` are pinned EXACTLY under
-    # `overrides:` in pnpm-workspace.yaml: the derivation in `./derive` walks
-    # ProseMirror's compiled schema, and a stored document is only guaranteed
-    # to decode identically while that model is the same (see
-    # packages/prosekit-utilities/CLAUDE.md § Invariants — a bump is a major
-    # changeset, decided by a person). Scoped to the version update
-    # types rather than a bare ignore, so a security advisory against either
-    # still gets a Dependabot PR.
+        update-types: [major, minor, patch]
+      # Tailwind and the daisyUI plugin the Storybook stack builds with.
+      tailwind:
+        applies-to: version-updates
+        patterns:
+          - tailwindcss
+          - '@tailwindcss/*'
+          - daisyui
+        update-types: [major, minor, patch]
+      bits-ui:
+        applies-to: version-updates
+        patterns:
+          - bits-ui
+        update-types: [major, minor, patch]
+      # Everything else's minor and patch updates in one PR.
+      minor-and-patch:
+        applies-to: version-updates
+        patterns:
+          - '*'
+        update-types: [minor, patch]
+    # Pins a person moves by hand. Each ignore is scoped to the version
+    # update types rather than a bare ignore, so a security advisory against
+    # any of them still gets a Dependabot PR. The by-hand steps are in
+    # AGENTS.md § Common pitfalls.
     ignore:
+      # Pinned EXACTLY under `overrides:` in pnpm-workspace.yaml: the
+      # derivation in `./derive` walks ProseMirror's compiled schema, and a
+      # stored document is only guaranteed to decode identically while that
+      # model is the same (packages/prosekit-utilities/CLAUDE.md §
+      # Invariants — a bump is a major changeset, decided by a person).
       - dependency-name: prosemirror-model
         update-types:
           - 'version-update:semver-major'
@@ -70,26 +151,22 @@ updates:
           - 'version-update:semver-major'
           - 'version-update:semver-minor'
           - 'version-update:semver-patch'
-      # `playwright` is pinned EXACTLY and behind the app repos on purpose:
-      # agent sessions reach its Chromium revision through the SessionStart
-      # hook's symlink bridge to the image's older build (see the `playwright`
-      # entry in pnpm-workspace.yaml), so a bump moves the hook's revision
-      # with it and is made by a person. Same update-type scoping as above.
+      # Pinned EXACTLY: agent sessions reach its Chromium revision through
+      # the SessionStart hook's symlink bridge to the image's older build, so
+      # a bump moves the hook's PW_WANT_REV with it.
       - dependency-name: playwright
         update-types:
           - 'version-update:semver-major'
           - 'version-update:semver-minor'
           - 'version-update:semver-patch'
-      # vite-plus pins `vitest` and the `@vitest/*` runtime packages EXACTLY,
-      # and the catalog's `vitest`, `@vitest/browser-playwright` and
-      # `@vitest/coverage-istanbul` must equal that pin (see the `vite-plus`
-      # entry in pnpm-workspace.yaml). A group only moves what has a newer
-      # release, so a vitest release that no vite-plus pins yet would arrive
-      # alone and leave the tree split (#60). So they never move on their own:
-      # when Dependabot proposes a vite-plus bump, the same PR gets a hand edit
-      # moving the vitest set in the catalog to the new vite-plus's
-      # `dependencies.vitest`, plus the regenerated lockfile. Same update-type
-      # scoping as above, so security updates stay enabled.
+      # A group only moves what has a newer release, so a vitest release that
+      # no vite-plus pins yet — or a TypeScript / tsgo release the other two
+      # do not support yet — would arrive in the toolchain group alone and
+      # leave the tree split (#60). They follow vite-plus by hand instead:
+      # on the toolchain PR that bumps vite-plus, set the vitest set to the
+      # new vite-plus's `dependencies.vitest` and `@effect/tsgo` /
+      # `@typescript/native` / `typescript` to a supported pairing (the
+      # catalog comments say how), in that same PR.
       - dependency-name: vitest
         update-types:
           - 'version-update:semver-major'
@@ -100,13 +177,6 @@ updates:
           - 'version-update:semver-major'
           - 'version-update:semver-minor'
           - 'version-update:semver-patch'
-      # `typescript` (the TS6 JS-API alias that svelte-check and the
-      # declaration emit load) and `@typescript/native` (TS7, the `tsc` the
-      # core type-checks with) are a pair that moves by hand, together and
-      # deliberately, not onto whatever npm's `latest` happens to be (see both
-      # entries in pnpm-workspace.yaml). If this workspace adopts
-      # `@effect/tsgo`, it joins this pair and gets the same ignore. Same
-      # update-type scoping as above, so security updates stay enabled.
       - dependency-name: typescript
         update-types:
           - 'version-update:semver-major'
@@ -117,13 +187,24 @@ updates:
           - 'version-update:semver-major'
           - 'version-update:semver-minor'
           - 'version-update:semver-patch'
+      - dependency-name: '@effect/tsgo'
+        update-types:
+          - 'version-update:semver-major'
+          - 'version-update:semver-minor'
+          - 'version-update:semver-patch'
 
-  # The SHA-pinned actions in .github/workflows. Dependabot updates the SHA
-  # and the trailing `# vX.Y.Z` comment together.
+  # The SHA-pinned actions in .github/workflows and .github/actions.
+  # Dependabot updates the SHA and the trailing `# vX.Y.Z` comment together.
   - package-ecosystem: github-actions
-    directory: '/'
+    directories:
+      - '/'
+      - '/.github/actions/setup'
     schedule:
       interval: weekly
+    commit-message:
+      prefix: chore
+    cooldown:
+      default-days: 1
     groups:
       actions:
         patterns:

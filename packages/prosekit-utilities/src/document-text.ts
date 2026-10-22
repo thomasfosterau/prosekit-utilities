@@ -39,9 +39,16 @@ export function extractDocumentText(
 function textParts(nodes: ReadonlyArray<unknown>): string[] {
   return Array.flatMap(nodes, (node) => {
     if (!Predicate.isObjectOrArray(node)) return [];
-    const n = node as Record<string, unknown>;
-    const own = n.type === 'text' && Predicate.isString(n.text) ? [n.text] : [];
-    return Array.isArray(n.content) ? [...own, ...textParts(n.content)] : own;
+    const own =
+      Predicate.hasProperty(node, 'type') &&
+      node.type === 'text' &&
+      Predicate.hasProperty(node, 'text') &&
+      Predicate.isString(node.text)
+        ? [node.text]
+        : [];
+    return Predicate.hasProperty(node, 'content') && Array.isArray(node.content)
+      ? [...own, ...textParts(node.content)]
+      : own;
   });
 }
 
@@ -61,7 +68,8 @@ export function inlineDocumentText(doc: NodeJSON | DocumentJSON): string {
 }
 
 /** The `text` leaves of a document subtree, in document order. */
-function inlineTextParts(node: NodeJSON | DocumentJSON | undefined): string[] {
+function inlineTextParts(node: NodeJSON | DocumentJSON): string[] {
+  // `?.`: an untyped caller's missing document still yields no text.
   return Array.flatMap(node?.content ?? [], (child) =>
     child.text ? [child.text] : 'content' in child ? inlineTextParts(child) : [],
   );

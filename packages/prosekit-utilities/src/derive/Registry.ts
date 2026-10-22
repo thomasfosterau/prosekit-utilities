@@ -118,11 +118,12 @@ export class Registry {
       this.#options.attributes,
     );
     if (Option.isSome(attrs)) fields.attrs = attrs.value;
-    // The runtime shape is `{ type, attrs? }` by construction; the dynamic
-    // struct's inferred type is wider than `DerivedMarkJSON`, so assert the
-    // documented shape at this single seam.
-    // oxlint-disable-next-line effect/avoid-any -- a struct built from a runtime-computed field record has no static relation to `DerivedMarkJSON`; there is nothing to decode here, the shape is guaranteed by construction above
-    return Schema.Struct(fields) as unknown as Schema.Codec<DerivedMarkJSON>;
+    const struct: Schema.Top = Schema.Struct(fields);
+    // SAFETY: the runtime shape is `{ type, attrs? }` by construction above.
+    // A struct built from a runtime-computed field record has no static
+    // relation to `DerivedMarkJSON` (there is nothing to decode here), so the
+    // documented shape is asserted at this single seam, from `Schema.Top`.
+    return struct as Schema.Codec<DerivedMarkJSON>;
   }
 
   #inlineMarkCache: Option.Option<ReadonlyArray<MarkType>> = Option.none();
@@ -224,9 +225,10 @@ export class Registry {
     const marks = this.#marksFor(nodeType);
     if (Option.isSome(marks)) fields.marks = Schema.optionalKey(Schema.Array(marks.value));
 
-    // See the mark seam above: the dynamic struct matches `DerivedNodeJSON` by
-    // construction, so assert it here rather than propagate a wider type.
-    // oxlint-disable-next-line effect/avoid-any -- see the mark seam above: a runtime-computed field record cannot be statically related to `DerivedNodeJSON`
-    return Schema.Struct(fields) as unknown as Schema.Codec<DerivedNodeJSON>;
+    const struct: Schema.Top = Schema.Struct(fields);
+    // SAFETY: see the mark seam above — the dynamic struct matches
+    // `DerivedNodeJSON` by construction, so assert it here rather than
+    // propagate a wider type.
+    return struct as Schema.Codec<DerivedNodeJSON>;
   }
 }

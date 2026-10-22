@@ -109,10 +109,12 @@ export function defineCitation() {
     parseDOM: [
       {
         tag: 'cite[data-work-id]',
-        getAttrs: (dom) => ({ workId: (dom as HTMLElement).getAttribute('data-work-id') ?? '' }),
+        getAttrs: (dom) => ({ workId: dom.getAttribute('data-work-id') ?? '' }),
       },
     ],
     toDOM(mark) {
+      // SAFETY: `workId` has a string default and `parseDOM` only ever yields
+      // a string, so ProseMirror's loosely typed `attrs` holds one here.
       return ['cite', { 'data-work-id': (mark.attrs as { workId: string }).workId }, 0];
     },
   });

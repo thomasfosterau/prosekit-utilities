@@ -33,6 +33,7 @@
  */
 
 import * as Option from 'effect/Option';
+import * as Result from 'effect/Result';
 import * as Schema from 'effect/Schema';
 import type { AllowList } from './allow-list.ts';
 import { allowListFilter } from './allow-list.ts';
@@ -128,7 +129,7 @@ export function defineDocumentShape<Name extends string>(options: {
 
   let grammar: Option.Option<DocumentGrammarGuard> = Option.none();
 
-  const documentSchema = Schema.Struct({
+  const structural: Schema.Top = Schema.Struct({
     type: Schema.Literal(name),
     content: ContentShape,
   }).pipe(
@@ -150,11 +151,15 @@ export function defineDocumentShape<Name extends string>(options: {
         },
       ),
     ),
-    // The derived struct schema's inferred type is a wider structural type
-    // than `DocumentJSON<Name>` (its `content` is `ReadonlyArray<Json>`, not
-    // `ReadonlyArray<NodeJSON>`). This is the single documented seam where
-    // it is pinned to the declared shape.
-  ) as unknown as Schema.Codec<DocumentJSON<Name>>;
+  );
+
+  // SAFETY: the struct schema's inferred type is a wider structural type than
+  // `DocumentJSON<Name>` (its `content` is `ReadonlyArray<Json>`, not
+  // `ReadonlyArray<NodeJSON>`), and the two do not overlap enough for one
+  // assertion, so it goes through `Schema.Top`. This is the single documented
+  // seam where it is pinned to the declared shape; the grammar guard, once
+  // installed, is what proves the narrower type.
+  const documentSchema = structural as Schema.Codec<DocumentJSON<Name>>;
 
   const guard = Schema.is(documentSchema);
 
@@ -170,13 +175,11 @@ export function defineDocumentShape<Name extends string>(options: {
      * malformed-but-not-cleanly-rejectable document to "not a valid
      * document" rather than an uncaught throw on a render path.
      */
-    is: (value: unknown): value is DocumentJSON<Name> => {
-      try {
-        return guard(value);
-      } catch {
-        return false;
-      }
-    },
+    is: (value: unknown): value is DocumentJSON<Name> =>
+      Result.getOrElse(
+        Result.try(() => guard(value)),
+        () => false,
+      ),
     install: (installed: DocumentGrammarGuard) => {
       grammar = Option.some(installed);
     },

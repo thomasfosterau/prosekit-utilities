@@ -47,7 +47,7 @@ const link = (href: string): MarkJSON => ({ type: 'link', attrs: { href } });
 const para = (...content: ReadonlyArray<NodeJSON>): NodeJSON => ({ type: 'paragraph', content });
 const listItem = (
   kind: string,
-  attrs: Record<string, unknown>,
+  attrs: Partial<{ readonly order: number; readonly checked: boolean }>,
   ...content: ReadonlyArray<NodeJSON>
 ): NodeJSON => ({ type: 'list', attrs: { kind, ...attrs }, content });
 
@@ -452,7 +452,9 @@ describe('document: fallbacks', () => {
 
   it('returns the empty string for an empty or content-less document', () => {
     expect(document(block())).toBe('');
-    expect(document({ type: 'blockDocument' } as unknown as DocumentJSON)).toBe('');
+    // SAFETY: a content-less envelope, ill-typed on purpose — a stored row can
+    // hold one, and the serialiser must degrade to the empty string.
+    expect(document({ type: 'blockDocument' } as DocumentJSON)).toBe('');
   });
 
   it('skips an inline node with no serialiser', () => {
@@ -486,7 +488,11 @@ describe('inline', () => {
 // ── mention (opt-in) ──────────────────────────────────────────────────
 
 describe('mentionMarkdown', () => {
-  const mention = (attrs: Record<string, unknown>): NodeJSON => ({ type: 'mention', attrs });
+  // `label` is left loose on purpose: the cases below pin a missing and a
+  // non-string label as well as the stored string.
+  const mention = (
+    attrs: { readonly id: string } & Partial<{ readonly label: string | number }>,
+  ): NodeJSON => ({ type: 'mention', attrs });
 
   it('renders a mention as its @label', () => {
     expect(extended.document(block(para(text('hi '), mention({ id: 'u1', label: 'rosa' }))))).toBe(

@@ -16,6 +16,11 @@
  * @module
  */
 
+import * as Arr from 'effect/Array';
+import * as Option from 'effect/Option';
+import * as Predicate from 'effect/Predicate';
+import * as Result from 'effect/Result';
+import * as String from 'effect/String';
 import type { DocumentJSON, MarkJSON, NodeJSON } from '../json.ts';
 import { escapeMarkdown } from './escape.ts';
 import { childrenOf, stockBlocks, stockInlines, stockMarks } from './stock.ts';
@@ -72,6 +77,20 @@ const EMPHASIS_ORDER: ReadonlyArray<string> = ['strike', 'italic', 'bold'];
 /** One nesting level of list indentation. */
 const LIST_INDENT = '  ';
 
+/**
+ * The serialiser registered for a type name: the application's own entry if
+ * it has one, the stock entry otherwise — the application's map merged over
+ * the stock one.
+ */
+const serialiserLookup =
+  <S extends Readonly<Record<string, A>>, A>(stock: S, overrides: Readonly<Record<string, A>>) =>
+  (type: string): Option.Option<A> =>
+    Option.fromNullishOr(overrides[type] ?? stock[type]);
+
+/** The first of `marks` whose type is `type`. */
+const markOfType = (marks: ReadonlyArray<MarkJSON>, type: string): Option.Option<MarkJSON> =>
+  Arr.findFirst(marks, (mark) => mark.type === type);
+
 // ---------------------------------------------------------------------------
 // The engine
 // ---------------------------------------------------------------------------
@@ -103,9 +122,16 @@ export function createMarkdownSerialiser(options?: {
   readonly inlines?: Record<string, InlineSerialiser> | undefined;
   readonly marks?: Record<string, MarkSerialiser> | undefined;
 }): MarkdownSerialiser {
-  const blocks: Record<string, BlockSerialiser> = { ...stockBlocks, ...options?.blocks };
-  const inlines: Record<string, InlineSerialiser> = { ...stockInlines, ...options?.inlines };
-  const marks: Record<string, MarkSerialiser> = { ...stockMarks, ...options?.marks };
+  const blocks = serialiserLookup(stockBlocks, options?.blocks ?? {});
+  const inlines = serialiserLookup(stockInlines, options?.inlines ?? {});
+  const marks = serialiserLookup(stockMarks, options?.marks ?? {});
+
+  /** Wraps `text` in `mark`'s syntax when a serialiser exists for it. */
+  const applyMark = (text: string, mark: MarkJSON): string =>
+    Option.match(marks(mark.type), {
+      onNone: () => text,
+      onSome: (serialiser) => serialiser(text, mark),
+    });
 
   /**
    * Applies a text node's marks to its text.
@@ -116,57 +142,59 @@ export function createMarkdownSerialiser(options?: {
    * A mark with no serialiser (underline, highlight, sub- and superscript
    * have no Markdown form) passes through as plain styled-or-unstyled text.
    */
-  const applyMarks = (text: string, nodeMarks: ReadonlyArray<MarkJSON> | undefined): string => {
-    if (!nodeMarks || nodeMarks.length === 0) return escapeMarkdown(text);
-
-    const codeMark = nodeMarks.find((mark) => mark.type === 'code');
-    const codeSerialiser = marks.code;
-    const verbatim = codeMark !== undefined && codeSerialiser !== undefined;
-
-    let out = verbatim ? codeSerialiser(text, codeMark) : escapeMarkdown(text);
-
-    if (!verbatim) {
-      for (const type of EMPHASIS_ORDER) {
-        const mark = nodeMarks.find((candidate) => candidate.type === type);
-        const serialiser = marks[type];
-        if (mark !== undefined && serialiser !== undefined) out = serialiser(out, mark);
-      }
-      for (const mark of nodeMarks) {
-        if (mark.type === 'code' || mark.type === 'link') continue;
-        if (EMPHASIS_ORDER.includes(mark.type)) continue;
-        const serialiser = marks[mark.type];
-        if (serialiser !== undefined) out = serialiser(out, mark);
-      }
-    }
-
-    const link = nodeMarks.find((mark) => mark.type === 'link');
-    const linkSerialiser = marks.link;
-    if (link !== undefined && linkSerialiser !== undefined) out = linkSerialiser(out, link);
-    return out;
-  };
+  const applyMarks = (text: string, nodeMarks: ReadonlyArray<MarkJSON>): string =>
+    Arr.match(nodeMarks, {
+      onEmpty: () => escapeMarkdown(text),
+      onNonEmpty: (present) => {
+        const verbatim = Option.zipWith(
+          markOfType(present, 'code'),
+          marks('code'),
+          (codeMark, serialiser) => serialiser(text, codeMark),
+        );
+        const styled = Option.getOrElse(verbatim, () =>
+          Arr.reduce(
+            present,
+            Arr.reduce(EMPHASIS_ORDER, escapeMarkdown(text), (out, type) =>
+              Option.match(markOfType(present, type), {
+                onNone: () => out,
+                onSome: (mark) => applyMark(out, mark),
+              }),
+            ),
+            (out, mark) =>
+              mark.type === 'code' || mark.type === 'link' || EMPHASIS_ORDER.includes(mark.type)
+                ? out
+                : applyMark(out, mark),
+          ),
+        );
+        return Option.getOrElse(
+          Option.zipWith(markOfType(present, 'link'), marks('link'), (link, serialiser) =>
+            serialiser(styled, link),
+          ),
+          () => styled,
+        );
+      },
+    });
 
   /** Serialise a run of inline nodes to a single line-ish string. */
-  const serialiseInline = (nodes: ReadonlyArray<NodeJSON>): string => {
-    let out = '';
-    for (const node of nodes) {
-      if (node.type === 'text' && typeof node.text === 'string') {
-        out += applyMarks(node.text, node.marks);
-        continue;
-      }
-      const serialiser = inlines[node.type];
-      // An inline node with no serialiser contributes nothing: it is inside a
-      // paragraph whose surrounding text must not gain a stray placeholder.
-      if (serialiser !== undefined) out += serialiser(node, context);
-    }
-    return out;
-  };
+  const serialiseInline = (nodes: ReadonlyArray<NodeJSON>): string =>
+    Arr.map(nodes, (node) =>
+      node.type === 'text' && Predicate.isString(node.text)
+        ? applyMarks(node.text, node.marks ?? [])
+        : // An inline node with no serialiser contributes nothing: it is inside
+          // a paragraph whose surrounding text must not gain a stray placeholder.
+          Option.match(inlines(node.type), {
+            onNone: () => '',
+            onSome: (serialiser) => serialiser(node, context),
+          }),
+    ).join('');
 
-  /** Marker for one list item, given the list node's `attrs` and its position. */
-  const listMarker = (attrs: Record<string, unknown> | undefined, index: number): string => {
+  /** Marker for one list item, given the list node and its position. */
+  const listMarker = (item: NodeJSON, index: number): string => {
+    const attrs = item.attrs;
     // No attrs at all renders as a bullet, exactly as an absent/unknown `kind` does.
     if (attrs === undefined) return '- ';
     if (attrs.kind === 'ordered') {
-      const start = typeof attrs.order === 'number' ? attrs.order : 1;
+      const start = Predicate.isNumber(attrs.order) ? attrs.order : 1;
       return `${start + index}. `;
     }
     if (attrs.kind === 'task') {
@@ -182,10 +210,9 @@ export function createMarkdownSerialiser(options?: {
    * list; a nested list is a `list` child inside an item's content, so it
    * recurses with deeper indentation.
    */
-  const serialiseListRun = (items: ReadonlyArray<NodeJSON>, indent: string): string => {
-    const lines: string[] = [];
-    items.forEach((item, index) => {
-      const marker = listMarker(item.attrs, index);
+  const serialiseListRun = (items: ReadonlyArray<NodeJSON>, indent: string): string =>
+    Arr.flatMap(items, (item, index) => {
+      const marker = listMarker(item, index);
       const itemBlocks = childrenOf(item);
       // The first children are the item's own content (typically a
       // paragraph); any further `list` children are the nested sub-list.
@@ -194,55 +221,47 @@ export function createMarkdownSerialiser(options?: {
       const body = serialiseBlocks(ownBlocks).trim();
       const continuation = indent + ' '.repeat(marker.length);
       const bodyLines = body.split('\n');
-      lines.push(
+      const line =
         indent +
-          marker +
-          (bodyLines[0] ?? '') +
-          bodyLines
-            .slice(1)
-            .map((line) => '\n' + (line.length > 0 ? continuation + line : ''))
-            .join(''),
-      );
-      if (nested.length > 0) {
-        lines.push(serialiseListRun(nested, indent + LIST_INDENT));
-      }
-    });
-    return lines.join('\n');
-  };
+        marker +
+        (bodyLines[0] ?? '') +
+        bodyLines
+          .slice(1)
+          .map((next) => '\n' + (String.isNonEmpty(next) ? continuation + next : ''))
+          .join('');
+      return Arr.match(nested, {
+        onEmpty: () => [line],
+        onNonEmpty: (sublist) => [line, serialiseListRun(sublist, indent + LIST_INDENT)],
+      });
+    }).join('\n');
 
   /** Serialise a single block node (no trailing blank line). */
-  const serialiseBlock = (node: NodeJSON): string => {
-    const serialiser = blocks[node.type];
-    if (serialiser !== undefined) return serialiser(node, context);
-    // Unknown / unhandled node: fall back to its inline text so nothing is
-    // silently lost.
-    return serialiseInline(childrenOf(node));
-  };
+  const serialiseBlock = (node: NodeJSON): string =>
+    Option.match(blocks(node.type), {
+      onSome: (serialiser) => serialiser(node, context),
+      // Unknown / unhandled node: fall back to its inline text so nothing is
+      // silently lost.
+      onNone: () => serialiseInline(childrenOf(node)),
+    });
 
   /**
    * Serialise an array of block nodes, grouping consecutive `list` siblings
-   * into one list and separating blocks with blank lines.
+   * into one list and separating blocks with blank lines. Every other block
+   * is a group of its own, and one that renders to nothing is dropped.
    */
-  const serialiseBlocks = (nodes: ReadonlyArray<NodeJSON>): string => {
-    const chunks: string[] = [];
-    let index = 0;
-    while (index < nodes.length) {
-      const node = nodes[index]!;
-      if (node.type === 'list') {
-        const run: NodeJSON[] = [];
-        while (index < nodes.length && nodes[index]!.type === 'list') {
-          run.push(nodes[index]!);
-          index++;
-        }
-        chunks.push(serialiseListRun(run, ''));
-        continue;
-      }
-      const rendered = serialiseBlock(node);
-      if (rendered.length > 0) chunks.push(rendered);
-      index++;
-    }
-    return chunks.join('\n\n');
-  };
+  const serialiseBlocks = (nodes: ReadonlyArray<NodeJSON>): string =>
+    Arr.match(nodes, {
+      onEmpty: () => '',
+      onNonEmpty: (present) =>
+        Arr.filterMap(
+          Arr.groupWith(present, (left, right) => left.type === 'list' && right.type === 'list'),
+          (group) => {
+            if (group[0].type === 'list') return Result.succeed(serialiseListRun(group, ''));
+            const rendered = serialiseBlock(group[0]);
+            return String.isNonEmpty(rendered) ? Result.succeed(rendered) : Result.failVoid;
+          },
+        ).join('\n\n'),
+    });
 
   const context: MarkdownContext = {
     serialiseInline,

@@ -15,6 +15,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 import * as Array from 'effect/Array';
 import * as Effect from 'effect/Effect';
+import * as Schema from 'effect/Schema';
 import { createHtmlRenderer, HtmlRenderError, sanitiseDocument } from '../../src/prosekit/html.ts';
 import { lazySchema } from '../../src/prosekit/lazy-schema.ts';
 import { defineCitation } from '../../src/prosekit/marks.ts';
@@ -23,6 +24,10 @@ import {
   defineBlockDocumentExtension,
   defineInlineDocumentExtension,
 } from '../../src/prosekit/presets.ts';
+import { present } from './fixture.ts';
+
+/** The failure the throwing `postProcess` hook below raises. */
+class HookFailure extends Schema.TaggedError<HookFailure>()('HookFailure', {}) {}
 
 const blockSchema = lazySchema(() =>
   defineBlockDocumentExtension(defineMention(), defineSidenote(), defineCitation()),
@@ -184,9 +189,12 @@ describe('postProcess', () => {
         if (!html.includes('data-mention-id')) return html;
         const container = host.createElement('div');
         container.innerHTML = html;
-        for (const marker of Array.fromIterable(container.querySelectorAll('[data-mention-id]'))) {
-          marker.textContent = `resolved:${marker.getAttribute('data-mention-id') ?? ''}`;
-        }
+        Array.forEach(
+          Array.fromIterable(container.querySelectorAll('[data-mention-id]')),
+          (marker) => {
+            marker.textContent = `resolved:${marker.getAttribute('data-mention-id') ?? ''}`;
+          },
+        );
         return container.innerHTML;
       },
     });
@@ -218,7 +226,7 @@ describe('postProcess', () => {
     const renderer = createHtmlRenderer({
       schema: blockSchema,
       postProcess: () => {
-        throw new Error('hook blew up');
+        throw new HookFailure();
       },
     });
     const error = await Effect.runPromise(
@@ -269,16 +277,20 @@ describe('sanitiseDocument', () => {
       ],
     };
     const sanitised = sanitiseDocument(doc);
-    const paragraph = sanitised.content![0]!.content![0]!;
-    expect(paragraph.content![0]!.marks).toEqual([{ type: 'bold' }]);
-    expect(paragraph.content![1]!.marks).toEqual([
+    const quote = present(sanitised.content?.[0], 'blockquote');
+    const paragraph = present(quote.content?.[0], 'paragraph');
+    const children = present(paragraph.content, 'paragraph content');
+    expect(present(children[0], 'first text').marks).toEqual([{ type: 'bold' }]);
+    expect(present(children[1], 'second text').marks).toEqual([
       { type: 'link', attrs: { href: 'https://example.com' } },
     ]);
-    expect(paragraph.content!.filter((child) => child.type === 'image')).toEqual([
+    expect(children.filter((child) => child.type === 'image')).toEqual([
       { type: 'image', attrs: { src: '/safe.png' } },
     ]);
     // Non-mutating.
-    expect(doc.content[0]!.content[0]!.content).toHaveLength(4);
+    expect(
+      present(present(doc.content[0], 'blockquote').content[0], 'paragraph').content,
+    ).toHaveLength(4);
   });
 
   it('leaves a node with no marks and no content untouched', () => {

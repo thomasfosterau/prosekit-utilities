@@ -12,8 +12,10 @@
   },
   "type": "module",
   "scripts": {
-    "prepare": "vp config",
+    "prepare": "vp config && effect-tsgo patch --typescript --oxlint",
     "changeset": "changeset",
+    "fallow": "fallow --summary",
+    "fallow:audit": "fallow audit",
     "version": "changeset version && vp fmt",
     "release": "bash scripts/release.sh"
   },
@@ -24,8 +26,11 @@
   },
   "devDependencies": {
     "@changesets/cli": "catalog:",
+    "@effect/tsgo": "catalog:",
+    "@mpsuesser/oxlint-plugin-effect": "catalog:",
     "@types/node": "catalog:",
     "@typescript/native": "catalog:",
+    "fallow": "catalog:",
     "svelte": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",

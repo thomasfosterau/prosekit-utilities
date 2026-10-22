@@ -11,7 +11,23 @@
  * package never means editing it.
  */
 
+import { recommended } from '@effect/tsgo/oxlint-presets';
+import effect from '@mpsuesser/oxlint-plugin-effect';
 import { defineConfig } from 'vite-plus';
+
+/**
+ * The Effect-using code, and the only files the Effect lint rules apply to:
+ * the core package (all four entries and its node suite) and the flowchart's
+ * canvas-free `./node` entry with its tests. The Svelte components are not
+ * Effect code — their state is runes, their props plain values — so the
+ * preset has no idiomatic fix to offer there.
+ */
+const EFFECT_FILES = [
+  'packages/prosekit-utilities/src/**/*.ts',
+  'packages/prosekit-utilities/tests/**/*.ts',
+  'packages/prosekit-flowchart/src/lib/node/**/*.ts',
+  'packages/prosekit-flowchart/tests/node/**/*.ts',
+];
 
 export default defineConfig({
   // Staged-file checks run by `vp staged` (pre-commit). Routed by type: oxfmt
@@ -47,6 +63,30 @@ export default defineConfig({
         dependsOn: [{ from: 'dependencies', task: 'build' }],
         cache: false,
       },
+      // Every package's suite — the core's node suite and both Svelte
+      // packages' browser suites — under ONE istanbul map at
+      // `coverage/coverage-final.json`, which `fallow audit` reads for exact
+      // per-function CRAP scores (`health.coverage` in .fallowrc.json).
+      // Without it fallow estimates every function as uncovered, and any
+      // function with cyclomatic complexity ≥ 5 fails the gate on its own.
+      // Run this before `fallow audit`: the PreToolUse fallow gate audits the
+      // map on disk and never refreshes it.
+      //
+      // Not the core's threshold gate: that stays the core's own
+      // `test:coverage`, which CI runs. One vitest process runs every
+      // project here, so no `from: 'dependencies'` edge builds the siblings a
+      // suite imports through `exports` (→ `dist/`), nor runs the Svelte
+      // packages' `svelte-kit sync`: each is named explicitly (cached, so a
+      // warm tree pays nothing).
+      'test:coverage': {
+        command: 'vp test run --coverage',
+        dependsOn: [
+          '@thomasfosterau/prosekit-utilities#build',
+          '@thomasfosterau/prosekit-svelte#build',
+          '@thomasfosterau/prosekit-flowchart#sync',
+        ],
+        cache: false,
+      },
     },
   },
 
@@ -62,9 +102,98 @@ export default defineConfig({
       '**/storybook-static/**',
       '**/coverage/**',
     ],
+    categories: {
+      correctness: 'error',
+    },
+    rules: {
+      'vite-plus/prefer-vite-plus-imports': 'error',
+    },
+    // Registered workspace-wide (loading a plugin enables none of its rules);
+    // the Effect rules themselves are switched on only for EFFECT_FILES below.
+    jsPlugins: [
+      { name: 'vite-plus', specifier: 'vite-plus/oxlint-plugin' },
+      ...effect.configs.recommended.jsPlugins,
+    ],
+    overrides: [
+      {
+        files: EFFECT_FILES,
+        plugins: recommended.plugins ?? [],
+        rules: {
+          ...recommended.rules,
+          ...effect.configs.recommended.rules,
+          // `casting-awareness` is an awareness prompt, not a defect rule —
+          // it fires on every `as`, including the narrowings ProseMirror's
+          // loosely typed `attrs` / `toDOM` structurally require. Stays
+          // visible as a warning.
+          'effect/casting-awareness': 'warn',
+          // Hard-codes abbreviations (`Arr`, `P`, `R`, …) with no options, so
+          // it is unsatisfiable under the full-name convention (`import * as
+          // Option from 'effect/Option'`) this family shares with its
+          // consumers.
+          'effect/prefer-namespace-imports': 'off',
+          // "Shape" IS this package's domain term, not a description of
+          // structure: a `DocumentShape` is the browser-cheap structural half
+          // of a document schema (packages/prosekit-utilities/CLAUDE.md §
+          // Terms), and `DocumentShape` / `defineDocumentShape` /
+          // `DocumentShape.narrow` are published API that consumers' apps
+          // name. Renaming them is a major break for no behavioural gain.
+          'effect/no-shape-in-symbol-names': 'off',
+
+          // ---- Rules this workspace's conventions cut across --------------
+          // As in effect-web: each stays visible as a warning, so a NEW site
+          // is still read, while the published surface it fires on today
+          // keeps its shape.
+          //
+          // Fires on `?: T | undefined`, the ONLY spelling of an optional
+          // member `exactOptionalPropertyTypes` lets a caller forward an
+          // optional of its own into (AGENTS.md § Conventions), and on the
+          // one deliberately nullable public parameter (`extractDocumentText`
+          // takes a nullable database column). Every site today is one of
+          // the two; switching to `Option` would break the published API.
+          'effect/prefer-option-over-null': 'warn',
+          // `NodeJSON` / `MarkJSON` and the derive options mirror
+          // ProseMirror's JSON model, whose `attrs` is an open record of
+          // `unknown`. That is deliberate: a caller must narrow a value
+          // before using it, which is what keeps an `href` from skipping
+          // `isSafeHref`.
+          'effect/no-unsafe-dictionary-type': 'warn',
+          // `unknown` is the honest type at a decode boundary: the public
+          // `DocumentGrammarGuard` and `DocumentSchema.decode` exist to take
+          // unparsed input, and `schemaFromDefault` reads ProseMirror's
+          // `any`-typed `AttributeSpec.default`.
+          'effect/no-unknown-parameters': 'warn',
+        },
+      },
+      // The test suites are the boundary where an Effect is run to a value
+      // and asserted on — the place the rule's own guidance sends
+      // `runSync` / `runPromise` ("the test harness"). The workspace does not
+      // use `@effect/vitest`, so there is no `it.effect` to hand the run to.
+      {
+        files: [
+          'packages/prosekit-utilities/tests/**/*.ts',
+          'packages/prosekit-flowchart/tests/node/**/*.ts',
+        ],
+        rules: {
+          'effect/effect-run-in-body': 'off',
+        },
+      },
+    ],
     options: {
       typeAware: false,
       typeCheck: false,
+    },
+  },
+
+  // The root `test:coverage` run above: each package's vite.config.ts is a
+  // vitest project, so one run and one coverage map cover them all.
+  test: {
+    projects: ['packages/*/vite.config.ts'],
+    coverage: {
+      provider: 'istanbul',
+      reporter: ['text-summary', 'json-summary', 'json'],
+      reportsDirectory: './coverage',
+      include: ['packages/*/src/lib/**/*.{ts,svelte}', 'packages/prosekit-utilities/src/**/*.ts'],
+      exclude: ['**/*.d.ts'],
     },
   },
 

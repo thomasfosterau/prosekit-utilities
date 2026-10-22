@@ -59,12 +59,13 @@ export function parseFlowchartData(input: string): FlowchartDataSchema {
   if (Option.isNone(decoded)) return { ...EMPTY_FLOWCHART };
   const parsed = decoded.value;
   if (!Predicate.isObjectOrArray(parsed)) return { ...EMPTY_FLOWCHART };
-  const obj = parsed as { nodes?: unknown; edges?: unknown };
-  const nodes = Array.isArray(obj.nodes)
-    ? Arr.getSomes(obj.nodes.map((node) => decodeFlowchartNode(node)))
-    : [];
-  const edges = Array.isArray(obj.edges)
-    ? Arr.getSomes(obj.edges.map((edge) => decodeFlowchartEdge(edge)))
-    : [];
+  const nodes =
+    Predicate.hasProperty(parsed, 'nodes') && Array.isArray(parsed.nodes)
+      ? Arr.getSomes(parsed.nodes.map((node) => decodeFlowchartNode(node)))
+      : [];
+  const edges =
+    Predicate.hasProperty(parsed, 'edges') && Array.isArray(parsed.edges)
+      ? Arr.getSomes(parsed.edges.map((edge) => decodeFlowchartEdge(edge)))
+      : [];
   return { nodes, edges };
 }

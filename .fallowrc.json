@@ -1,0 +1,125 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  "entry": [
+    "packages/prosekit-utilities/src/index.ts",
+    "packages/prosekit-utilities/src/derive/index.ts",
+    "packages/prosekit-utilities/src/prosekit/index.ts",
+    "packages/prosekit-utilities/src/drizzle/index.ts",
+    "packages/prosekit-svelte/src/lib/index.ts",
+    "packages/prosekit-flowchart/src/lib/index.ts",
+    "packages/prosekit-flowchart/src/lib/node/index.ts",
+    "packages/*/tests/**/*.test.ts",
+    "packages/*/tests/setup.ts",
+    "packages/*/src/stories/**/*.stories.{ts,svelte}",
+    "packages/prosekit-svelte/.storybook/*.ts",
+    "packages/*/svelte.config.js",
+    "**/vite.config.ts",
+    "scripts/check-dist-boundaries.ts"
+  ],
+  "ignorePatterns": ["**/dist/**", "**/coverage/**", "**/.svelte-kit/**", "**/storybook-static/**"],
+  "ignoreDependencies": [
+    "@types/node",
+    "@effect/tsgo",
+    "@typescript/native",
+    "typescript",
+    "vite",
+    "vitest",
+    "vite-plus",
+    "@changesets/cli",
+    "@vitest/coverage-istanbul",
+    "@vitest/browser-playwright",
+    "playwright",
+    "svelte-check",
+    "fallow",
+    "@sveltejs/package",
+    "@thomasfosterau/prosekit-utilities",
+    "@thomasfosterau/prosekit-svelte",
+    "@thomasfosterau/prosekit-flowchart"
+  ],
+  "rules": {
+    "unused-files": "error",
+    "unused-exports": "error",
+    "unused-types": "error",
+    "unused-dependencies": "error",
+    "unused-dev-dependencies": "warn",
+    "unused-enum-members": "error",
+    "unused-class-members": "warn",
+    "unresolved-imports": "error",
+    "unlisted-dependencies": "error",
+    "duplicate-exports": "error",
+    "circular-dependencies": "error",
+    "boundary-violation": "error",
+    "stale-suppressions": "warn"
+  },
+  "boundaries": {
+    "zones": [
+      {
+        "name": "core-root",
+        "patterns": [
+          "packages/prosekit-utilities/src/*.ts",
+          "packages/prosekit-utilities/src/markdown/**"
+        ]
+      },
+      {
+        "name": "core-derive",
+        "patterns": ["packages/prosekit-utilities/src/derive/**"]
+      },
+      {
+        "name": "core-prosekit",
+        "patterns": ["packages/prosekit-utilities/src/prosekit/**"]
+      },
+      {
+        "name": "core-drizzle",
+        "patterns": ["packages/prosekit-utilities/src/drizzle/**"]
+      },
+      {
+        "name": "svelte",
+        "patterns": ["packages/prosekit-svelte/src/lib/**"]
+      },
+      {
+        "name": "flowchart-node",
+        "patterns": ["packages/prosekit-flowchart/src/lib/node/**"]
+      },
+      {
+        "name": "flowchart-canvas",
+        "patterns": ["packages/prosekit-flowchart/src/lib/*"]
+      }
+    ],
+    "rules": [
+      {
+        "from": "core-root",
+        "allow": []
+      },
+      {
+        "from": "core-derive",
+        "allow": []
+      },
+      {
+        "from": "core-prosekit",
+        "allow": ["core-root", "core-derive"]
+      },
+      {
+        "from": "core-drizzle",
+        "allow": []
+      },
+      {
+        "from": "svelte",
+        "allow": ["core-root", "core-prosekit"]
+      },
+      {
+        "from": "flowchart-node",
+        "allow": ["core-root", "core-derive"]
+      },
+      {
+        "from": "flowchart-canvas",
+        "allow": ["flowchart-node", "svelte"]
+      }
+    ]
+  },
+  "health": {
+    "maxCyclomatic": 20,
+    "maxCognitive": 15,
+    "maxCrap": 30,
+    "coverage": "coverage/coverage-final.json"
+  }
+}

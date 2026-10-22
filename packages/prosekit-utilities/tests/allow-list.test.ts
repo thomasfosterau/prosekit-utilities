@@ -11,12 +11,14 @@
  * @module
  */
 
+import * as Arr from 'effect/Array';
 import * as Effect from 'effect/Effect';
 import * as HashSet from 'effect/HashSet';
 import * as Option from 'effect/Option';
+import * as Order from 'effect/Order';
 import * as Result from 'effect/Result';
 import * as Schema from 'effect/Schema';
-import { describe, expect, it } from 'vite-plus/test';
+import { assert, describe, expect, it } from 'vite-plus/test';
 import {
   allowListFilter,
   allowListViolation,
@@ -24,7 +26,7 @@ import {
   defineAllowList,
   DocumentViolation,
 } from '../src/allow-list.ts';
-import type { DocumentJSON, MarkJSON } from '../src/json.ts';
+import type { DocumentJSON, MarkJSON, NodeJSON } from '../src/json.ts';
 
 // ── The four vocabularies the source applications ship ────────────────
 
@@ -73,19 +75,36 @@ const TITLE = defineAllowList({
   marks: [...INLINE_MARKS, 'subscript', 'superscript'],
 });
 
-const paragraph = (text: string, marks?: ReadonlyArray<MarkJSON>): DocumentJSON => ({
+const paragraph = (text: string, marks: ReadonlyArray<MarkJSON> = []): DocumentJSON => ({
   type: 'blockDocument',
-  content: [{ type: 'paragraph', content: [{ type: 'text', text, ...(marks ? { marks } : {}) }] }],
+  content: [
+    {
+      type: 'paragraph',
+      content: [
+        Arr.match(marks, {
+          onEmpty: (): NodeJSON => ({ type: 'text', text }),
+          onNonEmpty: (nonEmpty): NodeJSON => ({ type: 'text', text, marks: nonEmpty }),
+        }),
+      ],
+    },
+  ],
 });
 
-/** The violation message, or `undefined` — the shape the source applications' seams returned. */
+/**
+ * A stored-row value the envelope type rules out (a `null` entry, a node
+ * missing its `type`, a non-array `marks`), typed as a document on purpose:
+ * the walk runs on values only proved to be JSON, so these are reachable.
+ */
+const malformed = (value: Schema.Json | DocumentJSON): DocumentJSON =>
+  // SAFETY: deliberately ill-typed input is the point of every caller.
+  value as DocumentJSON;
+
+/** The violation's message, if there is one. */
 const message = (
   allowList: Parameters<typeof allowListViolation>[0],
   doc: DocumentJSON,
-): string | undefined =>
-  Option.map(allowListViolation(allowList, doc), (violation) => violation.message).pipe(
-    Option.getOrUndefined,
-  );
+): Option.Option<string> =>
+  Option.map(allowListViolation(allowList, doc), (violation) => violation.message);
 
 // ── defineAllowList ───────────────────────────────────────────────────
 
@@ -93,7 +112,7 @@ describe('defineAllowList', () => {
   it('accepts any iterable of names and stores them as HashSets', () => {
     const list = defineAllowList({
       label: 'a thing',
-      nodes: new Set(['text', 'paragraph']),
+      nodes: HashSet.make('text', 'paragraph'),
       marks: ['bold'],
     });
     expect(HashSet.has(list.nodes, 'text')).toBe(true);
@@ -120,14 +139,20 @@ describe('defineAllowList', () => {
     });
     expect(lax.checkLinkHref).toBe(false);
     const doc = paragraph('x', [{ type: 'link', attrs: { href: 'javascript:alert(1)' } }]);
-    expect(message(lax, doc)).toBeUndefined();
+    expect(message(lax, doc)).toEqual(Option.none());
     // The same document under a checking list is a violation.
-    expect(message(COMMENT, doc)).toBeDefined();
+    expect(message(COMMENT, doc)).toEqual(Option.some(expect.any(String)));
   });
 
   it('carries the four documented vocabularies', () => {
-    expect([...COMMENT.nodes].sort()).toEqual(['hardBreak', 'paragraph', 'text']);
-    expect([...COMMENT.marks].sort()).toEqual(['bold', 'code', 'italic', 'link', 'strike']);
+    expect(Arr.sort([...COMMENT.nodes], Order.String)).toEqual(['hardBreak', 'paragraph', 'text']);
+    expect(Arr.sort([...COMMENT.marks], Order.String)).toEqual([
+      'bold',
+      'code',
+      'italic',
+      'link',
+      'strike',
+    ]);
   });
 });
 
@@ -139,7 +164,7 @@ describe('allowListViolation: node allow-list', () => {
   });
 
   it('passes an empty document (no content)', () => {
-    expect(message(COMMENT, { type: 'blockDocument', content: [] })).toBeUndefined();
+    expect(message(COMMENT, { type: 'blockDocument', content: [] })).toEqual(Option.none());
   });
 
   it('passes a hardBreak between two text runs', () => {
@@ -156,10 +181,10 @@ describe('allowListViolation: node allow-list', () => {
         },
       ],
     };
-    expect(message(COMMENT, doc)).toBeUndefined();
+    expect(message(COMMENT, doc)).toEqual(Option.none());
   });
 
-  for (const nodeType of [
+  it.each([
     'heading',
     'image',
     'table',
@@ -169,23 +194,22 @@ describe('allowListViolation: node allow-list', () => {
     'list',
     'flowchart',
     'sidenote',
-  ]) {
-    it(`flags a "${nodeType}" node as a violation`, () => {
-      const doc: DocumentJSON = { type: 'blockDocument', content: [{ type: nodeType }] };
-      expect(message(COMMENT, doc)).toContain(nodeType);
-    });
-  }
+  ])('flags a "%s" node as a violation', (nodeType) => {
+    const doc: DocumentJSON = { type: 'blockDocument', content: [{ type: nodeType }] };
+    expect(message(COMMENT, doc)).toEqual(Option.some(expect.stringContaining(nodeType)));
+  });
 
   it('names the specific disallowed node type in the violation message', () => {
     const doc: DocumentJSON = { type: 'blockDocument', content: [{ type: 'horizontalRule' }] };
-    expect(message(COMMENT, doc)).toContain('horizontalRule');
+    expect(message(COMMENT, doc)).toEqual(Option.some(expect.stringContaining('horizontalRule')));
   });
 
   it('reports the violation as structured data, not only a string', () => {
     const doc: DocumentJSON = { type: 'blockDocument', content: [{ type: 'heading' }] };
     const violation = allowListViolation(COMMENT, doc);
     expect(Option.isSome(violation)).toBe(true);
-    const value = Option.getOrThrow(violation);
+    assert(Option.isSome(violation));
+    const value = violation.value;
     expect(value).toBeInstanceOf(DocumentViolation);
     expect(value._tag).toBe('DocumentViolation');
     expect(value.kind).toBe('node');
@@ -198,22 +222,23 @@ describe('allowListViolation: node allow-list', () => {
 // ── The mark allow-list ───────────────────────────────────────────────
 
 describe('allowListViolation: mark allow-list', () => {
-  for (const mark of ['bold', 'italic', 'strike', 'code']) {
-    it(`passes the "${mark}" mark`, () => {
-      expect(message(COMMENT, paragraph('styled', [{ type: mark }]))).toBeUndefined();
-    });
-  }
+  it.each(['bold', 'italic', 'strike', 'code'])('passes the "%s" mark', (mark) => {
+    expect(message(COMMENT, paragraph('styled', [{ type: mark }]))).toEqual(Option.none());
+  });
 
-  for (const mark of ['underline', 'highlight', 'subscript', 'superscript']) {
-    it(`flags the "${mark}" mark as a violation`, () => {
-      expect(message(COMMENT, paragraph('styled', [{ type: mark }]))).toContain(mark);
-    });
-  }
+  it.each(['underline', 'highlight', 'subscript', 'superscript'])(
+    'flags the "%s" mark as a violation',
+    (mark) => {
+      expect(message(COMMENT, paragraph('styled', [{ type: mark }]))).toEqual(
+        Option.some(expect.stringContaining(mark)),
+      );
+    },
+  );
 
   it('reports a mark violation with kind "mark"', () => {
-    const violation = Option.getOrThrow(
-      allowListViolation(COMMENT, paragraph('x', [{ type: 'highlight' }])),
-    );
+    const found = allowListViolation(COMMENT, paragraph('x', [{ type: 'highlight' }]));
+    assert(Option.isSome(found));
+    const violation = found.value;
     expect(violation.kind).toBe('mark');
     expect(violation.name).toBe('highlight');
   });
@@ -224,33 +249,33 @@ describe('allowListViolation: mark allow-list', () => {
 describe('allowListViolation: link href safety', () => {
   it('passes an https link', () => {
     const doc = paragraph('a link', [{ type: 'link', attrs: { href: 'https://example.com' } }]);
-    expect(message(COMMENT, doc)).toBeUndefined();
+    expect(message(COMMENT, doc)).toEqual(Option.none());
   });
 
   it('passes a mailto: link', () => {
     const doc = paragraph('a link', [{ type: 'link', attrs: { href: 'mailto:a@b.test' } }]);
-    expect(message(COMMENT, doc)).toBeUndefined();
+    expect(message(COMMENT, doc)).toEqual(Option.none());
   });
 
   it('flags a javascript: link as a violation', () => {
     const doc = paragraph('a link', [{ type: 'link', attrs: { href: 'javascript:alert(1)' } }]);
-    expect(message(COMMENT, doc)).toBeDefined();
+    expect(message(COMMENT, doc)).toEqual(Option.some(expect.any(String)));
   });
 
   it('flags a data: link as a violation', () => {
     const doc = paragraph('a link', [
       { type: 'link', attrs: { href: 'data:text/html,<script>1</script>' } },
     ]);
-    expect(message(COMMENT, doc)).toBeDefined();
+    expect(message(COMMENT, doc)).toEqual(Option.some(expect.any(String)));
   });
 
   it('reports an href violation with kind "href" and the link mark s name', () => {
-    const violation = Option.getOrThrow(
-      allowListViolation(
-        COMMENT,
-        paragraph('x', [{ type: 'link', attrs: { href: 'javascript:1' } }]),
-      ),
+    const found = allowListViolation(
+      COMMENT,
+      paragraph('x', [{ type: 'link', attrs: { href: 'javascript:1' } }]),
     );
+    assert(Option.isSome(found));
+    const violation = found.value;
     expect(violation.kind).toBe('href');
     expect(violation.name).toBe('link');
     expect(violation.message).toBe('link href is not a permitted URL scheme');
@@ -292,13 +317,11 @@ describe('allowListViolation: obfuscated dangerous schemes', () => {
     ['backslash-escaped root', '/\\evil.example/x'],
   ] as const;
 
-  for (const [label, href] of dangerous) {
-    it(`rejects ${label}: ${JSON.stringify(href)}`, () => {
-      expect(
-        message(COMMENT, paragraph('a link', [{ type: 'link', attrs: { href } }])),
-      ).toBeDefined();
-    });
-  }
+  it.each(dangerous)('rejects %s: %j', (_label, href) => {
+    expect(message(COMMENT, paragraph('a link', [{ type: 'link', attrs: { href } }]))).toEqual(
+      Option.some(expect.any(String)),
+    );
+  });
 
   // Guards against over-correcting into rejecting legitimate links. Table-
   // driven for the same reason the dangerous cases are: a single `it`
@@ -314,13 +337,11 @@ describe('allowListViolation: obfuscated dangerous schemes', () => {
     ['bare fragment', '#fragment'],
   ] as const;
 
-  for (const [label, href] of safe) {
-    it(`still accepts ${label}: ${JSON.stringify(href)}`, () => {
-      expect(
-        message(COMMENT, paragraph('a link', [{ type: 'link', attrs: { href } }])),
-      ).toBeUndefined();
-    });
-  }
+  it.each(safe)('still accepts %s: %j', (_label, href) => {
+    expect(message(COMMENT, paragraph('a link', [{ type: 'link', attrs: { href } }]))).toEqual(
+      Option.none(),
+    );
+  });
 });
 
 // ── Nesting and document order ────────────────────────────────────────
@@ -339,7 +360,7 @@ describe('allowListViolation: nested violation detection', () => {
         },
       ],
     };
-    expect(message(COMMENT, doc)).toBeDefined();
+    expect(message(COMMENT, doc)).toEqual(Option.some(expect.any(String)));
   });
 
   it('names the earliest offender in document order', () => {
@@ -347,33 +368,37 @@ describe('allowListViolation: nested violation detection', () => {
       type: 'blockDocument',
       content: [{ type: 'heading' }, { type: 'table' }],
     };
-    expect(message(COMMENT, doc)).toContain('heading');
+    expect(message(COMMENT, doc)).toEqual(Option.some(expect.stringContaining('heading')));
   });
 
   it('reports a malformed entry as a violation rather than throwing', () => {
     // The walk runs on values the structural check has only proved to be
     // JSON, so a `null`, a stray string or a node missing its `type` is
     // reachable. None of them is in any vocabulary.
-    for (const entry of [null, 'a stray string', 42, { attrs: {} }, { type: 7 }]) {
-      const doc = { type: 'blockDocument', content: [entry] } as unknown as DocumentJSON;
-      expect(message(COMMENT, doc)).toBe('node type "" is not permitted in a comment');
-    }
+    Arr.forEach([null, 'a stray string', 42, { attrs: {} }, { type: 7 }], (entry) => {
+      const doc = malformed({ type: 'blockDocument', content: [entry] });
+      expect(message(COMMENT, doc)).toEqual(
+        Option.some('node type "" is not permitted in a comment'),
+      );
+    });
   });
 
   it('reports a malformed mark as a violation rather than throwing', () => {
-    const doc = {
+    const doc = malformed({
       type: 'blockDocument',
       content: [{ type: 'paragraph', content: [{ type: 'text', text: 'x', marks: [null] }] }],
-    } as unknown as DocumentJSON;
-    expect(message(COMMENT, doc)).toBe('mark type "" is not permitted in a comment');
+    });
+    expect(message(COMMENT, doc)).toEqual(
+      Option.some('mark type "" is not permitted in a comment'),
+    );
   });
 
   it('ignores a `marks` or `content` field that is not an array', () => {
-    const doc = {
+    const doc = malformed({
       type: 'blockDocument',
       content: [{ type: 'paragraph', marks: 'nope', content: 'nope' }],
-    } as unknown as DocumentJSON;
-    expect(message(COMMENT, doc)).toBeUndefined();
+    });
+    expect(message(COMMENT, doc)).toEqual(Option.none());
   });
 
   it('reports a node violation before a mark violation on the same node', () => {
@@ -381,7 +406,7 @@ describe('allowListViolation: nested violation detection', () => {
       type: 'blockDocument',
       content: [{ type: 'heading', marks: [{ type: 'highlight' }] }],
     };
-    expect(message(COMMENT, doc)).toContain('heading');
+    expect(message(COMMENT, doc)).toEqual(Option.some(expect.stringContaining('heading')));
   });
 });
 
@@ -396,17 +421,17 @@ describe('post / article / title vocabularies', () => {
         { type: 'paragraph', content: [{ type: 'mention', attrs: { id: 'u', label: 'rosa' } }] },
       ],
     };
-    expect(message(POST, structured)).toBeUndefined();
-    expect(message(COMMENT, structured)).toContain('heading');
-    expect(message(POST, { type: 'blockDocument', content: [{ type: 'table' }] })).toContain(
-      'table',
+    expect(message(POST, structured)).toEqual(Option.none());
+    expect(message(COMMENT, structured)).toEqual(Option.some(expect.stringContaining('heading')));
+    expect(message(POST, { type: 'blockDocument', content: [{ type: 'table' }] })).toEqual(
+      Option.some(expect.stringContaining('table')),
     );
-    expect(message(POST, { type: 'blockDocument', content: [{ type: 'figure' }] })).toContain(
-      'figure',
+    expect(message(POST, { type: 'blockDocument', content: [{ type: 'figure' }] })).toEqual(
+      Option.some(expect.stringContaining('figure')),
     );
     expect(
       message(POST, paragraph('cited', [{ type: 'citation', attrs: { workId: 'w' } }])),
-    ).toContain('citation');
+    ).toEqual(Option.some(expect.stringContaining('citation')));
   });
 
   it('an article section admits tables, figures and citations', () => {
@@ -418,13 +443,13 @@ describe('post / article / title vocabularies', () => {
           { type: 'figure', content: [{ type: 'image' }, { type: 'figcaption' }] },
         ],
       }),
-    ).toBeUndefined();
+    ).toEqual(Option.none());
     expect(
       message(ARTICLE, paragraph('cited', [{ type: 'citation', attrs: { workId: 'w' } }])),
-    ).toBeUndefined();
+    ).toEqual(Option.none());
     expect(
       message(ARTICLE, paragraph('x', [{ type: 'link', attrs: { href: 'javascript:1' } }])),
-    ).toContain('URL scheme');
+    ).toEqual(Option.some(expect.stringContaining('URL scheme')));
   });
 
   it('a title is inline only and admits the scientific-name marks', () => {
@@ -437,16 +462,16 @@ describe('post / article / title vocabularies', () => {
           { type: 'text', text: '2', marks: [{ type: 'subscript' }] },
         ],
       }),
-    ).toBeUndefined();
-    expect(message(TITLE, { type: 'inlineDocument', content: [{ type: 'paragraph' }] })).toContain(
-      'paragraph',
+    ).toEqual(Option.none());
+    expect(message(TITLE, { type: 'inlineDocument', content: [{ type: 'paragraph' }] })).toEqual(
+      Option.some(expect.stringContaining('paragraph')),
     );
     expect(
       message(TITLE, {
         type: 'inlineDocument',
         content: [{ type: 'text', text: 'x', marks: [{ type: 'highlight' }] }],
       }),
-    ).toContain('highlight');
+    ).toEqual(Option.some(expect.stringContaining('highlight')));
   });
 });
 
@@ -464,7 +489,9 @@ describe('checkAllowList', () => {
     const doc: DocumentJSON = { type: 'blockDocument', content: [{ type: 'heading' }] };
     const result = Effect.runSync(Effect.result(checkComment(doc)));
     expect(Result.isFailure(result)).toBe(true);
-    const failure = Result.getFailure(result).pipe(Option.getOrThrow);
+    const failed = Result.getFailure(result);
+    assert(Option.isSome(failed));
+    const failure = failed.value;
     expect(failure).toBeInstanceOf(DocumentViolation);
     expect(failure._tag).toBe('DocumentViolation');
     expect(failure.kind).toBe('node');

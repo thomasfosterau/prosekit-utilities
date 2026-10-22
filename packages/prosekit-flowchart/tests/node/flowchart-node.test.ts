@@ -22,13 +22,44 @@
  * @module
  */
 
-import { describe, expect, it } from 'vite-plus/test';
+import { assert, describe, expect, it, onTestFinished } from 'vite-plus/test';
+import * as Arr from 'effect/Array';
+import * as Option from 'effect/Option';
+import * as Schema from 'effect/Schema';
 import { createEditor, union } from 'prosekit/core';
 import { defineDoc } from 'prosekit/extensions/doc';
 import { defineParagraph } from 'prosekit/extensions/paragraph';
 import { defineText } from 'prosekit/extensions/text';
+import {
+  DOMSerializer,
+  type Node as ProseMirrorNode,
+  type NodeType,
+  type Schema as ProseMirrorSchema,
+} from '@prosekit/pm/model';
 import { EMPTY_FLOWCHART } from '../../src/lib/node/data.ts';
 import { defineFlowchart } from '../../src/lib/node/flowchart-node.ts';
+
+const toJson = Schema.encodeSync(Schema.fromJsonString(Schema.Unknown));
+
+/** The node type `name` of `schema`, failing the test when it is not registered. */
+const nodeType = (schema: ProseMirrorSchema, name: string): NodeType => {
+  const type = schema.nodes[name];
+  assert(type, `the schema registers ${name}`);
+  return type;
+};
+
+/** The element `toDOM` renders for `node`, through ProseMirror's own serialiser. */
+const renderElement = (schema: ProseMirrorSchema, node: ProseMirrorNode): Element => {
+  const rendered = DOMSerializer.fromSchema(schema).serializeNode(node);
+  assert(rendered instanceof Element, 'toDOM renders an element');
+  return rendered;
+};
+
+type DocJSON = ReturnType<ReturnType<typeof createEditor>['getDocJSON']>;
+
+/** The first flowchart node in an editor's document JSON. */
+const findFlowchart = (json: DocJSON): Option.Option<DocJSON> =>
+  Arr.findFirst(json.content ?? [], (n) => n.type === 'flowchart');
 
 const extension = () => union(defineDoc(), defineText(), defineParagraph(), defineFlowchart());
 
@@ -36,7 +67,7 @@ describe('defineFlowchart', () => {
   const editor = createEditor({ extension: extension() });
 
   it('registers the flowchart node as an isolating block atom', () => {
-    const spec = editor.schema.nodes.flowchart!.spec;
+    const spec = nodeType(editor.schema, 'flowchart').spec;
     expect(spec.atom).toBe(true);
     expect(spec.isolating).toBe(true);
     expect(spec.group).toContain('block');
@@ -49,15 +80,12 @@ describe('defineFlowchart', () => {
       nodes: [{ id: 'a', position: { x: 0, y: 0 }, data: { label: '<x>&\'"' } }],
       edges: [],
     };
-    const node = editor.schema.nodes.flowchart!.create({ data });
-    const dom = editor.schema.nodes.flowchart!.spec.toDOM!(node) as [
-      string,
-      Record<string, string>,
-      string,
-    ];
-    expect(dom[0]).toBe('div');
-    expect(dom[1]['data-flowchart']).toBe('');
-    const payload = dom[1]['data-payload']!;
+    const node = nodeType(editor.schema, 'flowchart').create({ data });
+    const dom = renderElement(editor.schema, node);
+    expect(dom.tagName.toLowerCase()).toBe('div');
+    expect(dom.getAttribute('data-flowchart')).toBe('');
+    const payload = dom.getAttribute('data-payload');
+    assert(payload !== null, 'toDOM emits data-payload');
     expect(payload).not.toContain('<');
     expect(payload).not.toContain('>');
     expect(payload).not.toContain('&');
@@ -72,46 +100,36 @@ describe('defineFlowchart', () => {
   });
 
   it('falls back to the empty payload when `data` is absent', () => {
-    const node = editor.schema.nodes.flowchart!.create();
-    const dom = editor.schema.nodes.flowchart!.spec.toDOM!(node) as [
-      string,
-      Record<string, string>,
-      string,
-    ];
-    expect(dom[1]['data-payload']).toBe(JSON.stringify(EMPTY_FLOWCHART));
+    const node = nodeType(editor.schema, 'flowchart').create();
+    const dom = renderElement(editor.schema, node);
+    expect(dom.getAttribute('data-payload')).toBe(toJson(EMPTY_FLOWCHART));
   });
 
   it("updateFlowchartData mutates a mounted flowchart node's data in place", () => {
     const mounted = createEditor({ extension: extension() });
     const { schema } = mounted;
-    const flowNode = schema.nodes.flowchart!.create({ data: EMPTY_FLOWCHART });
-    mounted.setContent(schema.nodes.doc!.create(null, flowNode));
+    const flowNode = nodeType(schema, 'flowchart').create({ data: EMPTY_FLOWCHART });
+    mounted.setContent(nodeType(schema, 'doc').create(null, flowNode));
     const place = document.createElement('div');
     mounted.mount(place);
-    try {
-      const newData = {
-        nodes: [{ id: 'n', position: { x: 1, y: 2 }, data: { label: 'L' } }],
-        edges: [],
-      };
-      expect(mounted.commands.updateFlowchartData(0, newData)).toBe(true);
-      expect(mounted.view.state.doc.nodeAt(0)!.attrs.data).toEqual(newData);
-    } finally {
-      mounted.unmount();
-    }
+    onTestFinished(() => mounted.unmount());
+    const newData = {
+      nodes: [{ id: 'n', position: { x: 1, y: 2 }, data: { label: 'L' } }],
+      edges: [],
+    };
+    expect(mounted.commands.updateFlowchartData(0, newData)).toBe(true);
+    expect(mounted.view.state.doc.nodeAt(0)?.attrs.data).toEqual(newData);
   });
 
   it('updateFlowchartData is a no-op when the target position is not a flowchart', () => {
     const mounted = createEditor({ extension: extension() });
     const { schema } = mounted;
-    const paragraph = schema.nodes.paragraph!.create(null, schema.text('hi'));
-    mounted.setContent(schema.nodes.doc!.create(null, paragraph));
+    const paragraph = nodeType(schema, 'paragraph').create(null, schema.text('hi'));
+    mounted.setContent(nodeType(schema, 'doc').create(null, paragraph));
     const place = document.createElement('div');
     mounted.mount(place);
-    try {
-      expect(mounted.commands.updateFlowchartData(0, EMPTY_FLOWCHART)).toBe(false);
-    } finally {
-      mounted.unmount();
-    }
+    onTestFinished(() => mounted.unmount());
+    expect(mounted.commands.updateFlowchartData(0, EMPTY_FLOWCHART)).toBe(false);
   });
 
   it('defineFlowchart() returns an extension object', () => {
@@ -127,13 +145,9 @@ describe('flowchart parseDOM.getAttrs (DOM round-trip)', () => {
       nodes: [{ id: 'a', position: { x: 1, y: 2 }, data: { label: 'L' } }],
       edges: [],
     };
-    const payload = JSON.stringify(data);
+    const payload = toJson(data);
     editor.setContent(`<div data-flowchart data-payload='${payload}'></div>`);
-    const json = editor.getDocJSON() as {
-      content?: Array<{ type: string; attrs?: { data?: unknown } }>;
-    };
-    const flow = json.content?.find((n) => n.type === 'flowchart');
-    expect(flow?.attrs?.data).toEqual(data);
+    expect(Option.getOrUndefined(findFlowchart(editor.getDocJSON()))?.attrs?.data).toEqual(data);
   });
 
   it("falls back to the element's text content for legacy serialised payloads", () => {
@@ -142,20 +156,15 @@ describe('flowchart parseDOM.getAttrs (DOM round-trip)', () => {
       edges: [],
     };
     // Older documents carried the JSON inside the element, not in data-payload.
-    editor.setContent(`<div data-flowchart>${JSON.stringify(data)}</div>`);
-    const json = editor.getDocJSON() as {
-      content?: Array<{ type: string; attrs?: { data?: unknown } }>;
-    };
-    const flow = json.content?.find((n) => n.type === 'flowchart');
-    expect(flow?.attrs?.data).toEqual(data);
+    editor.setContent(`<div data-flowchart>${toJson(data)}</div>`);
+    expect(Option.getOrUndefined(findFlowchart(editor.getDocJSON()))?.attrs?.data).toEqual(data);
   });
 
   it('falls back to the empty payload for an unparseable flowchart div', () => {
     editor.setContent(`<div data-flowchart>not json</div>`);
-    const json = editor.getDocJSON() as {
-      content?: Array<{ type: string; attrs?: { data?: unknown } }>;
-    };
-    const flow = json.content?.find((n) => n.type === 'flowchart');
-    expect(flow?.attrs?.data).toEqual({ nodes: [], edges: [] });
+    expect(Option.getOrUndefined(findFlowchart(editor.getDocJSON()))?.attrs?.data).toEqual({
+      nodes: [],
+      edges: [],
+    });
   });
 });

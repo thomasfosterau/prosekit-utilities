@@ -17,14 +17,24 @@
  * @module
  */
 
-import { describe, expect, it } from 'vite-plus/test';
+import { assert, describe, expect, it } from 'vite-plus/test';
 import * as Effect from 'effect/Effect';
+import * as Schema from 'effect/Schema';
 import { createHtmlRenderer, HtmlRenderError } from '../../src/prosekit/html.ts';
 import { lazySchema } from '../../src/prosekit/lazy-schema.ts';
 import {
   defineBlockDocumentExtension,
   defineInlineDocumentExtension,
 } from '../../src/prosekit/presets.ts';
+
+/** The rejection the failing `document` source below raises. */
+class NoDom extends Schema.TaggedError<NoDom>()('NoDom', {}) {}
+
+/**
+ * Narrows linkedom's own `Document` class to the DOM's `Document`, which it
+ * implements without being declared as.
+ */
+const isDocument = <A extends object>(value: A): value is A & Document => 'createElement' in value;
 
 const blockRenderer = createHtmlRenderer({
   schema: lazySchema(() => defineBlockDocumentExtension()),
@@ -115,8 +125,9 @@ describe('createHtmlRenderer (server path)', () => {
       document: async () => {
         resolutions += 1;
         const { parseHTML } = await import('linkedom');
-        return parseHTML('<!doctype html><html><body></body></html>')
-          .document as unknown as Document;
+        const { document } = parseHTML('<!doctype html><html><body></body></html>');
+        assert(isDocument(document), 'linkedom yields a Document');
+        return document;
       },
     });
     const doc = {
@@ -131,7 +142,7 @@ describe('createHtmlRenderer (server path)', () => {
   it('fails with a dom-unavailable HtmlRenderError when the Document source rejects', async () => {
     const renderer = createHtmlRenderer({
       schema: lazySchema(() => defineBlockDocumentExtension()),
-      document: () => Promise.reject(new Error('no DOM here')),
+      document: () => Promise.reject(new NoDom()),
     });
     const doc = {
       type: 'blockDocument',

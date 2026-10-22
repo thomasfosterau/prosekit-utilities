@@ -16,7 +16,10 @@
  */
 
 import { describe, expect, it } from 'vite-plus/test';
+import * as Schema from 'effect/Schema';
 import { postProcessFlowcharts } from '../../src/lib/node/html.ts';
+
+const toJson = Schema.encodeSync(Schema.fromJsonString(Schema.Unknown));
 
 describe('postProcessFlowcharts', () => {
   it('replaces a `[data-flowchart]` placeholder with an inline SVG snapshot, keeping data-payload', () => {
@@ -24,7 +27,7 @@ describe('postProcessFlowcharts', () => {
       nodes: [{ id: 'a', position: { x: 0, y: 0 }, data: { label: 'Start' } }],
       edges: [],
     };
-    const payload = JSON.stringify(data);
+    const payload = toJson(data);
     const html = `<div data-flowchart data-payload="${payload.replace(/"/g, '&quot;')}"></div>`;
     const result = postProcessFlowcharts(html, document);
     expect(result).toContain('data-flowchart');
@@ -45,11 +48,11 @@ describe('postProcessFlowcharts', () => {
   });
 
   it('post-processes multiple placeholders in one pass', () => {
-    const one = JSON.stringify({
+    const one = toJson({
       nodes: [{ id: 'a', position: { x: 0, y: 0 }, data: { label: 'One' } }],
       edges: [],
     }).replace(/"/g, '&quot;');
-    const two = JSON.stringify({
+    const two = toJson({
       nodes: [{ id: 'b', position: { x: 0, y: 0 }, data: { label: 'Two' } }],
       edges: [],
     }).replace(/"/g, '&quot;');

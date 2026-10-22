@@ -27,6 +27,7 @@
  * @module
  */
 
+import * as DateTime from 'effect/DateTime';
 import * as Schema from 'effect/Schema';
 import { describe, expect, it } from 'vite-plus/test';
 import { defineAllowList } from '../src/allow-list.ts';
@@ -35,7 +36,21 @@ import type { NodeJSON } from '../src/json.ts';
 
 // ── A stand-in grammar guard ──────────────────────────────────────────
 
-const BLOCK_NODES = new Set([
+/** One node as the stand-in grammar sees it: a `type`, and maybe children. */
+type StandInNode = { readonly type: string } & Partial<{
+  readonly content: ReadonlyArray<StandInNode>;
+}>;
+
+/** Every node has a known `type`, recursively. */
+const knownNodes = (known: ReadonlyArray<string>): Schema.Codec<StandInNode> => {
+  const Node: Schema.Codec<StandInNode> = Schema.Struct({
+    type: Schema.Literals(known),
+    content: Schema.optionalKey(Schema.Array(Schema.suspend(() => Node))),
+  });
+  return Node;
+};
+
+const BlockNode = knownNodes([
   'paragraph',
   'heading',
   'text',
@@ -44,37 +59,20 @@ const BLOCK_NODES = new Set([
   'list',
   'blockquote',
 ]);
-const INLINE_NODES = new Set(['text', 'hardBreak']);
-
-/** Every node has a known `type`, recursively. */
-const nodesValid = (nodes: unknown, known: ReadonlySet<string>): boolean =>
-  Array.isArray(nodes) &&
-  nodes.every((node) => {
-    if (typeof node !== 'object' || node === null) return false;
-    const record = node as Record<string, unknown>;
-    if (typeof record.type !== 'string' || !known.has(record.type)) return false;
-    return record.content === undefined || nodesValid(record.content, known);
-  });
+const InlineNode = knownNodes(['text', 'hardBreak']);
 
 /** Mimics a derived block-document guard: `block+`, known node types only. */
-const isBlockDocument = (value: unknown): boolean => {
-  if (typeof value !== 'object' || value === null) return false;
-  const record = value as Record<string, unknown>;
-  if (record.type !== 'blockDocument') return false;
-  return (
-    Array.isArray(record.content) &&
-    record.content.length > 0 &&
-    nodesValid(record.content, BLOCK_NODES)
-  );
-};
+const isBlockDocument = Schema.is(
+  Schema.Struct({
+    type: Schema.Literal('blockDocument'),
+    content: Schema.NonEmptyArray(BlockNode),
+  }),
+);
 
 /** Mimics a derived inline-document guard: `inline*`, inline node types only. */
-const isInlineDocument = (value: unknown): boolean => {
-  if (typeof value !== 'object' || value === null) return false;
-  const record = value as Record<string, unknown>;
-  if (record.type !== 'inlineDocument') return false;
-  return nodesValid(record.content, INLINE_NODES);
-};
+const isInlineDocument = Schema.is(
+  Schema.Struct({ type: Schema.Literal('inlineDocument'), content: Schema.Array(InlineNode) }),
+);
 
 // ── Fixtures ──────────────────────────────────────────────────────────
 
@@ -166,7 +164,9 @@ describe('DocumentShape.Schema: structural check, grammar not installed', () => 
   });
 
   it('rejects a non-JSON value inside `content` (the wire-safety half of the check)', () => {
-    expect(() => decodeBlock({ type: 'blockDocument', content: [new Date()] })).toThrow();
+    expect(() =>
+      decodeBlock({ type: 'blockDocument', content: [DateTime.toDateUtc(DateTime.makeUnsafe(0))] }),
+    ).toThrow();
     expect(() => decodeBlock({ type: 'blockDocument', content: [() => 'x'] })).toThrow();
   });
 

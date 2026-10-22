@@ -29,6 +29,25 @@ catalogMode: strict
 
 catalog:
   '@changesets/cli': ^3.0.3
+  # Effect Language Service as a native (TypeScript-Go) binary. The root
+  # `prepare` runs `effect-tsgo patch --typescript --oxlint`, which overwrites
+  # the native `tsc` (`@typescript/native`) and vite-plus's `oxlint` with
+  # Effect-patched builds matched by gitHead, and `vite.config.ts` lints with
+  # its `oxlint-presets`. Each release hard-errors
+  # (UnsupportedTargetPackageVersionError) on any other component version, so
+  # it moves in lockstep with `@typescript/native` (0.55.0 supports 7.0.2) and
+  # with the `oxlint` / `oxlint-tsgolint` that `vite-plus` pins (0.55.0
+  # supports oxlint 1.87.0 – 1.89.0 and tsgolint 7.0.2003 / 7.0.2004;
+  # vite-plus 1.3.0 carries 1.88.0 / 7.0.2004). Read the `components` table
+  # in node_modules/@effect/tsgo/dist/effect-tsgo.cjs before bumping any of
+  # the three.
+  '@effect/tsgo': 0.55.0
+  # Effect lint rules (`effect.configs.recommended` in vite.config.ts),
+  # scoped there to the Effect-using code: the core package and the
+  # flowchart's `./node`. Built on `effect` 4.0.0, which the `effect`
+  # singleton override resolves to the catalog's 4.0.x — the stable line it
+  # was built on, so it needs no scoped override of its own.
+  '@mpsuesser/oxlint-plugin-effect': ^0.6.0
   # ProseMirror's model / view / state / transform, re-published as one
   # package by ProseKit. Type-only for `./derive`; a runtime peer of
   # `./prosekit` and the Svelte packages.
@@ -56,8 +75,8 @@ catalog:
   # Vitest browser mode: the Playwright provider is its own package as of
   # v4 and pins `vitest` EXACTLY, so it must track the `vitest` entry below
   # (which itself must match vite-plus's exact pin — see that entry).
-  '@vitest/browser-playwright': 5.0.3
-  '@vitest/coverage-istanbul': 5.0.3
+  '@vitest/browser-playwright': 5.0.5
+  '@vitest/coverage-istanbul': 5.0.5
   # The REQUIRED peer of `@thomasfosterau/prosekit-flowchart` — and the
   # reason that package exists apart from the editor package: a component
   # whose behaviour needs a specific third-party engine lives in its own
@@ -77,6 +96,9 @@ catalog:
   # Effect 4. A PEER of every package here that uses it, never a dependency:
   # the consuming app owns the singleton.
   effect: 4.0.5
+  # The dead-code / duplication / complexity audit (`.fallowrc.json`), run by
+  # the PreToolUse gate in agent sessions and by hand before a PR.
+  fallow: 3.34.1
   happy-dom: ^21.0.1
   # The server-side DOM the HTML renderer reaches through a dynamic import
   # when `globalThis.document` is absent. linkedom, not happy-dom: happy-dom
@@ -112,8 +134,10 @@ catalog:
   typescript: npm:@typescript/typescript6@6.0.2
   # vite-plus pins `oxlint`, `oxfmt`, `vitest` and the `@vitest/*` runtime
   # packages to exact versions, so `vitest`, `@vitest/browser-playwright` and
-  # `@vitest/coverage-istanbul` must all match vite-plus's own pin (1.1.0 ->
-  # 5.0.3). The `vitest: "catalog:"` override forces every resolution to the
+  # `@vitest/coverage-istanbul` must all match vite-plus's own pin (1.3.0 ->
+  # 5.0.5). It also decides the `oxlint` (1.3.0 -> 1.88.0, tsgolint
+  # 7.0.2004) that `effect-tsgo patch --oxlint` must support: see the
+  # `@effect/tsgo` entry, which moves with this one and `@typescript/native`. The `vitest: "catalog:"` override forces every resolution to the
   # catalog singleton, a mismatch breaks the browser provider's exact peer,
   # and vite-plus refuses to start `test:coverage` when the coverage provider
   # differs from its pin. Bump vite-plus first, then the vitest set to its pin.
@@ -121,9 +145,9 @@ catalog:
   # ignored in .github/dependabot.yml, #60): on its vite-plus PR, set all
   # three to the new vite-plus's `dependencies.vitest` by hand, in that PR.
   # `vite` is the same release published under its aliased core package.
-  vite-plus: 1.1.0
-  vite: npm:@voidzero-dev/vite-plus-core@1.1.0
-  vitest: 5.0.3
+  vite-plus: 1.3.0
+  vite: npm:@voidzero-dev/vite-plus-core@1.3.0
+  vitest: 5.0.5
   # `render` + locators for Svelte components under Vitest browser mode.
   vitest-browser-svelte: ^3.1.0
 
@@ -139,7 +163,10 @@ overrides:
   # decode identically while the model it was derived from is the same. The
   # app repos pin these two exactly for that reason; so does this one.
   prosemirror-model: 1.25.7
-  prosemirror-view: 1.41.8
+  # 1.42.3 is the first release fixing GHSA-c8x8-7fp4-3x9w (an XSS in paste
+  # handling); raised from 1.41.8 by the owner's decision so `pnpm audit
+  # --audit-level high` passes. `@prosekit/pm` declares `^1.42.4`.
+  prosemirror-view: 1.42.3
 
 nodeLinker: hoisted
 

@@ -38,8 +38,10 @@
  * @module
  */
 
+import * as Array from 'effect/Array';
 import * as Effect from 'effect/Effect';
 import * as Option from 'effect/Option';
+import * as Result from 'effect/Result';
 import * as Schema from 'effect/Schema';
 import type { Extension } from 'prosekit/core';
 import type { Schema as PmSchema } from '@prosekit/pm/model';
@@ -189,18 +191,19 @@ export function defineDocumentSchema<Name extends string>(
     return created;
   };
 
-  const Document = Schema.suspend(() => {
+  const derived: Schema.Top = Schema.suspend(() => {
     const compiled = schema();
     const registry = new Registry(compiled, { attributes: overlay }, cacheFor());
     // The top node is renamed here and only here: ProseMirror's top node is
     // always `doc`, and the envelope's `type` is the surface's own name.
     return registry.nodeAs(compiled.topNodeType, shape.name);
-    // The derived schema's inferred type is a wider structural type than
-    // `DocumentJSON<Name>` (its nodes are `DerivedNodeJSON`, and its top
-    // `type` is `string`, not the literal). This is the single documented seam
-    // where it is pinned to the declared shape — the same convention the
-    // `Registry` itself uses internally.
-  }) as unknown as Schema.Codec<DocumentJSON<Name>>;
+  });
+  // SAFETY: the derived schema's inferred type is a wider structural type
+  // than `DocumentJSON<Name>` (its nodes are `DerivedNodeJSON`, and its top
+  // `type` is `string`, not the literal). This is the single documented seam
+  // where it is pinned to the declared shape — the same convention the
+  // `Registry` itself uses internally.
+  const Document = derived as Schema.Codec<DocumentJSON<Name>>;
 
   const guard = Schema.is(Document);
   const decodeUnknown = Schema.decodeUnknownEffect(Document);
@@ -218,20 +221,18 @@ export function defineDocumentSchema<Name extends string>(
      * malformed-but-not-cleanly-rejectable document to "not a valid document"
      * rather than an uncaught throw on a render path.
      */
-    is: (value: unknown): value is DocumentJSON<Name> => {
-      try {
-        return guard(value);
-      } catch {
-        return false;
-      }
-    },
-    decode: (value: unknown) =>
+    is: (value: unknown): value is DocumentJSON<Name> =>
+      Result.getOrElse(
+        Result.try(() => guard(value)),
+        () => false,
+      ),
+    decode: (value) =>
       Effect.mapError(
         decodeUnknown(value),
         (issue) => new DocumentDecodeError({ document: shape.name, issue }),
       ),
     install: () => {
-      shape.install((value: unknown) => guard(value));
+      shape.install((value) => guard(value));
     },
   };
 }
@@ -253,5 +254,5 @@ export function defineDocumentSchema<Name extends string>(
 export const installDocumentGrammars = (
   ...schemas: ReadonlyArray<DocumentSchema<string>>
 ): void => {
-  for (const schema of schemas) schema.install();
+  Array.forEach(schemas, (schema) => schema.install());
 };
