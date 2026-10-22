@@ -95,7 +95,7 @@ const paragraph = (text: string, marks: ReadonlyArray<MarkJSON> = []): DocumentJ
  * missing its `type`, a non-array `marks`), typed as a document on purpose:
  * the walk runs on values only proved to be JSON, so these are reachable.
  */
-const malformed = (value: Schema.Json): DocumentJSON =>
+const malformed = (value: Schema.Json | DocumentJSON): DocumentJSON =>
   // SAFETY: deliberately ill-typed input is the point of every caller.
   value as DocumentJSON;
 

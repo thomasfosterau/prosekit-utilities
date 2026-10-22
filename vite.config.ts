@@ -117,7 +117,7 @@ export default defineConfig({
     overrides: [
       {
         files: EFFECT_FILES,
-        plugins: recommended.plugins,
+        plugins: recommended.plugins ?? [],
         rules: {
           ...recommended.rules,
           ...effect.configs.recommended.rules,

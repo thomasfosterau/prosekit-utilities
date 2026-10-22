@@ -21,7 +21,7 @@ import type { DocumentJSON } from '../src/json.ts';
  * non-string `text`, `null` entries — typed as a document on purpose, so a
  * case can pin how tolerant the walk is of what a jsonb column can hold.
  */
-const malformed = (value: Schema.Json): DocumentJSON =>
+const malformed = (value: Schema.Json | DocumentJSON): DocumentJSON =>
   // SAFETY: deliberately ill-typed input is the point of every caller.
   value as DocumentJSON;
 
