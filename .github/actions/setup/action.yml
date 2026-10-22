@@ -1,0 +1,53 @@
+# Composite setup shared by the CI job: pnpm, Node.js with the pnpm store
+# cache (keyed on pnpm-lock.yaml by setup-node), a frozen-lockfile install
+# (retried — see the Install step), and node_modules/.bin on PATH so later
+# steps call `vp`, `svelte-check`, `svelte-package`, `storybook` and
+# `playwright` directly. Shaped like the effect-web library's action.
+#
+# Callers must run `actions/checkout` BEFORE this (a local composite action
+# needs the repo on disk first).
+name: Setup toolchain
+description: Set up pnpm and Node.js, restore the package cache, and install dependencies.
+runs:
+  using: composite
+  steps:
+    # pnpm before Node so setup-node's `cache: pnpm` can resolve the store
+    # path. The pnpm version comes from the `packageManager` field in
+    # package.json — do not pin it here as well, or the two drift.
+    - name: Setup pnpm
+      uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+    - name: Setup Node.js
+      uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: latest
+        cache: pnpm
+
+    # Install scripts run: the root `prepare` patches the native `tsc` and
+    # vite-plus's `oxlint` with `@effect/tsgo` (`effect-tsgo patch`), which
+    # `vp check` and the core's `check` need, exactly as a local install
+    # does. Dependency build scripts stay gated by `allowBuilds` in
+    # pnpm-workspace.yaml (only `esbuild` and `@tailwindcss/oxide`); the
+    # privileged release job keeps `--ignore-scripts`.
+    #
+    # Retried: pnpm's linker can race itself when a package with a build
+    # script resolves twice — a transient ENOENT on a `_tmp_<pid>_<hex>`
+    # rename seen on cold-store runs in the sibling repos. Every attempt keeps
+    # `--frozen-lockfile`, so a deterministic failure (lockfile drift, a
+    # policy violation) still fails all three.
+    - name: Install dependencies
+      shell: bash
+      run: |
+        for attempt in 1 2 3; do
+          if pnpm install --frozen-lockfile; then
+            break
+          fi
+          if [ "$attempt" -eq 3 ]; then
+            echo "::error::pnpm install failed after 3 attempts"
+            exit 1
+          fi
+          delay=$((attempt * 15))
+          echo "::warning::pnpm install failed (attempt ${attempt}/3); retrying in ${delay}s"
+          sleep "$delay"
+        done
+        echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
