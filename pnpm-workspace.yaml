@@ -99,7 +99,7 @@ catalog:
   # The dead-code / duplication / complexity audit (`.fallowrc.json`), run by
   # the PreToolUse gate in agent sessions and by hand before a PR.
   fallow: 3.34.1
-  happy-dom: ^21.0.1
+  happy-dom: ^21.0.4
   # The server-side DOM the HTML renderer reaches through a dynamic import
   # when `globalThis.document` is absent. linkedom, not happy-dom: happy-dom
   # pulls `node:child_process` / `node:vm`, which workerd does not provide.
