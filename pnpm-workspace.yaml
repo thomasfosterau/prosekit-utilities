@@ -92,7 +92,7 @@ catalog:
   daisyui: ^5.7.50
   # A peer of `@thomasfosterau/prosekit-utilities/drizzle` only. The app
   # repos are on this release candidate; the peer range is `^1.0.0-rc.5`.
-  drizzle-orm: 1.0.0-rc.5-5935859
+  drizzle-orm: 1.0.0-rc.5
   # Effect 4. A PEER of every package here that uses it, never a dependency:
   # the consuming app owns the singleton.
   effect: 4.0.5
