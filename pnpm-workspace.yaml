@@ -56,9 +56,9 @@ catalog:
   # pipeline a `svelte-package` library uses too — plus the Svelte CSF addon
   # so snippet-taking components can be storied in `.svelte`, and the a11y
   # addon because accessibility is part of this library's contract.
-  '@storybook/addon-a11y': ^10.6.2
+  '@storybook/addon-a11y': ^10.6.3
   '@storybook/addon-svelte-csf': ^5.1.5
-  '@storybook/sveltekit': ^10.6.2
+  '@storybook/sveltekit': ^10.6.3
   # SvelteKit is a BUILD-TIME dependency here, not a runtime one: `svelte-kit
   # sync` generates the package's ambient types and `svelte-package` emits
   # `dist/`. Nothing in `src/lib/` may import `$app/*`.
@@ -124,7 +124,7 @@ catalog:
   # carries the wanted revision.
   playwright: 1.60.0
   prosekit: ^0.22.4
-  storybook: ^10.6.2
+  storybook: ^10.6.3
   svelte-check: ^4.7.7
   svelte: ^5.57.2
   tailwindcss: ^4.3.3
