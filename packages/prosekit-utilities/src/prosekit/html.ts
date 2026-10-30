@@ -111,11 +111,7 @@ const resolveDefaultDocument = (): Promise<Document> => {
     const loading = (async (): Promise<Document> => {
       if (!Predicate.isUndefined(globalThis.document)) return globalThis.document;
       const { parseHTML } = await import('linkedom');
-      // SAFETY: linkedom's `Document` is a structurally similar but nominally
-      // distinct class from lib.dom's; ProseKit only ever calls the shared
-      // subset on it. There is no schema to decode through — it is a live DOM
-      // object.
-      return parseHTML('<!doctype html><html><body></body></html>').document as Document;
+      return parseHTML('<!doctype html><html><body></body></html>').document;
     })();
     defaultDocument = Option.some(loading);
     return loading;

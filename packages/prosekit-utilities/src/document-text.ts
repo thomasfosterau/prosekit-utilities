@@ -29,7 +29,7 @@ import type { DocumentJSON, NodeJSON } from './json.ts';
  */
 export function extractDocumentText(
   doc: NodeJSON | DocumentJSON | null | undefined,
-  options?: { readonly separator?: string | undefined } | undefined,
+  options?: { readonly separator?: string | undefined },
 ): string {
   if (!doc || !doc.content) return '';
   return textParts(doc.content).join(options?.separator ?? ' ');

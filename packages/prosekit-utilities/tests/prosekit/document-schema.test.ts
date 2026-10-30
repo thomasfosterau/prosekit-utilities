@@ -193,13 +193,13 @@ describe('defineDocumentSchema without an `attributes` option', () => {
     });
     // `heading.level` is `required(Literals([1..6]))` in the standard overlay.
     expect(() =>
-      Schema.decodeUnknownSync(schema.Document)({
+      Schema.decodeSync(schema.Document)({
         type: 'blockDocument',
         content: [{ type: 'heading', attrs: {}, content: [] }],
       }),
     ).toThrow();
     expect(
-      Schema.decodeUnknownSync(schema.Document)({
+      Schema.decodeSync(schema.Document)({
         type: 'blockDocument',
         content: [{ type: 'heading', attrs: { level: 3 }, content: [] }],
       }),

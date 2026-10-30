@@ -63,7 +63,7 @@ export default defineConfig({
       sync: { command: 'svelte-kit sync', cache: false },
       // The published artifact.
       build: {
-        command: 'svelte-package',
+        command: 'svelte-package --tsconfig ./tsconfig.dist.json',
         dependsOn: ['sync', { task: 'build', from: 'dependencies' }],
         cache: {
           input: cacheInputs,
@@ -72,7 +72,7 @@ export default defineConfig({
       },
       // Type-checks `src/` (stories included) and `tests/`.
       check: {
-        command: 'svelte-check --tsconfig ./tsconfig.json',
+        command: 'svelte-check --tsconfig ./tsconfig.dist.json',
         dependsOn: [
           { task: 'check', from: 'dependencies' },
           { task: 'build', from: 'dependencies' },

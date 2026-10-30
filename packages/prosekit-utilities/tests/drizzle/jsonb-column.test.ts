@@ -6,7 +6,7 @@ import { jsonbSchemaColumn } from '../../src/drizzle/jsonb-column.ts';
 
 const Widget = Schema.Struct({
   kind: Schema.Literal('widget'),
-  count: Schema.Number,
+  count: Schema.Finite,
 });
 type Widget = typeof Widget.Type;
 
@@ -54,8 +54,8 @@ describe('jsonbSchemaColumn', () => {
   });
 
   it('throws on the read side when a non-string driver value is invalid', () => {
-    // SAFETY: a deliberately ill-typed, already-parsed driver value (see above).
-    expect(() => table.widget.mapFromDriverValue({ kind: 'gadget' } as never)).toThrow();
+    // A deliberately invalid, already-parsed driver value (see above).
+    expect(() => table.widget.mapFromDriverValue({ kind: 'gadget' })).toThrow();
   });
 
   it('encodes toDriver as the raw value, without running the schema', () => {

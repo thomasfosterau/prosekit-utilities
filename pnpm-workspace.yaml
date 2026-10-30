@@ -31,23 +31,26 @@ catalog:
   '@changesets/cli': ^3.0.3
   # Effect Language Service as a native (TypeScript-Go) binary. The root
   # `prepare` runs `effect-tsgo patch --typescript --oxlint`, which overwrites
-  # the native `tsc` (`@typescript/native`) and vite-plus's `oxlint` with
-  # Effect-patched builds matched by gitHead, and `vite.config.ts` lints with
-  # its `oxlint-presets`. Each release hard-errors
+  # the native `tsc` (`@typescript/native`) and vite-plus's `oxlint` and
+  # `oxlint-tsgolint` with Effect-patched builds matched by gitHead, and
+  # `vite.config.ts` lints with its `oxlint-presets`. Each release hard-errors
   # (UnsupportedTargetPackageVersionError) on any other component version, so
-  # it moves in lockstep with `@typescript/native` (0.55.0 supports 7.0.2) and
-  # with the `oxlint` / `oxlint-tsgolint` that `vite-plus` pins (0.55.0
-  # supports oxlint 1.87.0 – 1.89.0 and tsgolint 7.0.2003 / 7.0.2004;
-  # vite-plus 1.3.0 carries 1.88.0 / 7.0.2004). Read the `components` table
+  # it moves in lockstep with `@typescript/native` (0.63.0 supports 7.0.2) and
+  # with the `oxlint` / `oxlint-tsgolint` that `vite-plus` pins (0.63.0
+  # supports oxlint 1.88.0 – 1.90.0 and tsgolint 7.0.2004 / 7.0.2005;
+  # vite-plus 1.4.0 carries 1.89.0 / 7.0.2004). Read the `components` table
   # in node_modules/@effect/tsgo/dist/effect-tsgo.cjs before bumping any of
   # the three.
-  '@effect/tsgo': 0.55.0
-  # Effect lint rules (`effect.configs.recommended` in vite.config.ts),
-  # scoped there to the Effect-using code: the core package and the
-  # flowchart's `./node`. Built on `effect` 4.0.0, which the `effect`
-  # singleton override resolves to the catalog's 4.0.x — the stable line it
-  # was built on, so it needs no scoped override of its own.
-  '@mpsuesser/oxlint-plugin-effect': ^0.6.0
+  '@effect/tsgo': 0.63.0
+  # Effect lint rules (`effect.configs.recommended` in vite.config.ts, the
+  # 74 `effect/*` rules including the anti-slop set), scoped there to the
+  # Effect-using code: the core package and the flowchart's `./node`. It
+  # replaced `@mpsuesser/oxlint-plugin-effect`. It declares `effect` 4.1.0
+  # exactly, but the `effect` singleton override resolves it to the
+  # catalog's copy, which it lints fine on: the linter is no reason to move
+  # the Effect line. Loads into vite-plus's oxlint, so it is in Dependabot's
+  # `toolchain` group.
+  '@enfect/oxlint': 0.9.0
   # ProseMirror's model / view / state / transform, re-published as one
   # package by ProseKit. Type-only for `./derive`; a runtime peer of
   # `./prosekit` and the Svelte packages.
@@ -98,7 +101,7 @@ catalog:
   effect: 4.0.5
   # The dead-code / duplication / complexity audit (`.fallowrc.json`), run by
   # the PreToolUse gate in agent sessions and by hand before a PR.
-  fallow: 3.34.1
+  fallow: 3.37.0
   happy-dom: ^21.0.4
   # The server-side DOM the HTML renderer reaches through a dynamic import
   # when `globalThis.document` is absent. linkedom, not happy-dom: happy-dom
@@ -132,12 +135,14 @@ catalog:
   # as `typescript`: svelte-check and tsdown's declaration emit drive
   # TypeScript through its JS API, which TypeScript 7 does not ship until 7.1.
   typescript: npm:@typescript/typescript6@6.0.2
-  # vite-plus pins `oxlint`, `oxfmt`, `vitest` and the `@vitest/*` runtime
-  # packages to exact versions, so `vitest`, `@vitest/browser-playwright` and
-  # `@vitest/coverage-istanbul` must all match vite-plus's own pin (1.3.0 ->
-  # 5.0.5). It also decides the `oxlint` (1.3.0 -> 1.88.0, tsgolint
+  # vite-plus pins `oxlint`, `oxfmt`, `oxlint-tsgolint` (the type-aware lint
+  # backend `vp check` runs), `vitest` and the `@vitest/*` runtime packages
+  # to exact versions, so `vitest`, `@vitest/browser-playwright` and
+  # `@vitest/coverage-istanbul` must all match vite-plus's own pin (1.4.0 ->
+  # 5.0.5). It also decides the `oxlint` (1.4.0 -> 1.89.0, tsgolint
   # 7.0.2004) that `effect-tsgo patch --oxlint` must support: see the
-  # `@effect/tsgo` entry, which moves with this one and `@typescript/native`. The `vitest: "catalog:"` override forces every resolution to the
+  # `@effect/tsgo` entry, which moves with this one and `@typescript/native`.
+  # The `vitest@*: "catalog:"` override forces every resolution to the
   # catalog singleton, a mismatch breaks the browser provider's exact peer,
   # and vite-plus refuses to start `test:coverage` when the coverage provider
   # differs from its pin. Bump vite-plus first, then the vitest set to its pin.
@@ -145,18 +150,19 @@ catalog:
   # ignored in .github/dependabot.yml, #60): on its vite-plus PR, set all
   # three to the new vite-plus's `dependencies.vitest` by hand, in that PR.
   # `vite` is the same release published under its aliased core package.
-  vite-plus: 1.3.0
-  vite: npm:@voidzero-dev/vite-plus-core@1.3.0
+  vite-plus: 1.4.0
+  vite: npm:@voidzero-dev/vite-plus-core@1.4.0
   vitest: 5.0.5
   # `render` + locators for Svelte components under Vitest browser mode.
   vitest-browser-svelte: ^3.1.0
 
 overrides:
   # Singletons. See the `catalog:` note at the top.
+  # `vite@*` / `vitest@*` are the keys `vp migrate` manages under pnpm.
   effect: 'catalog:'
   svelte: 'catalog:'
-  vite: 'catalog:'
-  vitest: 'catalog:'
+  vite@*: 'catalog:'
+  vitest@*: 'catalog:'
   '@sveltejs/kit': 'catalog:'
   # The derivation in `./derive` walks ProseMirror's compiled `ContentMatch`
   # automaton and `AttributeSpec`s; a stored document is only guaranteed to
@@ -196,11 +202,15 @@ peerDependencyRules:
     vitest: '*'
     '@sveltejs/kit': '*'
 
-# Supply-chain delay (owner's policy): hold newly published versions for 1 day
-# before pnpm will install them, so a compromised release has a window to get
-# pulled before it reaches this workspace. Unit is MINUTES, not seconds
-# (`opts.minimumReleaseAge * 60 * 1e3` in pnpm's own source), so 1 day = 1440.
-minimumReleaseAge: 1440
+# Supply-chain delay (owner's policy): hold newly published versions for 8
+# hours before pnpm will install them, so a compromised release has a window
+# to get pulled before it reaches this workspace. Unit is MINUTES, not seconds
+# (`opts.minimumReleaseAge * 60 * 1e3` in pnpm's own source), so 8 h = 480.
+# Dependabot's `cooldown` (whole days only) is 1 day, longer than this, so it
+# never proposes a version pnpm would still refuse. `vp migrate` adds the
+# toolchain packages to the exclusions below; they are removed again on
+# purpose, so the toolchain waits like everything else.
+minimumReleaseAge: 480
 # First-party releases are exempt from the delay, so the app repos and this
 # one can consume each other's releases the day they land.
 minimumReleaseAgeExclude:

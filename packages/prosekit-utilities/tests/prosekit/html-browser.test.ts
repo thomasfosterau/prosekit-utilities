@@ -27,7 +27,10 @@ import {
 import { present } from './fixture.ts';
 
 /** The failure the throwing `postProcess` hook below raises. */
-class HookFailure extends Schema.TaggedError<HookFailure>()('HookFailure', {}) {}
+class HookFailure extends Schema.TaggedError<HookFailure, { readonly brand: unique symbol }>()(
+  'HookFailure',
+  {},
+) {}
 
 const blockSchema = lazySchema(() =>
   defineBlockDocumentExtension(defineMention(), defineSidenote(), defineCitation()),

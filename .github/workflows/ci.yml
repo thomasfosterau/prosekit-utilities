@@ -40,8 +40,9 @@ jobs:
           persist-credentials: false
 
       # pnpm, Node.js, the pnpm store cache and a frozen-lockfile install
-      # (with the root `prepare`, which applies the `@effect/tsgo` patch),
-      # plus node_modules/.bin on PATH. See the action's own comments.
+      # (with the root `prepare`, which applies the `@effect/tsgo` patch).
+      # The steps below run the toolchain through `pnpm exec`. See the
+      # action's own comments.
       - uses: ./.github/actions/setup
 
       # The Vite+ task cache: a step whose inputs are unchanged since the last
@@ -63,11 +64,13 @@ jobs:
       - name: Install Chromium for the browser suites
         run: pnpm exec playwright install --with-deps chromium
 
+      # Lint is type-aware (oxlint-tsgolint), and runs before any build: the
+      # Svelte packages' tsconfig.json maps the siblings to their `src/`.
       - name: Format and lint
-        run: vp check
+        run: pnpm exec vp check
 
       - name: Type check
-        run: vp run check
+        run: pnpm exec vp run check
 
       # The core's node suite runs ONCE, under istanbul coverage, so the
       # thresholds in packages/prosekit-utilities/vite.config.ts (statements
@@ -75,13 +78,13 @@ jobs:
       # are missed. The Svelte packages' browser suites keep plain
       # `test:unit`; the `!` filter selects every package but the core.
       - name: Unit tests with coverage thresholds (the core, node)
-        run: vp run --filter ./packages/prosekit-utilities test:coverage
+        run: pnpm exec vp run --filter ./packages/prosekit-utilities test:coverage
 
       - name: Unit tests (the Svelte packages, browser)
-        run: vp run --filter '!./packages/prosekit-utilities' test:unit
+        run: pnpm exec vp run --filter '!./packages/prosekit-utilities' test:unit
 
       - name: Build the libraries
-        run: vp run -r build
+        run: pnpm exec vp run -r build
 
       # Reads the dist/ the step above wrote: the core's `.`, `./derive` and
       # `./drizzle` must reach no ProseKit, and the flowchart's `./node` no
@@ -89,10 +92,10 @@ jobs:
       # (scripts/check-dist-boundaries.ts). Its `build` dependencies are cache
       # hits here.
       - name: Entry-point boundaries and side effects (built dist/)
-        run: vp run check:dist
+        run: pnpm exec vp run check:dist
 
       - name: Build Storybook
-        run: vp run --filter ./packages/prosekit-svelte storybook:build
+        run: pnpm exec vp run --filter ./packages/prosekit-svelte storybook:build
 
       # Known high/critical advisories in the resolved dependency tree.
       - name: Audit

@@ -47,7 +47,7 @@ const asProtocol = (scheme: string): string => {
  */
 export function isSafeHref(
   href: unknown,
-  options?: { readonly schemes?: ReadonlyArray<string> | undefined } | undefined,
+  options?: { readonly schemes?: ReadonlyArray<string> | undefined },
 ): href is string {
   if (!Predicate.isString(href)) return false;
   const trimmed = href.trim();

@@ -1,0 +1,10 @@
+{
+  // The tsconfig of the check (`svelte-check`) and build (`svelte-package`)
+  // gates: tsconfig.json with its `paths` cleared, so the sibling packages
+  // resolve through their published `exports` (the built `dist/`), the way a
+  // consumer resolves them. tsconfig.json keeps the `src/` paths for lint.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {}
+  }
+}

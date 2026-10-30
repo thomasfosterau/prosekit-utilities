@@ -12,7 +12,7 @@
  */
 
 import { recommended } from '@effect/tsgo/oxlint-presets';
-import effect from '@mpsuesser/oxlint-plugin-effect';
+import effect from '@enfect/oxlint';
 import { defineConfig } from 'vite-plus';
 
 /**
@@ -32,10 +32,18 @@ const EFFECT_FILES = [
 export default defineConfig({
   // Staged-file checks run by `vp staged` (pre-commit). Routed by type: oxfmt
   // cannot format `.svelte`, so Svelte goes through lint alone while the
-  // oxfmt-supported types get the full format+lint+fix pass.
+  // oxfmt-supported types get a format pass with fixes, then a lint pass
+  // WITHOUT them. Lint is type-aware, and `--fix` would apply type-aware
+  // autofixes (even of rules at `warn`) to staged files at commit time, so
+  // the commit would differ from the tree that was verified.
+  // `--no-error-on-unmatched-pattern` keeps a commit of only `.md` / `.json`
+  // / `.css` files from failing the lint step, which has no file to lint.
   staged: {
-    '*.{js,ts,css,json,md}': 'vp check --fix',
-    '*.svelte': 'vp lint --fix',
+    '*.{js,ts,css,json,md}': [
+      'vp check --fix --no-lint',
+      'vp check --no-fmt --no-error-on-unmatched-pattern',
+    ],
+    '*.svelte': 'vp lint --no-error-on-unmatched-pattern',
   },
 
   run: {
@@ -90,10 +98,9 @@ export default defineConfig({
     },
   },
 
-  // Oxlint. Type-aware linting is intentionally OFF: the Svelte packages'
-  // types come from the `svelte-kit sync` output and their `.svelte` files
-  // are outside oxlint's remit either way, so type checking stays the job of
-  // `vp run check` (svelte-check / tsc).
+  // Oxlint, type-aware through vite-plus's bundled oxlint-tsgolint (patched by
+  // `effect-tsgo patch --oxlint`, so the `effecttsgo/*` rules of the preset
+  // below run too). See `options` at the end of this block.
   lint: {
     ignorePatterns: [
       '**/dist/**',
@@ -102,11 +109,45 @@ export default defineConfig({
       '**/storybook-static/**',
       '**/coverage/**',
     ],
+    // Oxlint's built-in plugins beyond the default set: `import`, `promise`,
+    // `vitest` and `jsdoc` add their correctness / suspicious / perf rules.
+    plugins: ['eslint', 'typescript', 'unicorn', 'oxc', 'import', 'promise', 'vitest', 'jsdoc'],
     categories: {
       correctness: 'error',
+      suspicious: 'error',
+      perf: 'error',
     },
     rules: {
       'vite-plus/prefer-vite-plus-imports': 'error',
+      // `_tag` is Effect's discriminant, read on every tagged value and error.
+      'eslint/no-underscore-dangle': ['error', { allow: ['_tag'] }],
+      // Vitest's `expect(value, message)` takes a failure message second.
+      'vitest/valid-expect': ['error', { maxArgs: 2 }],
+      // Stylesheets are imported for their side effect on purpose (AGENTS.md
+      // § Common pitfalls lists the only ones `dist/` may carry), and the
+      // test setup files register jest-dom's matchers the same way.
+      'import/no-unassigned-import': [
+        'error',
+        { allow: ['**/*.css', '@testing-library/jest-dom/vitest'] },
+      ],
+
+      // ---- Adoption allowances (#127) ----------------------------
+      // Sites that predate the `suspicious` category and type-aware lint. A
+      // new site is a defect; when a count reaches zero, delete the line so
+      // the rule is back at `error`.
+      //
+      // 53 sites, all in tests: `toThrow()` with no expected error. Most are
+      // Schema decode failures, whose message is Effect's formatted issue
+      // tree; pinning each needs a matcher per case, not a mechanical edit.
+      'vitest/require-to-throw-message': 'warn',
+      // 34 sites, all in tests: `vi.fn()` without the mocked signature.
+      'vitest/require-mock-type-parameters': 'warn',
+      // 12 sites outside the Effect code (the Svelte packages' tests, one
+      // story and the flowchart's `toolbar.ts`): narrowings of ProseMirror's `Node`
+      // / `NodeViewSpec` and of `any`-typed browser test handles. The Effect
+      // code is governed by `effect/casting-awareness` and
+      // `effect/require-safety-comment-for-type-assertion` instead (below).
+      'typescript/no-unsafe-type-assertion': 'warn',
     },
     // Registered workspace-wide (loading a plugin enables none of its rules);
     // the Effect rules themselves are switched on only for EFFECT_FILES below.
@@ -162,6 +203,12 @@ export default defineConfig({
           // unparsed input, and `schemaFromDefault` reads ProseMirror's
           // `any`-typed `AttributeSpec.default`.
           'effect/no-unknown-parameters': 'warn',
+          // The Effect code's assertions are already gated twice, by
+          // `effect/casting-awareness` (a warning on each `as`) and by
+          // `effect/require-safety-comment-for-type-assertion` (a `SAFETY:`
+          // invariant above it). What is left narrows ProseMirror's untyped
+          // `attrs` or re-types a mapped record no generic can prove.
+          'typescript/no-unsafe-type-assertion': 'off',
         },
       },
       // The test suites are the boundary where an Effect is run to a value
@@ -177,9 +224,30 @@ export default defineConfig({
           'effect/effect-run-in-body': 'off',
         },
       },
+      // Every package's tests.
+      {
+        files: ['packages/*/tests/**/*.ts'],
+        rules: {
+          // The browser suites drive the editor one keystroke or click at a
+          // time, and each must land before the next: run in parallel they
+          // would race the same focused element.
+          'eslint/no-await-in-loop': 'off',
+          // A fixture builder sits inside the `describe` that uses it, next
+          // to the cases it serves; hoisting each to module scope only moves
+          // it away from them.
+          'unicorn/consistent-function-scoping': 'off',
+        },
+      },
     ],
+    // `typeAware` runs the type-aware rules through oxlint-tsgolint.
+    // `typeCheck` stays OFF, measured: tsgolint has no Svelte language
+    // service, so every `.svelte` import types as untyped, and with it on
+    // the Svelte suites report 10 false "unused @ts-expect-error" (TS2578)
+    // and a false implicit-any (TS7031) at props svelte-check rejects
+    // correctly. Type checking stays the job of `vp run check` (TS7 `tsc`
+    // and svelte-check), the gate that understands `.svelte`.
     options: {
-      typeAware: false,
+      typeAware: true,
       typeCheck: false,
     },
   },
