@@ -81,7 +81,7 @@ describe('shared registry cache: block forced first', () => {
     // types identically — so sharing is safe, but it must not widen what the
     // inline document admits.
     expect(() =>
-      Schema.decodeUnknownSync(inline.Document)({
+      Schema.decodeSync(inline.Document)({
         type: 'inlineDocument',
         content: [{ type: 'paragraph', content: [] }],
       }),

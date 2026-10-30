@@ -28,7 +28,7 @@ import {
 } from '../../src/prosekit/presets.ts';
 
 /** The rejection the failing `document` source below raises. */
-class NoDom extends Schema.TaggedError<NoDom>()('NoDom', {}) {}
+class NoDom extends Schema.TaggedError<NoDom, { readonly brand: unique symbol }>()('NoDom', {}) {}
 
 /**
  * Narrows linkedom's own `Document` class to the DOM's `Document`, which it

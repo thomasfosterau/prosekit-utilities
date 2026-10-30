@@ -433,14 +433,14 @@ describe('document schemas: JSON canonical codec (toCodecJson)', () => {
     };
     const encoded = Schema.encodeUnknownSync(codec)(doc);
     expect(encoded).toEqual(doc);
-    expect(Schema.decodeUnknownSync(codec)(encoded)).toEqual(doc);
+    expect(Schema.decodeSync(codec)(encoded)).toEqual(doc);
   });
 
   it('passes an inline document through its JSON codec unchanged', () => {
     const codec = Schema.toCodecJson(inline.Document);
     const doc = { type: 'inlineDocument', content: [{ type: 'text', text: 't' }] };
     expect(Schema.encodeUnknownSync(codec)(doc)).toEqual(doc);
-    expect(Schema.decodeUnknownSync(codec)(doc)).toEqual(doc);
+    expect(Schema.decodeSync(codec)(doc)).toEqual(doc);
   });
 });
 

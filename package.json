@@ -27,15 +27,14 @@
   "devDependencies": {
     "@changesets/cli": "catalog:",
     "@effect/tsgo": "catalog:",
-    "@mpsuesser/oxlint-plugin-effect": "catalog:",
+    "@enfect/oxlint": "catalog:",
     "@types/node": "catalog:",
     "@typescript/native": "catalog:",
     "fallow": "catalog:",
     "svelte": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
-    "vite-plus": "catalog:",
-    "vitest": "catalog:"
+    "vite-plus": "catalog:"
   },
   "engines": {
     "node": "^22.18.0 || ^24.11.0 || >=26.0.0",

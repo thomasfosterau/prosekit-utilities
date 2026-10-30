@@ -13,11 +13,11 @@ pnpm exec playwright install chromium # once: the browser the Svelte suites driv
 
 ## Git hooks
 
-Managed by Vite+ (`vp config`, run by `prepare`). **pre-commit** runs `vp staged`: `vp check --fix` on staged `.js` / `.ts` / `.css` / `.json` / `.md` files and `vp lint --fix` on `.svelte` files, which Oxfmt cannot format, so keep them in the same style by hand. There is no pre-push hook.
+Managed by Vite+ (`vp config`, run by `prepare`). **pre-commit** runs `vp staged`: `vp check --fix --no-lint` then `vp check --no-fmt` on staged `.js` / `.ts` / `.css` / `.json` / `.md` files (formatting with fixes, linting without, so no type-aware autofix lands unverified) and `vp lint` on `.svelte` files, which Oxfmt cannot format, so keep them in the same style by hand. There is no pre-push hook.
 
 ## CI expectations
 
-[`ci.yml`](.github/workflows/ci.yml) runs one job whose steps are the gate list in [AGENTS.md § Verification](AGENTS.md#verification), plus `pnpm audit --audit-level high`, on every pull request against `trunk` and every push to it. [`release.yml`](.github/workflows/release.yml) versions and publishes from `trunk` ([PUBLISHING.md](PUBLISHING.md)).
+[`ci.yml`](.github/workflows/ci.yml) runs one job whose steps are the gate list in [AGENTS.md § Verification](AGENTS.md#verification), plus `pnpm audit --audit-level high`, on every pull request against `trunk` and every push to it. [`release.yml`](.github/workflows/release.yml) versions and publishes from `trunk` ([PUBLISHING.md](PUBLISHING.md)). Both are hardened for Dependabot pull requests: `permissions: {}` at the top with per-job grants, every action pinned to a commit SHA, `persist-credentials: false` except where a step pushes, no secret or OIDC in CI, and Node as `node-version: "*"` with `check-latest` (never `latest`, which can resolve to a pre-release). `uvx zizmor --offline .github` audits the workflows.
 
 ## Pre-PR checklist
 
@@ -29,7 +29,7 @@ Managed by Vite+ (`vp config`, run by `prepare`). **pre-commit** runs `vp staged
 ## Running individual checks
 
 ```sh
-vp lint                                                    # oxlint (with the Effect rules on the Effect code)
+vp lint                                                    # oxlint, type-aware (with the Effect rules on the Effect code)
 vp fmt                                                     # oxfmt
 vp run check                                               # the whole type gate
 vp run --filter ./packages/prosekit-utilities check        # one package's type gate

@@ -53,7 +53,7 @@
   // and `aria-labelledby` are omitted from the props, and the markup sets
   // both after the spread: an untyped caller's `aria-labelledby`, which
   // would otherwise outrank `aria-label`, is cleared unless `labelledBy` sets
-  // it (an empty `labelledBy` counts as unset). Given `labelledBy`, it wins,
+  // one (an empty `labelledBy` counts as unset). Given `labelledBy`, it wins,
   // and `label` (or its default) stays as `aria-label`, the fallback name
   // when no element has the id; `Editor` says why that is not a union.
   // bits-ui sets no `aria-labelledby` of its own on the toolbar. `children`

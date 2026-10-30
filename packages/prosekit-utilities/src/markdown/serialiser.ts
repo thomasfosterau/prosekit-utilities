@@ -83,9 +83,25 @@ const LIST_INDENT = '  ';
  * the stock one.
  */
 const serialiserLookup =
-  <S extends Readonly<Record<string, A>>, A>(stock: S, overrides: Readonly<Record<string, A>>) =>
+  <A>(stock: Readonly<Record<string, A>>, overrides: Readonly<Record<string, A>>) =>
   (type: string): Option.Option<A> =>
     Option.fromNullishOr(overrides[type] ?? stock[type]);
+
+/** Marker for one list item, given the list node and its position. */
+const listMarker = (item: NodeJSON, index: number): string => {
+  const attrs = item.attrs;
+  // No attrs at all renders as a bullet, exactly as an absent/unknown `kind` does.
+  if (attrs === undefined) return '- ';
+  if (attrs.kind === 'ordered') {
+    const start = Predicate.isNumber(attrs.order) ? attrs.order : 1;
+    return `${start + index}. `;
+  }
+  if (attrs.kind === 'task') {
+    return attrs.checked === true ? '- [x] ' : '- [ ] ';
+  }
+  // bullet / toggle (Markdown has no toggle — render as a bullet).
+  return '- ';
+};
 
 /** The first of `marks` whose type is `type`. */
 const markOfType = (marks: ReadonlyArray<MarkJSON>, type: string): Option.Option<MarkJSON> =>
@@ -187,22 +203,6 @@ export function createMarkdownSerialiser(options?: {
             onSome: (serialiser) => serialiser(node, context),
           }),
     ).join('');
-
-  /** Marker for one list item, given the list node and its position. */
-  const listMarker = (item: NodeJSON, index: number): string => {
-    const attrs = item.attrs;
-    // No attrs at all renders as a bullet, exactly as an absent/unknown `kind` does.
-    if (attrs === undefined) return '- ';
-    if (attrs.kind === 'ordered') {
-      const start = Predicate.isNumber(attrs.order) ? attrs.order : 1;
-      return `${start + index}. `;
-    }
-    if (attrs.kind === 'task') {
-      return attrs.checked === true ? '- [x] ' : '- [ ] ';
-    }
-    // bullet / toggle (Markdown has no toggle — render as a bullet).
-    return '- ';
-  };
 
   /**
    * Serialise a run of sibling `list` nodes. In the prosemirror-flat-list

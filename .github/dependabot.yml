@@ -8,6 +8,20 @@
 # otherwise also match. Every lockstep group takes every update type,
 # majors included, so its members never land in separate PRs; outside them,
 # majors stay individual PRs and minors / patches share the catch-all.
+#
+# Moves Dependabot cannot make, done by hand on the matching PR's branch
+# (AGENTS.md § Common pitfalls lists them too):
+# - the npm-alias catalog entries: `vite` (npm:@voidzero-dev/vite-plus-core,
+#   always the `vite-plus` version; `pnpm dlx --package=vite-plus@<v> vp
+#   migrate --no-interactive` re-pins it, then drop the
+#   `minimumReleaseAgeExclude` entries it adds), `typescript`
+#   (npm:@typescript/typescript6) and `@typescript/native` (npm:typescript);
+# - `vitest` / `@vitest/*`, `typescript`, `@typescript/native` and
+#   `@effect/tsgo`, ignored below and set on the toolchain PR to what the new
+#   `vite-plus` pins and `@effect/tsgo` supports;
+# - `playwright`, with the SessionStart hook's PW_WANT_REV;
+# - the `overrides:` literals (`prosemirror-model`, `prosemirror-view`), only
+#   by the owner's decision.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -17,11 +31,13 @@ updates:
     open-pull-requests-limit: 10
     commit-message:
       prefix: chore
-    # The same supply-chain delay pnpm applies at install (`minimumReleaseAge:
-    # 1440`, one day, in pnpm-workspace.yaml): a newly published version has
-    # a window to be pulled before Dependabot proposes it. First-party
-    # releases are exempt on both sides (`minimumReleaseAgeExclude`), so this
-    # workspace can pick up a sibling-library release the day it lands.
+    # pnpm holds a newly published version for 8 hours at install
+    # (`minimumReleaseAge: 480` in pnpm-workspace.yaml). `cooldown` takes
+    # whole days only, so 1 day is the smallest setting, and it is longer
+    # than pnpm's wait: Dependabot never proposes a version pnpm would still
+    # refuse. First-party releases are exempt on both sides
+    # (`minimumReleaseAgeExclude`), so this workspace can pick up a
+    # sibling-library release the day it lands.
     cooldown:
       default-days: 1
       exclude:
@@ -39,6 +55,8 @@ updates:
         applies-to: version-updates
         patterns:
           - vite-plus
+          # An npm alias (npm:@voidzero-dev/vite-plus-core): matched so it stays
+          # in this group, but Dependabot cannot bump it (see the header).
           - vite
           - vitest
           - '@vitest/*'
@@ -50,7 +68,7 @@ updates:
           - '@typescript/native'
           - typescript
           - '@typescript/typescript6'
-          - '@mpsuesser/oxlint-plugin-effect'
+          - '@enfect/oxlint'
         update-types: [major, minor, patch]
       # `effect` is a singleton peer of every Effect package here.
       effect:
@@ -90,6 +108,13 @@ updates:
         patterns:
           - drizzle-orm
           - drizzle-kit
+        update-types: [major, minor, patch]
+      fallow:
+        applies-to: version-updates
+        patterns:
+          - fallow
+          - fallow-*
+          - '@fallow/*'
         update-types: [major, minor, patch]
       changesets:
         applies-to: version-updates

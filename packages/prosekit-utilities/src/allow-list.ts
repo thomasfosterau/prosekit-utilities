@@ -224,7 +224,7 @@ export const checkAllowList =
     Effect.gen(function* () {
       const violation = allowListViolation(allowList, doc);
       // `DocumentViolation` is a yieldable tagged error; no `Effect.fail` wrapper.
-      if (Option.isSome(violation)) yield* violation.value;
+      if (Option.isSome(violation)) return yield* violation.value;
       return doc;
     });
 

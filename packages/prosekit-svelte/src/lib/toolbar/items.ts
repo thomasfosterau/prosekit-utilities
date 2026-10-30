@@ -23,7 +23,7 @@ import { defaultEditorMessages, type EditorMessages } from '../messages.svelte.t
  * The editor as a toolbar item sees it: any grammar, with `commands`,
  * `nodes` and `marks` read by name.
  *
- * `Editor<any>` cannot be used directly. ProseKit derives those three from
+ * `Editor` (whose extension type defaults to `any`) cannot be used directly. ProseKit derives those three from
  * the extension's own typing, and the derivation collapses to `never` for
  * `any` — so `editor.commands.toggleBold()` in an application's own item
  * would not compile at all. Widening the three back to records is what makes
@@ -31,7 +31,7 @@ import { defaultEditorMessages, type EditorMessages } from '../messages.svelte.t
  * assignable to it, and an item that names a command the grammar lacks gets
  * `undefined` rather than a type error, which is the honest outcome.
  */
-export type ToolbarEditor = Omit<Editor<any>, 'commands' | 'marks' | 'nodes'> & {
+export type ToolbarEditor = Omit<Editor, 'commands' | 'marks' | 'nodes'> & {
   readonly commands: Record<string, CommandAction>;
   readonly marks: Record<string, MarkAction>;
   readonly nodes: Record<string, NodeAction>;
@@ -159,7 +159,7 @@ const toggleGenericMark = (editor: ToolbarEditor, type: string): void => {
  *   record; unlisted keys keep their default.
  */
 export function createDefaultToolbarItems(
-  messages?: Partial<EditorMessages> | undefined,
+  messages?: Partial<EditorMessages>,
 ): ReadonlyArray<ToolbarItem | ToolbarSeparator> {
   const m: EditorMessages = { ...defaultEditorMessages, ...messages };
 
@@ -311,7 +311,7 @@ export function createDefaultToolbarItems(
  *   record; unlisted keys keep their default.
  */
 export function createDefaultSlashCommands(
-  messages?: Partial<EditorMessages> | undefined,
+  messages?: Partial<EditorMessages>,
 ): ReadonlyArray<SlashCommand> {
   const m: EditorMessages = { ...defaultEditorMessages, ...messages };
 

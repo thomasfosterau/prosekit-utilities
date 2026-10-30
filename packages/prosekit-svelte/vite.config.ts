@@ -59,7 +59,7 @@ export default defineConfig({
       // type-check needs this to have run — they declare it topologically via
       // `{ task: "build", from: "dependencies" }`.
       build: {
-        command: 'svelte-package',
+        command: 'svelte-package --tsconfig ./tsconfig.dist.json',
         dependsOn: ['sync', { task: 'build', from: 'dependencies' }],
         cache: {
           input: cacheInputs,
@@ -73,7 +73,7 @@ export default defineConfig({
       // imported through its published `exports`, i.e. its built `dist/`, so
       // this cannot run until that build has.
       check: {
-        command: 'svelte-check --tsconfig ./tsconfig.json',
+        command: 'svelte-check --tsconfig ./tsconfig.dist.json',
         dependsOn: [
           { task: 'check', from: 'dependencies' },
           { task: 'build', from: 'dependencies' },

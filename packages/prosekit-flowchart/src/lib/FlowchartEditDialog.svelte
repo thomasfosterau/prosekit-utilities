@@ -142,11 +142,12 @@
   // Pull the canvas in the first time the dialog opens. Everything it drags
   // behind it — `@xyflow/svelte` and its stylesheet — stays out of the chunk
   // that merely renders the node view's SVG preview.
+  async function loadCanvas(): Promise<void> {
+    FlowchartCanvas = (await import('./Flowchart.svelte')).default;
+  }
   $effect(() => {
     if (!isOpen || FlowchartCanvas !== undefined) return;
-    void import('./Flowchart.svelte').then((module) => {
-      FlowchartCanvas = module.default;
-    });
+    void loadCanvas();
   });
 
   // Seed the canvas only once the dialog's content has mounted: `fitView` needs

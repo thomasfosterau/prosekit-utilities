@@ -117,7 +117,7 @@ describe('defineDocumentShape: declaration', () => {
   it('empty() is a valid document of the shape', () => {
     const shape = defineDocumentShape({ name: 'inlineDocument' });
     expect(shape.empty()).toEqual({ type: 'inlineDocument', content: [] });
-    expect(Schema.decodeUnknownSync(shape.Schema)(shape.empty())).toEqual(shape.empty());
+    expect(Schema.decodeSync(shape.Schema)(shape.empty())).toEqual(shape.empty());
   });
 
   it('gives each shape its own guard slot', () => {

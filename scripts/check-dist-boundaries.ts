@@ -165,10 +165,16 @@ const isOutside = (directory: string, file: string): boolean => {
  */
 const resolveEntry = (packageDir: string, entry: string): Array<string> | Error => {
   const manifestPath = resolve(root, packageDir, 'package.json');
-  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
-    exports?: Record<string, unknown>;
-  };
-  const targets = runtimeTargets(manifest.exports?.[entry]);
+  const manifest: unknown = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  const exportsField: unknown =
+    typeof manifest === 'object' && manifest !== null && 'exports' in manifest
+      ? manifest.exports
+      : undefined;
+  const targets = runtimeTargets(
+    typeof exportsField === 'object' && exportsField !== null
+      ? new Map<string, unknown>(Object.entries(exportsField)).get(entry)
+      : undefined,
+  );
   if (targets.length === 0) {
     return new Error(`${show(manifestPath)} has no runtime target for exports["${entry}"]`);
   }
@@ -450,7 +456,7 @@ const PUBLISHED: ReadonlyArray<string> = readdirSync(resolve(root, 'packages'), 
       entry.isDirectory() && existsSync(resolve(entry.parentPath, entry.name, 'package.json')),
   )
   .map((entry) => `packages/${entry.name}`)
-  .sort();
+  .toSorted();
 
 /**
  * The only bare side-effect imports `dist/` may carry: the stylesheets of
@@ -662,7 +668,7 @@ const pureAnnotationEnds = (
  * `isSymbolFor` admits).
  */
 const loadTimeEffects = (
-  root: AstNode,
+  program: AstNode,
   source: string,
   topLevel: ReadonlySet<string>,
   pure: ReadonlySet<number>,
@@ -674,7 +680,7 @@ const loadTimeEffects = (
     return pure.has(at);
   };
   const text = (node: AstNode): string => snippet(source, node);
-  const stack: Array<AstNode> = [root];
+  const stack: Array<AstNode> = [program];
   for (let node = stack.pop(); node !== undefined; node = stack.pop()) {
     switch (node.type) {
       case 'FunctionExpression':
@@ -818,6 +824,9 @@ const filesUnder = (directory: string): Array<string> =>
  * source with everything outside the block blanked — newlines kept — so
  * offsets and line numbers stay the component's own.
  */
+/** `text` with every character but a newline replaced by a space. */
+const blank = (text: string): string => text.replace(/[^\n]/g, ' ');
+
 const scriptsOf = (
   file: string,
   source: string,
@@ -828,7 +837,6 @@ const scriptsOf = (
   } catch (error) {
     return new Error(`${show(file)}: svelte parse error: ${String(error)}`);
   }
-  const blank = (text: string): string => text.replace(/[^\n]/g, ' ');
   const scripts: Array<{ context: 'default' | 'module'; masked: string }> = [];
   for (const script of [ast.module, ast.instance]) {
     // The parser leaves an absent block `undefined` at runtime, though typed `null`.
@@ -868,7 +876,7 @@ const sideEffects = (): { files: number; problems: Array<string> } => {
     }
     for (const file of filesUnder(dist)
       .filter((path) => PURITY_CHECKED.test(path))
-      .sort()) {
+      .toSorted()) {
       files += 1;
       const source = readFileSync(file, 'utf8');
       const bareAllowed = new Set(

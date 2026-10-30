@@ -35,3 +35,4 @@ vite.config.*.timestamp*
 *.log
 npm-debug.log*
 pnpm-debug.log*
+.vitest/

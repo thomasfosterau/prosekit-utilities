@@ -3,7 +3,21 @@
   "compilerOptions": {
     // `vite/client` for the ambient module declarations that let a component
     // import a stylesheet for its side effect; those are Vite's, not Node's.
-    "types": ["node", "vite/client"]
+    "types": ["node", "vite/client"],
+    // For oxlint-tsgolint (type-aware `vp lint`, which reads each file's
+    // nearest tsconfig.json) and editors: the sibling packages resolve to
+    // their `src/`, so lint types them on a clean tree, before any `build`.
+    // The check and build gates resolve them through their published
+    // `exports` (the built `dist/`) instead: `tsconfig.dist.json` clears
+    // these paths.
+    "paths": {
+      "@thomasfosterau/prosekit-utilities": ["../prosekit-utilities/src/index.ts"],
+      "@thomasfosterau/prosekit-utilities/derive": ["../prosekit-utilities/src/derive/index.ts"],
+      "@thomasfosterau/prosekit-utilities/prosekit": [
+        "../prosekit-utilities/src/prosekit/index.ts"
+      ],
+      "@thomasfosterau/prosekit-utilities/drizzle": ["../prosekit-utilities/src/drizzle/index.ts"]
+    }
   },
   // `.storybook/**/*.ts`, not a bare `.storybook`: TypeScript expands a bare
   // `include` entry to a directory only when its last segment holds no `.`,

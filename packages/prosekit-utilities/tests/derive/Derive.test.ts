@@ -12,7 +12,7 @@ import {
 } from '../../src/derive/index.ts';
 import { figureTestSchema, inlineTestSchema, testSchema } from './fixture.ts';
 
-const decodes = <Input>(schema: Schema.Codec<unknown>, value: Input): boolean =>
+const decodes = (schema: Schema.Codec<unknown>, value: unknown): boolean =>
   Result.isSuccess(Result.try(() => Schema.decodeUnknownSync(schema)(value)));
 
 describe('deriveMarkSchema', () => {
@@ -50,7 +50,7 @@ describe('deriveNodeSchema', () => {
     // Struct decoding ignores unexpected keys — matching ProseMirror's own
     // `nodeFromJSON`, which reads only declared fields — so a stray `marks`
     // key on a block node is dropped rather than rejected.
-    const decoded = Schema.decodeUnknownSync(Paragraph)({
+    const decoded = Schema.decodeSync(Paragraph)({
       type: 'paragraph',
       marks: [{ type: 'bold' }],
     });
@@ -113,7 +113,7 @@ describe('deriveDocumentSchema', () => {
 
   it('omits marks entirely when includeMarks is false (they are stripped)', () => {
     const NoMarks = deriveDocumentSchema(testSchema, { includeMarks: false });
-    const decoded = Schema.decodeUnknownSync(NoMarks)({
+    const decoded = Schema.decodeSync(NoMarks)({
       type: 'doc',
       content: [
         { type: 'paragraph', content: [{ type: 'text', text: 'x', marks: [{ type: 'bold' }] }] },
