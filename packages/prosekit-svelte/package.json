@@ -1,7 +1,7 @@
 {
   "$schema": "https://www.schemastore.org/package",
   "name": "@thomasfosterau/prosekit-svelte",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Svelte 5 rich-text editor components on ProseKit — Editor, BlockEditor, InlineEditor, a declarative toolbar with an insert menu and link/image dialogs on bits-ui, every string a prop",
   "keywords": [
     "accessibility",
