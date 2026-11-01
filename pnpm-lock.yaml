@@ -104,7 +104,7 @@ catalogs:
       version: 3.1.0
 
 overrides:
-  effect: 4.0.5
+  effect: 4.1.0
   svelte: ^5.57.2
   vite@*: npm:@voidzero-dev/vite-plus-core@1.4.0
   vitest@*: 5.0.5
@@ -200,8 +200,8 @@ importers:
         specifier: 'catalog:'
         version: 1.7.0(svelte@5.57.2)
       effect:
-        specifier: 4.0.5
-        version: 4.0.5
+        specifier: 4.1.0
+        version: 4.1.0
       playwright:
         specifier: 'catalog:'
         version: 1.60.0
@@ -307,10 +307,10 @@ importers:
         version: 5.0.5(vitest@5.0.5)
       drizzle-orm:
         specifier: 'catalog:'
-        version: 1.0.0-rc.5(effect@4.0.5)
+        version: 1.0.0-rc.5(effect@4.1.0)
       effect:
-        specifier: 4.0.5
-        version: 4.0.5
+        specifier: 4.1.0
+        version: 4.1.0
       happy-dom:
         specifier: 'catalog:'
         version: 21.0.4
@@ -2500,7 +2500,7 @@ packages:
       arktype: '>=2.0.0'
       better-sqlite3: '>=9.3.0'
       bun-types: '*'
-      effect: 4.0.5
+      effect: 4.1.0
       expo-sqlite: '>=14.0.0'
       mssql: ^11.0.1
       mysql2: '>=2'
@@ -2616,10 +2616,10 @@ packages:
   effect-oxlint@0.4.0:
     resolution: {integrity: sha512-IA3ihFKGK0JoZVSPPgPP58988jj4PZ5/asFOhaSYHwDyRRRbkBJn7FX8RiPi++MFpXQvb+3fQpKdPzOvUK9xPQ==}
     peerDependencies:
-      effect: 4.0.5
+      effect: 4.1.0
 
-  effect@4.0.5:
-    resolution: {integrity: sha512-BY4/28NlpOd99yzmV741xbVGmp+1U7tks4oB7F/Png64bTa5tm5eCA6W0RiXsnuLDDoJpjfVSo4Dnq4BZb/89Q==}
+  effect@4.1.0:
+    resolution: {integrity: sha512-lGx2MJJyrXA8RZb2UpQ/0Nkb5Utaimby7oD92+18noBxLPE85IFOvptdzau8dvcxAOwfwHo9iqapbKeFzqQM/Q==}
 
   electron-to-chromium@1.5.430:
     resolution: {integrity: sha512-e1QEj72Y4zd8RlNZVmoTg+iCOSVwpk05IOiiQwdrkwCSVlZfPthevErhE+nckGd2YbsXfp1SkisznhGVIXP2NQ==}
@@ -3995,8 +3995,8 @@ snapshots:
   '@enfect/oxlint@0.9.0':
     dependencies:
       '@oxlint/plugins': 1.89.0
-      effect: 4.0.5
-      effect-oxlint: 0.4.0(effect@4.0.5)
+      effect: 4.1.0
+      effect-oxlint: 0.4.0(effect@4.1.0)
 
   '@esbuild/aix-ppc64@0.28.2':
     optional: true
@@ -5621,16 +5621,16 @@ snapshots:
       domelementtype: 3.0.0
       domhandler: 6.0.1
 
-  drizzle-orm@1.0.0-rc.5(effect@4.0.5):
+  drizzle-orm@1.0.0-rc.5(effect@4.1.0):
     optionalDependencies:
-      effect: 4.0.5
+      effect: 4.1.0
 
-  effect-oxlint@0.4.0(effect@4.0.5):
+  effect-oxlint@0.4.0(effect@4.1.0):
     dependencies:
       '@oxlint/plugins': 1.89.0
-      effect: 4.0.5
+      effect: 4.1.0
 
-  effect@4.0.5: {}
+  effect@4.1.0: {}
 
   electron-to-chromium@1.5.430: {}
 

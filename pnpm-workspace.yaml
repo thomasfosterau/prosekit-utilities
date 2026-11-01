@@ -98,7 +98,7 @@ catalog:
   drizzle-orm: 1.0.0-rc.5
   # Effect 4. A PEER of every package here that uses it, never a dependency:
   # the consuming app owns the singleton.
-  effect: 4.0.5
+  effect: 4.1.0
   # The dead-code / duplication / complexity audit (`.fallowrc.json`), run by
   # the PreToolUse gate in agent sessions and by hand before a PR.
   fallow: 3.37.0
