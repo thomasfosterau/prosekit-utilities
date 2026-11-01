@@ -55,8 +55,8 @@ catalogs:
       specifier: ^1.7.0
       version: 1.7.0
     bits-ui:
-      specifier: ^2.20.0
-      version: 2.20.0
+      specifier: ^2.20.2
+      version: 2.20.2
     daisyui:
       specifier: ^5.7.50
       version: 5.7.50
@@ -167,7 +167,7 @@ importers:
         version: link:../prosekit-utilities
       bits-ui:
         specifier: 'catalog:'
-        version: 2.20.0(@internationalized/date@3.12.4)(@sveltejs/kit@3.1.0(@sveltejs/vite-plugin-svelte@7.3.1(@voidzero-dev/vite-plus-core@1.4.0(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))(svelte@5.57.2))(@typescript/typescript6@6.0.2)(@voidzero-dev/vite-plus-core@1.4.0(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))(svelte@5.57.2))(svelte@5.57.2)
+        version: 2.20.2(@internationalized/date@3.12.4)(@sveltejs/kit@3.1.0(@sveltejs/vite-plugin-svelte@7.3.1(@voidzero-dev/vite-plus-core@1.4.0(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))(svelte@5.57.2))(@typescript/typescript6@6.0.2)(@voidzero-dev/vite-plus-core@1.4.0(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))(svelte@5.57.2))(svelte@5.57.2)
     devDependencies:
       '@prosekit/pm':
         specifier: 'catalog:'
@@ -228,7 +228,7 @@ importers:
         version: link:../prosekit-utilities
       bits-ui:
         specifier: 'catalog:'
-        version: 2.20.0(@internationalized/date@3.12.4)(@sveltejs/kit@3.1.0(@sveltejs/vite-plugin-svelte@7.3.1(@voidzero-dev/vite-plus-core@1.4.0(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))(svelte@5.57.2))(@typescript/typescript6@6.0.2)(@voidzero-dev/vite-plus-core@1.4.0(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))(svelte@5.57.2))(svelte@5.57.2)
+        version: 2.20.2(@internationalized/date@3.12.4)(@sveltejs/kit@3.1.0(@sveltejs/vite-plugin-svelte@7.3.1(@voidzero-dev/vite-plus-core@1.4.0(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))(svelte@5.57.2))(@typescript/typescript6@6.0.2)(@voidzero-dev/vite-plus-core@1.4.0(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))(svelte@5.57.2))(svelte@5.57.2)
     devDependencies:
       '@prosekit/pm':
         specifier: 'catalog:'
@@ -2246,8 +2246,8 @@ packages:
     engines: {node: '>=6.0.0'}
     hasBin: true
 
-  bits-ui@2.20.0:
-    resolution: {integrity: sha512-q3oDsdiEtn9NVxWLgJRP/0Zl9Zm3zfVZuCsSjWz+i4QAAf6LoncxE/NMCxaPPW283CtU8haCWnp/aBsyvzJDqg==}
+  bits-ui@2.20.2:
+    resolution: {integrity: sha512-cb1eQD1wZEhJWb1dTLiAdYWqeUI5v7f+7EAHmetxBuELI9lo4cpAIfGEjald/PR4wTR80Fu5DFH+IaY1OKn+tg==}
     engines: {node: '>=20'}
     peerDependencies:
       '@internationalized/date': ^3.8.1
@@ -5431,7 +5431,7 @@ snapshots:
 
   baseline-browser-mapping@2.11.24: {}
 
-  bits-ui@2.20.0(@internationalized/date@3.12.4)(@sveltejs/kit@3.1.0(@sveltejs/vite-plugin-svelte@7.3.1(@voidzero-dev/vite-plus-core@1.4.0(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))(svelte@5.57.2))(@typescript/typescript6@6.0.2)(@voidzero-dev/vite-plus-core@1.4.0(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))(svelte@5.57.2))(svelte@5.57.2):
+  bits-ui@2.20.2(@internationalized/date@3.12.4)(@sveltejs/kit@3.1.0(@sveltejs/vite-plugin-svelte@7.3.1(@voidzero-dev/vite-plus-core@1.4.0(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))(svelte@5.57.2))(@typescript/typescript6@6.0.2)(@voidzero-dev/vite-plus-core@1.4.0(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))(svelte@5.57.2))(svelte@5.57.2):
     dependencies:
       '@floating-ui/core': 1.8.0
       '@floating-ui/dom': 1.8.0
