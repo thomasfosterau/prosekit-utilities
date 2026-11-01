@@ -70,7 +70,7 @@ catalog:
   '@sveltejs/vite-plugin-svelte': ^7.3.1
   '@tailwindcss/vite': ^4.3.3
   '@testing-library/jest-dom': ^7.0.1
-  '@types/node': ^26.6.5
+  '@types/node': ^26.6.6
   # TypeScript 7 (the native Go compiler, bin `tsc`) type-checks the pure-TS
   # core package, 8–12× faster than TS6; svelte-check still needs the TS6 JS
   # API (the `typescript` alias below). The same split the app repos run.
@@ -106,7 +106,7 @@ catalog:
   # The server-side DOM the HTML renderer reaches through a dynamic import
   # when `globalThis.document` is absent. linkedom, not happy-dom: happy-dom
   # pulls `node:child_process` / `node:vm`, which workerd does not provide.
-  linkedom: ^0.18.13
+  linkedom: ^0.18.14
   # The ONLY consumer is the Vitest browser provider above (`playwright: "*"`
   # peer); this repo has no Playwright test suite of its own.
   #
