@@ -88,7 +88,6 @@ Effect is used by the core package and by `prosekit-flowchart`'s `./node` entry 
 - The SessionStart hook ([`.claude/hooks/session-start.sh`](.claude/hooks/session-start.sh)) syncs dependencies against the lockfile, writes a `vp` shim on `~/.local/bin` that resolves the nearest project's `vite-plus`, links `fallow` there, repairs a broken bare `node`, runs `svelte-kit sync` on a first checkout, and bridges the image's Chromium to the revision the pinned `playwright` expects. It hydrates no secrets, and there are none to hydrate.
 - A PreToolUse hook ([`.claude/hooks/fallow-gate.sh`](.claude/hooks/fallow-gate.sh)) blocks `git commit` / `git push` when `fallow audit --base origin/trunk` fails; it reads the coverage map on disk, so run `vp run test:coverage` first.
 - A PostToolUse hook runs `vp fmt --write` on each `.ts`/`.tsx`/`.js`/`.css`/`.json`/`.md`/`.yaml` file an Edit or Write touches. It skips `.svelte`: Oxfmt can't format it, so keep `.svelte` files in the same style by hand (two-space indent, single quotes); the pre-commit hook lints them (`vp lint`, without fixes).
-- `.claude/settings.json` enables the `@enfect/claude` plugin (Effect guidance, skills and post-write pattern checks), pinned by `ref` to a reviewed `mpsuesser/enfect` commit; moving it is a reviewed edit of that SHA.
 - Won't run in an agent session: publishing (only the release workflow can mint the OIDC token). Everything in § Verification runs here, given a Chromium for the browser suites.
 
 ## Documentation surfaces
