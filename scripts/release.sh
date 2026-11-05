@@ -13,9 +13,11 @@
 # public, and an explicit request from a private repository fails the
 # publish.
 #
-# pnpm 11's own `pnpm publish` also performs trusted publishing; this script
-# keeps `pnpm pack` + `npm publish` by choice until the first release has gone
-# out (switching is evaluated in #31).
+# Not `pnpm publish` (evaluated in #31): at the pinned pnpm 11.26.0 it packs
+# and then shells out to `npm publish --ignore-scripts <tarball>` itself, so
+# the OIDC exchange is still npm's and the npm pin below stays either way. It
+# would also publish each package as it packs it, losing the pack-everything-
+# first guarantee. Revisit only if a pnpm release publishes without npm.
 #
 # Idempotent: a package already published at its current version is skipped,
 # so a partial run can be re-run, and a version bootstrapped by hand does not
