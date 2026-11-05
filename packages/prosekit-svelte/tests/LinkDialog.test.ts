@@ -45,7 +45,7 @@ test('Escape closes it', async () => {
 });
 
 test('a javascript: URL is refused in a live region and nothing is submitted', async () => {
-  const onSubmit = vi.fn();
+  const onSubmit = vi.fn<(attrs: { href: string; title: string | null }) => void>();
   const screen = await render(LinkDialog, { open: true, onSubmit });
 
   await screen.getByLabelText('URL').fill('javascript:alert(1)');
@@ -66,7 +66,7 @@ test('a javascript: URL is refused in a live region and nothing is submitted', a
 });
 
 test('a safe URL submits and closes, trimming and dropping an empty title', async () => {
-  const onSubmit = vi.fn();
+  const onSubmit = vi.fn<(attrs: { href: string; title: string | null }) => void>();
   const screen = await render(LinkDialog, { open: true, onSubmit });
 
   await screen.getByLabelText('URL').fill('  https://example.com/bed  ');
@@ -77,7 +77,7 @@ test('a safe URL submits and closes, trimming and dropping an empty title', asyn
 });
 
 test('Enter in the URL field submits', async () => {
-  const onSubmit = vi.fn();
+  const onSubmit = vi.fn<(attrs: { href: string; title: string | null }) => void>();
   const screen = await render(LinkDialog, { open: true, onSubmit });
 
   await screen.getByLabelText('URL').click();
@@ -87,7 +87,7 @@ test('Enter in the URL field submits', async () => {
 });
 
 test('seeds from `href` and `title`, and carries the title through', async () => {
-  const onSubmit = vi.fn();
+  const onSubmit = vi.fn<(attrs: { href: string; title: string | null }) => void>();
   const screen = await render(LinkDialog, {
     open: true,
     href: 'https://example.com/old',
@@ -107,7 +107,7 @@ test('seeds from `href` and `title`, and carries the title through', async () =>
 });
 
 test('the remove button is there only with `onRemove`, and closes the dialog', async () => {
-  const onRemove = vi.fn();
+  const onRemove = vi.fn<() => void>();
   const withoutRemove = await render(LinkDialog, { open: true, onSubmit: () => undefined });
   expect(withoutRemove.getByRole('button', { name: 'Remove link' }).elements()).toHaveLength(0);
   await withoutRemove.unmount();
@@ -120,7 +120,7 @@ test('the remove button is there only with `onRemove`, and closes the dialog', a
 });
 
 test('cancel closes without submitting', async () => {
-  const onSubmit = vi.fn();
+  const onSubmit = vi.fn<(attrs: { href: string; title: string | null }) => void>();
   const screen = await render(LinkDialog, { open: true, onSubmit });
 
   await screen.getByLabelText('URL').fill('https://example.com');

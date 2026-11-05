@@ -16,7 +16,7 @@
  * @module
  */
 
-import type { Node as ProseMirrorNode } from '@prosekit/pm/model';
+import type { Attrs, Node as ProseMirrorNode } from '@prosekit/pm/model';
 import { writable } from 'svelte/store';
 import { expect, test, vi } from 'vite-plus/test';
 import { userEvent } from 'vite-plus/test/browser';
@@ -40,7 +40,7 @@ test('renders the server SVG as the preview, and the Edit button', async () => {
   const screen = await render(FlowchartNodeView, {
     node: writable(nodeWith(ONE_NODE)),
     selected: writable(false),
-    setAttrs: vi.fn(),
+    setAttrs: vi.fn<(attrs: Attrs) => void>(),
   });
 
   await expect.element(screen.getByRole('img', { name: /Flowchart diagram/ })).toBeInTheDocument();
@@ -55,7 +55,7 @@ test('an empty payload still renders the empty-state SVG', async () => {
   const screen = await render(FlowchartNodeView, {
     node: writable(nodeWith({ nodes: [], edges: [] })),
     selected: writable(false),
-    setAttrs: vi.fn(),
+    setAttrs: vi.fn<(attrs: Attrs) => void>(),
   });
 
   await expect.element(screen.getByRole('img', { name: 'Empty flowchart' })).toBeInTheDocument();
@@ -65,7 +65,7 @@ test('the Edit button label is a prop', async () => {
   const screen = await render(FlowchartNodeView, {
     node: writable(nodeWith(ONE_NODE)),
     selected: writable(false),
-    setAttrs: vi.fn(),
+    setAttrs: vi.fn<(attrs: Attrs) => void>(),
     editLabel: 'Modifier',
   });
 
@@ -77,7 +77,7 @@ test('a selected node is marked as selected, not merely styled', async () => {
   const screen = await render(FlowchartNodeView, {
     node: writable(nodeWith(ONE_NODE)),
     selected,
-    setAttrs: vi.fn(),
+    setAttrs: vi.fn<(attrs: Attrs) => void>(),
   });
 
   const view = screen.getByRole('button', { name: 'Edit' }).element().parentElement;
@@ -90,7 +90,7 @@ test('a selected node is marked as selected, not merely styled', async () => {
 });
 
 test('Edit opens the dialog, and Save writes the diagram back through setAttrs', async () => {
-  const setAttrs = vi.fn();
+  const setAttrs = vi.fn<(attrs: Attrs) => void>();
   const screen = await render(FlowchartNodeView, {
     node: writable(nodeWith(ONE_NODE)),
     selected: writable(false),

@@ -16,7 +16,7 @@ import type SlashMenu from '../src/lib/toolbar/SlashMenu.svelte';
 import SlashMenuFixture from './fixtures/SlashMenuFixture.svelte';
 import { labellingElement, proseMirror } from './helpers.ts';
 
-const commands = (run: () => void): ReadonlyArray<SlashCommand> => [
+const commands = (run: SlashCommand['run']): ReadonlyArray<SlashCommand> => [
   { id: 'one', label: 'Sow', run },
   { id: 'two', label: 'Plant', run },
   { id: 'three', label: 'Harvest', run },
@@ -67,15 +67,15 @@ test('arrow keys move between items and Escape closes, returning focus', async (
 });
 
 test('choosing an entry runs it with the editor and leaves focus in the document', async () => {
-  const run = vi.fn();
+  const run = vi.fn<SlashCommand['run']>();
   const screen = await render(SlashMenuFixture, { commands: commands(run) });
 
   await screen.getByRole('button', { name: 'Insert' }).click();
   await screen.getByRole('menuitem', { name: 'Plant' }).click();
 
   expect(run).toHaveBeenCalledOnce();
-  const context = run.mock.calls[0]?.[0] as { editor: { mounted: boolean } };
-  expect(context.editor.mounted).toBe(true);
+  const context = run.mock.calls[0]?.[0];
+  expect(context?.editor.mounted).toBe(true);
   await expect.element(proseMirror()).toHaveFocus();
 });
 

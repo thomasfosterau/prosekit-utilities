@@ -52,7 +52,9 @@ describe('defineDocumentSchema', () => {
 
   it('names the envelope after the shape, not after ProseMirror`s `doc`', () => {
     expect(Schema.decodeUnknownSync(block.Document)(VALID)).toEqual(VALID);
-    expect(() => Schema.decodeUnknownSync(block.Document)({ ...VALID, type: 'doc' })).toThrow();
+    expect(() => Schema.decodeUnknownSync(block.Document)({ ...VALID, type: 'doc' })).toThrow(
+      'Expected "blockDocument"',
+    );
   });
 });
 
@@ -140,7 +142,9 @@ describe('install', () => {
     expect(blockShape.is(GRAMMAR_INVALID)).toBe(false);
     expect(blockShape.is(VALID)).toBe(true);
     // The shape's own codec rejects it too, not just its guard.
-    expect(() => Schema.decodeUnknownSync(blockShape.Schema)(GRAMMAR_INVALID)).toThrow();
+    expect(() => Schema.decodeUnknownSync(blockShape.Schema)(GRAMMAR_INVALID)).toThrow(
+      'must be a valid block document',
+    );
     expect(Schema.decodeUnknownSync(blockShape.Schema)(VALID)).toEqual(VALID);
   });
 
@@ -197,7 +201,7 @@ describe('defineDocumentSchema without an `attributes` option', () => {
         type: 'blockDocument',
         content: [{ type: 'heading', attrs: {}, content: [] }],
       }),
-    ).toThrow();
+    ).toThrow('Expected "paragraph"');
     expect(
       Schema.decodeSync(schema.Document)({
         type: 'blockDocument',

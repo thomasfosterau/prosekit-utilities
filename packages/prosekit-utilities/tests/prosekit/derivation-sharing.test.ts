@@ -85,7 +85,7 @@ describe('shared registry cache: block forced first', () => {
         type: 'inlineDocument',
         content: [{ type: 'paragraph', content: [] }],
       }),
-    ).toThrow();
+    ).toThrow('Expected "text"');
   });
 });
 

@@ -19,7 +19,9 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 const { defineSvelteNodeView } = vi.hoisted(() => ({
-  defineSvelteNodeView: vi.fn((spec: unknown) => ({ __spec: spec })),
+  defineSvelteNodeView: vi.fn<(spec: NodeViewSpec) => { __spec: NodeViewSpec }>((spec) => ({
+    __spec: spec,
+  })),
 }));
 vi.mock('prosekit/svelte', () => ({ defineSvelteNodeView }));
 vi.mock('../src/lib/FlowchartNodeView.svelte', () => ({ default: {} }));
@@ -40,16 +42,16 @@ describe('defineFlowchartNodeView', () => {
     defineFlowchartNodeView();
 
     expect(defineSvelteNodeView).toHaveBeenCalledTimes(1);
-    const spec = defineSvelteNodeView.mock.calls[0]?.[0] as NodeViewSpec;
-    expect(spec.name).toBe('flowchart');
-    expect(spec.as).toBe('div');
+    const spec = defineSvelteNodeView.mock.calls[0]?.[0];
+    expect(spec?.name).toBe('flowchart');
+    expect(spec?.as).toBe('div');
   });
 
   it('ignores mutations and stops events so the diagram is inert to ProseMirror', () => {
     defineFlowchartNodeView();
 
-    const spec = defineSvelteNodeView.mock.calls.at(-1)?.[0] as NodeViewSpec;
-    expect(spec.ignoreMutation()).toBe(true);
-    expect(spec.stopEvent()).toBe(true);
+    const spec = defineSvelteNodeView.mock.calls.at(-1)?.[0];
+    expect(spec?.ignoreMutation()).toBe(true);
+    expect(spec?.stopEvent()).toBe(true);
   });
 });

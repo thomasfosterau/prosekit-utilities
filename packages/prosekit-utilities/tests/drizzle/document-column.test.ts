@@ -36,6 +36,6 @@ describe('documentColumn', () => {
       type: 'not-a-doc',
       content: [],
     });
-    expect(() => table.document.mapFromDriverValue(driver)).toThrow();
+    expect(() => table.document.mapFromDriverValue(driver)).toThrow('Expected "doc"');
   });
 });

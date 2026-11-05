@@ -22,14 +22,14 @@ describe('parseValidateGrammar', () => {
     const { schema, optional } = parseValidateGrammar('number');
     expect(optional).toBe(false);
     expect(decodeSync(schema)(3)).toBe(3);
-    expect(() => decodeSync(schema)('x')).toThrow();
+    expect(() => decodeSync(schema)('x')).toThrow('Expected number');
   });
 
   it('unions multiple primitives', () => {
     const { schema } = parseValidateGrammar('string | null');
     expect(decodeSync(schema)('x')).toBe('x');
     expect(decodeSync(schema)(null)).toBeNull();
-    expect(() => decodeSync(schema)(3)).toThrow();
+    expect(() => decodeSync(schema)(3)).toThrow('Expected string | null');
   });
 
   it('treats an `undefined` member as optionality, not a value', () => {
@@ -59,7 +59,7 @@ describe('deriveAttribute', () => {
   it('infers the schema from a non-null default when validate is absent', () => {
     const derived = deriveAttribute(owner, 'language', { default: 'text' });
     expect(decodeSync(derived.schema)('ts')).toBe('ts');
-    expect(() => decodeSync(derived.schema)(3)).toThrow();
+    expect(() => decodeSync(derived.schema)(3)).toThrow('Expected string');
   });
 
   it('consults the overlay before deriving', () => {
@@ -67,7 +67,7 @@ describe('deriveAttribute', () => {
       Option.some(Schema.Literals([1, 2, 3])),
     );
     expect(decodeSync(derived.schema)(2)).toBe(2);
-    expect(() => decodeSync(derived.schema)(4)).toThrow();
+    expect(() => decodeSync(derived.schema)(4)).toThrow('Expected 1 | 2 | 3');
   });
 });
 
@@ -88,6 +88,6 @@ describe('deriveAttrsStruct', () => {
     expect(Option.isSome(struct)).toBe(true);
     const decode = decodeSync(expectSome(struct, 'a derived attrs struct'));
     expect(decode({ href: 'x' })).toEqual({ href: 'x' });
-    expect(() => decode({ title: null })).toThrow(); // href required
+    expect(() => decode({ title: null })).toThrow('Missing key'); // href required
   });
 });

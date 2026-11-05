@@ -60,7 +60,7 @@ test('opens as a dialog named by the title and described by the help text', asyn
   const screen = await render(FlowchartEditDialog, {
     open: true,
     initialData: ONE_NODE,
-    onSave: vi.fn(),
+    onSave: vi.fn<(data: FlowchartData) => void>(),
   });
 
   const dialog = screen.getByRole('dialog');
@@ -76,7 +76,7 @@ test('spreads native attributes on the dialog element, merges `class`, and keeps
   const screen = await render(FlowchartEditDialog, {
     open: true,
     initialData: ONE_NODE,
-    onSave: vi.fn(),
+    onSave: vi.fn<(data: FlowchartData) => void>(),
     class: 'max-w-4xl',
     id: 'flowchart-dialog',
     'data-surface': 'flowchart',
@@ -107,7 +107,7 @@ test('every string is a prop', async () => {
   const screen = await render(FlowchartEditDialog, {
     open: true,
     initialData: ONE_NODE,
-    onSave: vi.fn(),
+    onSave: vi.fn<(data: FlowchartData) => void>(),
     titleLabel: 'Modifier le diagramme',
     addNodeLabel: 'Ajouter',
     helpText: 'Glissez pour relier.',
@@ -127,7 +127,7 @@ test('focus lands inside the dialog', async () => {
   const screen = await render(FlowchartEditDialog, {
     open: true,
     initialData: ONE_NODE,
-    onSave: vi.fn(),
+    onSave: vi.fn<(data: FlowchartData) => void>(),
   });
 
   await expect.element(screen.getByRole('dialog')).toBeInTheDocument();
@@ -138,7 +138,7 @@ test('focus lands inside the dialog', async () => {
 });
 
 test('Save hands onSave the current snapshot and closes', async () => {
-  const onSave = vi.fn();
+  const onSave = vi.fn<(data: FlowchartData) => void>();
   const screen = await render(FlowchartEditDialog, {
     open: true,
     initialData: ONE_NODE,
@@ -154,7 +154,7 @@ test('Save hands onSave the current snapshot and closes', async () => {
 });
 
 test('Add node appends to the diagram Save reports', async () => {
-  const onSave = vi.fn();
+  const onSave = vi.fn<(data: FlowchartData) => void>();
   const screen = await render(FlowchartEditDialog, {
     open: true,
     initialData: ONE_NODE,
@@ -168,9 +168,9 @@ test('Add node appends to the diagram Save reports', async () => {
     .toBeInTheDocument();
   await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
-  const saved = onSave.mock.calls[0]?.[0] as FlowchartData;
-  expect(saved.nodes).toHaveLength(2);
-  expect(saved.nodes[1]?.data.label).toBe('New');
+  const saved = onSave.mock.calls[0]?.[0];
+  expect(saved?.nodes).toHaveLength(2);
+  expect(saved?.nodes[1]?.data.label).toBe('New');
 });
 
 test('a rejecting onSave shows an alert and keeps the dialog open', async () => {
@@ -203,7 +203,7 @@ test('a non-Error rejection falls back to the failure message prop', async () =>
 });
 
 test('the node copy is forwarded to the canvas the dialog hosts', async () => {
-  const onSave = vi.fn();
+  const onSave = vi.fn<(data: FlowchartData) => void>();
   const screen = await render(FlowchartEditDialog, {
     open: true,
     initialData: ONE_NODE,
@@ -224,12 +224,12 @@ test('the node copy is forwarded to the canvas the dialog hosts', async () => {
     .toBeInTheDocument();
 
   await userEvent.click(screen.getByRole('button', { name: 'Save' }));
-  const saved = onSave.mock.calls[0]?.[0] as FlowchartData;
-  expect(saved.nodes[0]?.data.label).toBe('Sans titre');
+  const saved = onSave.mock.calls[0]?.[0];
+  expect(saved?.nodes[0]?.data.label).toBe('Sans titre');
 });
 
 test('Cancel closes without calling onSave', async () => {
-  const onSave = vi.fn();
+  const onSave = vi.fn<(data: FlowchartData) => void>();
   const screen = await render(FlowchartEditDialog, {
     open: true,
     initialData: ONE_NODE,
@@ -247,7 +247,7 @@ test('Escape closes an idle dialog', async () => {
   const screen = await render(FlowchartEditDialog, {
     open: true,
     initialData: ONE_NODE,
-    onSave: vi.fn(),
+    onSave: vi.fn<(data: FlowchartData) => void>(),
   });
   await canvasReady(screen, 'Start');
 
@@ -278,7 +278,7 @@ test('Escape is ignored while a save is in flight, and both buttons are disabled
 });
 
 test('the imperative open(data) seeds the canvas with that payload', async () => {
-  const onSave = vi.fn();
+  const onSave = vi.fn<(data: FlowchartData) => void>();
   const screen = await render(FlowchartEditDialogFixture, {
     initialData: ONE_NODE,
     openWith: OTHER_NODE,

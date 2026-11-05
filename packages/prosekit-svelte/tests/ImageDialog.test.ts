@@ -37,7 +37,7 @@ test('Escape closes it', async () => {
 });
 
 test('a data: URL is refused in a live region and nothing is submitted', async () => {
-  const onSubmit = vi.fn();
+  const onSubmit = vi.fn<(attrs: { src: string }) => void>();
   const screen = await render(ImageDialog, { open: true, onSubmit });
 
   await screen.getByLabelText('Image URL').fill('data:text/html;base64,PHN2Zz4=');
@@ -51,7 +51,7 @@ test('a data: URL is refused in a live region and nothing is submitted', async (
 });
 
 test('a safe URL submits and closes', async () => {
-  const onSubmit = vi.fn();
+  const onSubmit = vi.fn<(attrs: { src: string }) => void>();
   const screen = await render(ImageDialog, { open: true, onSubmit });
 
   await screen.getByLabelText('Image URL').fill('  https://example.com/leaf.png ');
@@ -62,7 +62,7 @@ test('a safe URL submits and closes', async () => {
 });
 
 test('Enter in the field submits', async () => {
-  const onSubmit = vi.fn();
+  const onSubmit = vi.fn<(attrs: { src: string }) => void>();
   const screen = await render(ImageDialog, { open: true, onSubmit });
 
   await screen.getByLabelText('Image URL').click();
@@ -72,7 +72,7 @@ test('Enter in the field submits', async () => {
 });
 
 test('cancel closes without submitting', async () => {
-  const onSubmit = vi.fn();
+  const onSubmit = vi.fn<(attrs: { src: string }) => void>();
   const screen = await render(ImageDialog, { open: true, onSubmit });
 
   await screen.getByLabelText('Image URL').fill('https://example.com/leaf.png');
