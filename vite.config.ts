@@ -136,13 +136,7 @@ export default defineConfig({
       // new site is a defect; when a count reaches zero, delete the line so
       // the rule is back at `error`.
       //
-      // 53 sites, all in tests: `toThrow()` with no expected error. Most are
-      // Schema decode failures, whose message is Effect's formatted issue
-      // tree; pinning each needs a matcher per case, not a mechanical edit.
-      'vitest/require-to-throw-message': 'warn',
-      // 34 sites, all in tests: `vi.fn()` without the mocked signature.
-      'vitest/require-mock-type-parameters': 'warn',
-      // 12 sites outside the Effect code (the Svelte packages' tests, one
+      // 7 sites outside the Effect code (the Svelte packages' tests, one
       // story and the flowchart's `toolbar.ts`): narrowings of ProseMirror's `Node`
       // / `NodeViewSpec` and of `any`-typed browser test handles. The Effect
       // code is governed by `effect/casting-awareness` and

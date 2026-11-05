@@ -148,7 +148,7 @@ describe('block document: golden-fixture node/mark coverage', () => {
   });
 
   it('rejects an empty top-level content array (block+ is non-empty)', () => {
-    expect(() => decodeBlock({ type: 'blockDocument', content: [] })).toThrow();
+    expect(() => decodeBlock({ type: 'blockDocument', content: [] })).toThrow('Missing key');
     expect(block.is({ type: 'blockDocument', content: [] })).toBe(false);
   });
 
@@ -179,28 +179,30 @@ describe('block document: golden-fixture node/mark coverage', () => {
         },
       ],
     };
-    expect(() => decodeBlock(emptyBlockquote)).toThrow();
-    expect(() => decodeBlock(emptyList)).toThrow();
-    expect(() => decodeBlock(emptyTable)).toThrow();
-    expect(() => decodeBlock(emptyTableCell)).toThrow();
+    expect(() => decodeBlock(emptyBlockquote)).toThrow('Expected "paragraph"');
+    expect(() => decodeBlock(emptyList)).toThrow('Expected "paragraph"');
+    expect(() => decodeBlock(emptyTable)).toThrow('Expected "paragraph"');
+    expect(() => decodeBlock(emptyTableCell)).toThrow('Expected "paragraph"');
   });
 
   it('rejects a missing content key', () => {
-    expect(() => decodeBlock({ type: 'blockDocument' })).toThrow();
+    expect(() => decodeBlock({ type: 'blockDocument' })).toThrow('Missing key');
     expect(block.is({ type: 'blockDocument' })).toBe(false);
   });
 
   it('rejects a wrong envelope type and non-object values', () => {
-    expect(() => decodeBlock({ type: 'inlineDocument', content: [] })).toThrow();
-    expect(() => decodeBlock(null)).toThrow();
-    expect(() => decodeBlock('nope')).toThrow();
+    expect(() => decodeBlock({ type: 'inlineDocument', content: [] })).toThrow(
+      'Expected "blockDocument"',
+    );
+    expect(() => decodeBlock(null)).toThrow('Expected object');
+    expect(() => decodeBlock('nope')).toThrow('Expected object');
     expect(block.is(null)).toBe(false);
   });
 
   it('rejects a document carrying an unknown node type', () => {
     expect(() =>
       decodeBlock({ type: 'blockDocument', content: [{ type: 'notARealNode' }] }),
-    ).toThrow();
+    ).toThrow('Expected "paragraph"');
   });
 
   it('rejects an out-of-range heading level (attribute overlay)', () => {
@@ -209,7 +211,7 @@ describe('block document: golden-fixture node/mark coverage', () => {
         type: 'blockDocument',
         content: [{ type: 'heading', attrs: { level: 9 }, content: [] }],
       }),
-    ).toThrow();
+    ).toThrow('Expected "paragraph"');
   });
 
   it('rejects an unknown list kind (attribute overlay)', () => {
@@ -224,7 +226,7 @@ describe('block document: golden-fixture node/mark coverage', () => {
           },
         ],
       }),
-    ).toThrow();
+    ).toThrow('Expected "paragraph"');
   });
 
   it('rejects a sidenote nested inside a sidenote (content model, not just registry membership)', () => {
@@ -247,7 +249,7 @@ describe('block document: golden-fixture node/mark coverage', () => {
         },
       ],
     };
-    expect(() => decodeBlock(doc)).toThrow();
+    expect(() => decodeBlock(doc)).toThrow('Expected "text"');
     expect(block.is(doc)).toBe(false);
   });
 
@@ -312,7 +314,7 @@ describe('block document: golden-fixture node/mark coverage', () => {
           },
         ],
       }),
-    ).toThrow();
+    ).toThrow('Expected "paragraph"');
   });
 
   describe('required(...) attribute overlay entries stay required', () => {
@@ -328,7 +330,7 @@ describe('block document: golden-fixture node/mark coverage', () => {
         type: 'blockDocument',
         content: [{ type: 'heading', attrs: {}, content: [] }],
       };
-      expect(() => decodeBlock(doc)).toThrow();
+      expect(() => decodeBlock(doc)).toThrow('Expected "paragraph"');
       expect(block.is(doc)).toBe(false);
     });
 
@@ -337,19 +339,19 @@ describe('block document: golden-fixture node/mark coverage', () => {
         type: 'blockDocument',
         content: [{ type: 'list', attrs: {}, content: [{ type: 'paragraph', content: [] }] }],
       };
-      expect(() => decodeBlock(doc)).toThrow();
+      expect(() => decodeBlock(doc)).toThrow('Expected "paragraph"');
     });
 
     it('rejects an image missing attrs.src/width/height', () => {
       expect(() =>
         decodeBlock({ type: 'blockDocument', content: [{ type: 'image', attrs: {} }] }),
-      ).toThrow();
+      ).toThrow('Expected "paragraph"');
     });
 
     it('rejects a codeBlock missing attrs.language', () => {
       expect(() =>
         decodeBlock({ type: 'blockDocument', content: [{ type: 'codeBlock', attrs: {} }] }),
-      ).toThrow();
+      ).toThrow('Expected "paragraph"');
     });
 
     it('rejects a mention missing attrs.id or attrs.label', () => {
@@ -361,8 +363,8 @@ describe('block document: golden-fixture node/mark coverage', () => {
         type: 'blockDocument',
         content: [{ type: 'paragraph', content: [{ type: 'mention', attrs: { id: 'u-1' } }] }],
       };
-      expect(() => decodeBlock(missingBoth)).toThrow();
-      expect(() => decodeBlock(missingLabel)).toThrow();
+      expect(() => decodeBlock(missingBoth)).toThrow('Expected "sidenote"');
+      expect(() => decodeBlock(missingLabel)).toThrow('Expected "sidenote"');
       expect(block.is(missingLabel)).toBe(false);
     });
 
@@ -374,7 +376,7 @@ describe('block document: golden-fixture node/mark coverage', () => {
             { type: 'paragraph', content: [{ type: 'mention', attrs: { id: 7, label: 'x' } }] },
           ],
         }),
-      ).toThrow();
+      ).toThrow('Expected "sidenote"');
     });
   });
 });
@@ -401,16 +403,16 @@ describe('inline document: golden-fixture coverage', () => {
   it('rejects a block document and node types the inline grammar does not register', () => {
     expect(() =>
       decodeInline({ type: 'blockDocument', content: [{ type: 'paragraph', content: [] }] }),
-    ).toThrow();
+    ).toThrow('Expected "inlineDocument"');
     expect(() =>
       decodeInline({ type: 'inlineDocument', content: [{ type: 'hardBreak' }] }),
-    ).toThrow();
+    ).toThrow('Expected "text"');
     expect(() =>
       decodeInline({
         type: 'inlineDocument',
         content: [{ type: 'mention', attrs: { id: 'u-1', label: 'rosa' } }],
       }),
-    ).toThrow();
+    ).toThrow('Expected "text"');
     expect(inline.is({ type: 'blockDocument', content: [] })).toBe(false);
   });
 

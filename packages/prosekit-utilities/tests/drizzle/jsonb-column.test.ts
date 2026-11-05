@@ -35,7 +35,7 @@ describe('jsonbSchemaColumn', () => {
 
   it('throws on the read side for an invalid parsed value', () => {
     const driver = encodeJson({ kind: 'gadget', count: 3 });
-    expect(() => table.widget.mapFromDriverValue(driver)).toThrow();
+    expect(() => table.widget.mapFromDriverValue(driver)).toThrow('Expected "widget"');
   });
 
   it('parses then validates a JSON string driver value', () => {
@@ -55,7 +55,7 @@ describe('jsonbSchemaColumn', () => {
 
   it('throws on the read side when a non-string driver value is invalid', () => {
     // A deliberately invalid, already-parsed driver value (see above).
-    expect(() => table.widget.mapFromDriverValue({ kind: 'gadget' })).toThrow();
+    expect(() => table.widget.mapFromDriverValue({ kind: 'gadget' })).toThrow('Expected "widget"');
   });
 
   it('encodes toDriver as the raw value, without running the schema', () => {

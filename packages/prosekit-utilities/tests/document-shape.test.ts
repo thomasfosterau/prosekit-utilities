@@ -111,7 +111,9 @@ describe('defineDocumentShape: declaration', () => {
   it('prefers an explicit label', () => {
     const shape = defineDocumentShape({ name: 'blockDocument', label: 'a post body' });
     expect(shape.label).toBe('a post body');
-    expect(() => Schema.decodeUnknownSync(shape.Schema)({ type: 'nope' })).toThrow();
+    expect(() => Schema.decodeUnknownSync(shape.Schema)({ type: 'nope' })).toThrow(
+      'Expected "blockDocument"',
+    );
   });
 
   it('empty() is a valid document of the shape', () => {
@@ -152,22 +154,28 @@ describe('DocumentShape.Schema: structural check, grammar not installed', () => 
   });
 
   it('rejects a non-object, a null, and a wrong top-level type', () => {
-    expect(() => decodeBlock(null)).toThrow();
-    expect(() => decodeBlock('blockDocument')).toThrow();
-    expect(() => decodeBlock({ type: 'inlineDocument', content: [] })).toThrow();
-    expect(() => decodeInline({ type: 'blockDocument', content: [] })).toThrow();
+    expect(() => decodeBlock(null)).toThrow('Expected blockDocumentGrammar');
+    expect(() => decodeBlock('blockDocument')).toThrow('Expected blockDocumentGrammar');
+    expect(() => decodeBlock({ type: 'inlineDocument', content: [] })).toThrow(
+      'Expected "blockDocument"',
+    );
+    expect(() => decodeInline({ type: 'blockDocument', content: [] })).toThrow(
+      'Expected "inlineDocument"',
+    );
   });
 
   it('rejects a missing `content`, and a `content` that is not an array', () => {
-    expect(() => decodeBlock({ type: 'blockDocument' })).toThrow();
-    expect(() => decodeBlock({ type: 'blockDocument', content: 'nope' })).toThrow();
+    expect(() => decodeBlock({ type: 'blockDocument' })).toThrow('Missing key');
+    expect(() => decodeBlock({ type: 'blockDocument', content: 'nope' })).toThrow('Expected array');
   });
 
   it('rejects a non-JSON value inside `content` (the wire-safety half of the check)', () => {
     expect(() =>
       decodeBlock({ type: 'blockDocument', content: [DateTime.toDateUtc(DateTime.makeUnsafe(0))] }),
-    ).toThrow();
-    expect(() => decodeBlock({ type: 'blockDocument', content: [() => 'x'] })).toThrow();
+    ).toThrow('Expected JSON value');
+    expect(() => decodeBlock({ type: 'blockDocument', content: [() => 'x'] })).toThrow(
+      'Expected JSON value',
+    );
   });
 
   it('does NOT check per-node shape — that is the grammar guard s job, not this one', () => {
@@ -210,18 +218,20 @@ describe('DocumentShape.Schema: grammar installed', () => {
   });
 
   it('now rejects the documents the derived schema rejects', () => {
-    expect(() => decodeBlock(grammarInvalidBlock)).toThrow();
-    expect(() => decodeBlock(unknownNodeBlock)).toThrow();
+    expect(() => decodeBlock(grammarInvalidBlock)).toThrow('must be a valid block document');
+    expect(() => decodeBlock(unknownNodeBlock)).toThrow('must be a valid block document');
   });
 
   it('now rejects the per-node shape errors the structural check waves through', () => {
-    expect(() => decodeBlock({ type: 'blockDocument', content: [{ attrs: {} }] })).toThrow();
+    expect(() => decodeBlock({ type: 'blockDocument', content: [{ attrs: {} }] })).toThrow(
+      'must be a valid block document',
+    );
     expect(() =>
       decodeBlock({
         type: 'blockDocument',
         content: [{ type: 'paragraph', content: [{ text: 'no type here' }] }],
       }),
-    ).toThrow();
+    ).toThrow('must be a valid block document');
   });
 
   it('names the shape in the failure message', () => {
@@ -230,7 +240,7 @@ describe('DocumentShape.Schema: grammar installed', () => {
 
   it('applies on encode as well as decode — the write path is a boundary too', () => {
     const encode = Schema.encodeUnknownSync(block.Schema);
-    expect(() => encode(unknownNodeBlock)).toThrow();
+    expect(() => encode(unknownNodeBlock)).toThrow('must be a valid block document');
   });
 
   it('checks the inline document against the inline grammar', () => {
@@ -239,7 +249,7 @@ describe('DocumentShape.Schema: grammar installed', () => {
       content: [{ type: 'paragraph', content: [{ type: 'text', text: 'x' }] }],
     };
     expect(isInlineDocument(inlineWithBlockNode)).toBe(false);
-    expect(() => decodeInline(inlineWithBlockNode)).toThrow();
+    expect(() => decodeInline(inlineWithBlockNode)).toThrow('must be a valid inline document');
   });
 
   it('reads the guard at validation time, not at construction time', () => {
@@ -249,7 +259,7 @@ describe('DocumentShape.Schema: grammar installed', () => {
     const decode = Schema.decodeUnknownSync(late.Schema);
     expect(decode(unknownNodeBlock)).toEqual(unknownNodeBlock);
     late.install(isBlockDocument);
-    expect(() => decode(unknownNodeBlock)).toThrow();
+    expect(() => decode(unknownNodeBlock)).toThrow('must be a valid block document');
   });
 
   it('is() degrades a guard that throws to false rather than propagating the defect', () => {
@@ -301,7 +311,9 @@ describe('DocumentShape.narrow', () => {
   });
 
   it('still applies the structural check', () => {
-    expect(() => decodeNarrow({ type: 'inlineDocument', content: [] })).toThrow();
+    expect(() => decodeNarrow({ type: 'inlineDocument', content: [] })).toThrow(
+      'Expected "blockDocument"',
+    );
   });
 
   it('leaves the shape s own schema unnarrowed', () => {

@@ -35,11 +35,11 @@ interface InsertNodeOptions {
 const context = () => {
   // Typed rather than `vi.fn(() => true)`: an untyped mock records its calls as
   // an empty tuple, so every `mock.calls[0]?.[0]` below would be a type error.
-  const insertNode = vi.fn((_options: InsertNodeOptions) => true);
-  const focus = vi.fn();
+  const insertNode = vi.fn<(options: InsertNodeOptions) => boolean>(() => true);
+  const focus = vi.fn<() => void>();
   const run = {
     editor: { commands: { insertNode }, focus },
-    dialogs: { link: vi.fn(), image: vi.fn() },
+    dialogs: { link: vi.fn<() => void>(), image: vi.fn<() => void>() },
   } as unknown as ToolbarRunContext;
   return { run, insertNode, focus };
 };
@@ -85,8 +85,8 @@ describe('flowchartToolbarItem', () => {
 
   it('does nothing but refocus when the grammar has no flowchart node', () => {
     const run = {
-      editor: { commands: {}, focus: vi.fn() },
-      dialogs: { link: vi.fn(), image: vi.fn() },
+      editor: { commands: {}, focus: vi.fn<() => void>() },
+      dialogs: { link: vi.fn<() => void>(), image: vi.fn<() => void>() },
     } as unknown as ToolbarRunContext;
 
     expect(() => flowchartToolbarItem().run(run)).not.toThrow();
