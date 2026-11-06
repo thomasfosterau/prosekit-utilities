@@ -119,12 +119,13 @@ catalog:
   #
   # 1.60.0 expects Chromium revision 1223 (Chrome 148). CI installs exactly
   # that itself (`pnpm exec playwright install --with-deps chromium`). The
-  # agent-session image still pre-installs revision 1194 (Chrome 141) under
-  # /opt/pw-browsers, so the SessionStart hook (.claude/hooks/session-start.sh,
-  # section 4) builds a directory of symlinks named for 1223 that point at the
-  # 1194 build and exports `PLAYWRIGHT_BROWSERS_PATH` to it. That is what lets
+  # agent-session image pre-installs a different revision under
+  # /opt/pw-browsers (1194, Chrome 141, at first; 1243 since), so the
+  # SessionStart hook (.claude/hooks/session-start.sh, section 5) builds a
+  # directory of symlinks named for 1223 that point at whichever build the
+  # image carries and exports `PLAYWRIGHT_BROWSERS_PATH` to it. That is what lets
   # `vp run -r test:unit` launch a real browser in a session with no download.
-  # Bump this together with the hook's PW_WANT_REV, and check the older build
+  # Bump this together with the hook's PW_WANT_REV, and check the image's build
   # still launches under the new release; drop the bridge once the image
   # carries the wanted revision.
   playwright: 1.60.0
