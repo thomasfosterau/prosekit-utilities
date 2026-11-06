@@ -11,6 +11,8 @@ pnpm install                          # dependencies, the git hooks, and the @ef
 pnpm exec playwright install chromium # once: the browser the Svelte suites drive
 ```
 
+Open in a Codespace or Dev Container: `.devcontainer/` provisions it with the same hook as agent sessions.
+
 ## Git hooks
 
 Managed by Vite+ (`vp config`, run by `prepare`). **pre-commit** runs `vp staged`: `vp check --fix --no-lint` then `vp check --no-fmt` on staged `.js` / `.ts` / `.css` / `.json` / `.md` files (formatting with fixes, linting without, so no type-aware autofix lands unverified) and `vp lint` on `.svelte` files, which Oxfmt cannot format, so keep them in the same style by hand. There is no pre-push hook.
