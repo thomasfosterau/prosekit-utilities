@@ -33,8 +33,9 @@ fi
 
 # --- Trusted checkouts and the vp runner: local deviation from the generated script ---
 # Everything below runs code from the checkout it audits: fallow from its
-# node_modules. The audit runs in this hook's working directory, which Claude
-# Code sets to the session's project directory. Only this project and its
+# node_modules. The audit runs in the top level of the checkout holding this
+# hook's working directory, which Claude Code sets to the session's project
+# directory. Only this project and its
 # `.claude/worktrees/*` checkouts are trusted for that; anywhere else (a
 # scratch clone, a third-party checkout) is not this gate's to audit, so it
 # says so and runs nothing there rather than execute what that tree carries.
@@ -45,17 +46,27 @@ fi
 # PATH is not necessarily this checkout's pinned one.
 # `fallow hooks install --target agent --agent claude` overwrites this script
 # without asking, so re-apply this block after regenerating.
+# The check is made on the checkout's top level, so a commit run from a
+# subdirectory is still audited, and a worktree is exactly one path component
+# under `.claude/worktrees/`, so a repository nested inside one is not trusted.
 GATE_PROJECT="${CLAUDE_PROJECT_DIR:-}"
 GATE_PROJECT="${GATE_PROJECT%/}"
-case "$PWD" in
-  "$GATE_PROJECT" | "$GATE_PROJECT"/.claude/worktrees/*) ;;
-  *)
-    if [ -n "$GATE_PROJECT" ]; then
-      echo "fallow-gate: $PWD is not this project or one of its worktrees; not running its tooling, skipping audit." >&2
-      exit 0
-    fi
+GATE_CHECKOUT="$(git rev-parse --show-toplevel 2>/dev/null || printf '%s' "$PWD")"
+GATE_TRUSTED=
+case "$GATE_CHECKOUT" in
+  "$GATE_PROJECT") GATE_TRUSTED=1 ;;
+  "$GATE_PROJECT"/.claude/worktrees/*)
+    case "${GATE_CHECKOUT#"$GATE_PROJECT"/.claude/worktrees/}" in
+      */* | '') ;;
+      *) GATE_TRUSTED=1 ;;
+    esac
     ;;
 esac
+if [ -n "$GATE_PROJECT" ] && [ -z "$GATE_TRUSTED" ]; then
+  echo "fallow-gate: $GATE_CHECKOUT is not this project or one of its worktrees; not running its tooling, skipping audit." >&2
+  exit 0
+fi
+cd "$GATE_CHECKOUT" || exit 0
 if command -v vp >/dev/null 2>&1 && [ -x ./node_modules/.bin/fallow ]; then
   RUNNER=(vp exec fallow)
   BIN_DESC="vp exec fallow ($PWD/node_modules/.bin/fallow)"
