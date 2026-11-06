@@ -11,7 +11,7 @@ pnpm install                          # dependencies, the git hooks, and the @ef
 pnpm exec playwright install chromium # once: the browser the Svelte suites drive
 ```
 
-Open in a Codespace or Dev Container: `.devcontainer/` provisions it with the same hook as agent sessions.
+Open in a Codespace or Dev Container: `.devcontainer/` provisions it with the same hook as agent sessions. The `Dev Container` workflow (`.github/workflows/devcontainer.yml`) builds it in CI whenever its inputs change; to try a change locally, `pnpm dlx @devcontainers/cli@0.89.0 up --workspace-folder .` (needs Docker).
 
 ## Git hooks
 
