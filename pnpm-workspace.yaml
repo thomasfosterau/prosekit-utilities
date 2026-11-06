@@ -101,7 +101,7 @@ catalog:
   effect: 4.1.0
   # The dead-code / duplication / complexity audit (`.fallowrc.json`), run by
   # the PreToolUse gate in agent sessions and by hand before a PR.
-  fallow: 3.37.0
+  fallow: 3.39.0
   happy-dom: ^21.0.4
   # The server-side DOM the HTML renderer reaches through a dynamic import
   # when `globalThis.document` is absent. linkedom, not happy-dom: happy-dom
