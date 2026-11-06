@@ -35,10 +35,10 @@ fi
 # Everything below runs code from the checkout it audits: fallow from its
 # node_modules. The audit runs in the top level of the checkout holding this
 # hook's working directory, which Claude Code sets to the session's project
-# directory. Only this project and its
-# `.claude/worktrees/*` checkouts are trusted for that; anywhere else (a
-# scratch clone, a third-party checkout) is not this gate's to audit, so it
-# says so and runs nothing there rather than execute what that tree carries.
+# directory. Only this project and its `.claude/worktrees/*` checkouts are
+# trusted for that; anywhere else (a scratch clone, a third-party checkout) is
+# not this gate's to audit, so it says so and runs nothing there rather than
+# execute what that tree carries.
 # Inside a trusted checkout fallow runs through Vite+ (`vp exec fallow`),
 # which resolves the checkout's own pinned copy; the checkout's
 # `node_modules/.bin/fallow` is the fallback where `vp` is not on PATH. The
