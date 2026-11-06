@@ -2,12 +2,15 @@
 # every external version lives (package.json files carry only `catalog:`), so
 # a bump here is a bump for the whole workspace at once.
 #
-# Dependabot puts a dependency in the FIRST group that matches it, so the
-# groups run from the most specific lockstep set to the catch-all, and
-# `exclude-patterns` keeps a package out of a broader group it would
-# otherwise also match. Every lockstep group takes every update type,
-# majors included, so its members never land in separate PRs; outside them,
-# majors stay individual PRs and minors / patches share the catch-all.
+# Groups exist only for sets whose members must move at the same time:
+# released together from one monorepo with exact cross-pins, or tied by a
+# hard compatibility table, so one bumped alone breaks the install or the
+# build. Everything else (`fallow`, `bits-ui`, `@changesets/*`, `@xyflow/*`,
+# `daisyui`, …) updates in its own PR; there is no catch-all. Dependabot
+# puts a dependency in the FIRST group that matches it, and
+# `exclude-patterns` keeps a package out of a group it would otherwise also
+# match. Every group takes every update type, majors included, so its
+# members never land in separate PRs.
 #
 # Moves Dependabot cannot make, done by hand on the matching PR's branch
 # (AGENTS.md § Common pitfalls lists them too):
@@ -43,34 +46,22 @@ updates:
       exclude:
         - '@thomasfosterau/*'
     groups:
-      # The toolchain moves as ONE set: vite-plus pins the `oxlint`, `oxfmt`,
-      # `vitest` and `@vitest/*` it carries exactly; `@effect/tsgo`'s
-      # `prepare` patch hard-errors at install on any `tsc`
-      # (`@typescript/native`) or `oxlint` it was not built for; the TS6
-      # alias (`typescript`) pairs with TS7; the Effect lint plugin loads into
-      # that oxlint. `@vitest/browser-playwright` is here rather than with
-      # playwright because vitest pins it exactly. See the catalog comments
-      # on `vite-plus`, `@effect/tsgo` and `@typescript/native`.
+      # vite-plus pins the `vitest` / `@vitest/*` (and the transitive oxlint,
+      # oxfmt, oxlint-tsgolint) it carries exactly, and `@effect/tsgo`'s
+      # `prepare` patch hard-errors on any `tsc` or `oxlint` it was not built
+      # for. vitest, `@vitest/*` and tsgo are ignored below and follow
+      # vite-plus by hand in this group's PR. `@vitest/browser-playwright` is
+      # here because vitest pins it exactly. See the catalog comments on
+      # `vite-plus`, `@effect/tsgo` and `@typescript/native`.
       toolchain:
         applies-to: version-updates
         patterns:
           - vite-plus
-          # An npm alias (npm:@voidzero-dev/vite-plus-core): matched so it stays
-          # in this group, but Dependabot cannot bump it (see the header).
-          - vite
           - vitest
           - '@vitest/*'
-          - vitest-browser-svelte
-          - oxlint
-          - oxfmt
-          - oxlint-tsgolint
           - '@effect/tsgo'
-          - '@typescript/native'
-          - typescript
-          - '@typescript/typescript6'
-          - '@enfect/oxlint'
         update-types: [major, minor, patch]
-      # `effect` is a singleton peer of every Effect package here.
+      # One release train: `effect` and `@effect/*` publish on one version.
       effect:
         applies-to: version-updates
         patterns:
@@ -87,75 +78,34 @@ updates:
           - svelte
           - '@sveltejs/*'
           - svelte-check
-          - svelte2tsx
         update-types: [major, minor, patch]
-      # `playwright` and the SessionStart hook's Chromium bridge move together
-      # (PW_WANT_REV in .claude/hooks/session-start.sh); see the ignore below.
-      playwright:
-        applies-to: version-updates
-        patterns:
-          - playwright
-          - '@playwright/*'
-        update-types: [major, minor, patch]
+      # One monorepo: `@storybook/sveltekit` pins its framework packages and
+      # the addons peer `storybook` at their own version.
+      # `@storybook/addon-svelte-csf` is versioned separately.
       storybook:
         applies-to: version-updates
         patterns:
           - storybook
           - '@storybook/*'
+        exclude-patterns:
+          - '@storybook/addon-svelte-csf'
         update-types: [major, minor, patch]
-      drizzle:
-        applies-to: version-updates
-        patterns:
-          - drizzle-orm
-          - drizzle-kit
-        update-types: [major, minor, patch]
-      fallow:
-        applies-to: version-updates
-        patterns:
-          - fallow
-          - fallow-*
-          - '@fallow/*'
-        update-types: [major, minor, patch]
-      changesets:
-        applies-to: version-updates
-        patterns:
-          - '@changesets/*'
-        update-types: [major, minor, patch]
-      # `prosekit` and `@prosekit/pm` (ProseMirror re-published as one
-      # package) move together — the node and mark specs here are written
-      # against both — with the ProseMirror modules they carry.
+      # `prosekit` pins every `@prosekit/*` package (`@prosekit/pm` included)
+      # exactly. The ProseMirror modules are pinned under `overrides:` and
+      # ignored below.
       prosekit:
         applies-to: version-updates
         patterns:
           - prosekit
           - '@prosekit/*'
-          - prosemirror-*
         update-types: [major, minor, patch]
-      # The flowchart package's required peer, plus its dev copy.
-      xyflow:
-        applies-to: version-updates
-        patterns:
-          - '@xyflow/*'
-        update-types: [major, minor, patch]
-      # Tailwind and the daisyUI plugin the Storybook stack builds with.
+      # `@tailwindcss/vite` pins `tailwindcss` exactly.
       tailwind:
         applies-to: version-updates
         patterns:
           - tailwindcss
           - '@tailwindcss/*'
-          - daisyui
         update-types: [major, minor, patch]
-      bits-ui:
-        applies-to: version-updates
-        patterns:
-          - bits-ui
-        update-types: [major, minor, patch]
-      # Everything else's minor and patch updates in one PR.
-      minor-and-patch:
-        applies-to: version-updates
-        patterns:
-          - '*'
-        update-types: [minor, patch]
     # Pins a person moves by hand. Each ignore is scoped to the version
     # update types rather than a bare ignore, so a security advisory against
     # any of them still gets a Dependabot PR. The by-hand steps are in
@@ -230,7 +180,4 @@ updates:
       prefix: chore
     cooldown:
       default-days: 1
-    groups:
-      actions:
-        patterns:
-          - '*'
+    # No groups: each action updates in its own PR.

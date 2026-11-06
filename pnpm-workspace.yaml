@@ -48,8 +48,8 @@ catalog:
   # replaced `@mpsuesser/oxlint-plugin-effect`. It declares `effect` 4.1.0
   # exactly, but the `effect` singleton override resolves it to the
   # catalog's copy, which it lints fine on: the linter is no reason to move
-  # the Effect line. Loads into vite-plus's oxlint, so it is in Dependabot's
-  # `toolchain` group.
+  # the Effect line. Loads into vite-plus's oxlint but ranges
+  # `@oxlint/plugins`, so Dependabot proposes it on its own (no group).
   '@enfect/oxlint': 0.9.0
   # ProseMirror's model / view / state / transform, re-published as one
   # package by ProseKit. Type-only for `./derive`; a runtime peer of
@@ -59,14 +59,14 @@ catalog:
   # pipeline a `svelte-package` library uses too — plus the Svelte CSF addon
   # so snippet-taking components can be storied in `.svelte`, and the a11y
   # addon because accessibility is part of this library's contract.
-  '@storybook/addon-a11y': ^10.6.3
-  '@storybook/addon-svelte-csf': ^5.1.5
-  '@storybook/sveltekit': ^10.6.3
+  '@storybook/addon-a11y': ^10.6.6
+  '@storybook/addon-svelte-csf': ^5.1.6
+  '@storybook/sveltekit': ^10.6.6
   # SvelteKit is a BUILD-TIME dependency here, not a runtime one: `svelte-kit
   # sync` generates the package's ambient types and `svelte-package` emits
   # `dist/`. Nothing in `src/lib/` may import `$app/*`.
-  '@sveltejs/kit': 3.1.0
-  '@sveltejs/package': 3.0.1
+  '@sveltejs/kit': 3.1.1
+  '@sveltejs/package': 3.0.2
   '@sveltejs/vite-plugin-svelte': ^7.3.1
   '@tailwindcss/vite': ^4.3.3
   '@testing-library/jest-dom': ^7.0.1
@@ -130,9 +130,9 @@ catalog:
   # carries the wanted revision.
   playwright: 1.60.0
   prosekit: ^0.23.0
-  storybook: ^10.6.3
-  svelte-check: ^4.7.7
-  svelte: ^5.57.2
+  storybook: ^10.6.6
+  svelte-check: ^4.7.8
+  svelte: ^5.57.3
   tailwindcss: ^4.3.3
   # The TS6 JS compiler (bin `tsc6`), aliased so the package stays importable
   # as `typescript`: svelte-check and tsdown's declaration emit drive
