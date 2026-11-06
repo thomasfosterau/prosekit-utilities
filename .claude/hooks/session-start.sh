@@ -24,9 +24,9 @@
 # both are. `vp` lives in `node_modules/.bin`, which is on nobody's PATH.
 #
 # Rather than fight PATH — which this script cannot export into its caller —
-# it links the tools into `~/.local/bin`, a directory already on PATH in these
-# images and writable by the session user. A symlink survives where an `export`
-# cannot.
+# it writes the tools into `~/.local/bin`, a directory already on PATH in these
+# images and writable by the session user, as small re-exec shims (see
+# write_reexec_shim). A file there survives where an `export` cannot.
 #
 # ## Node, and why this repairs rather than clobbers
 #
@@ -165,14 +165,43 @@ if [ -f "$PROJECT_DIR/pnpm-lock.yaml" ]; then
     || log "dependency install failed; continuing"
 fi
 
+# Write a re-exec shim at ~/.local/bin/<name> for a pnpm `node_modules/.bin`
+# entry, replacing a stale symlink or a shim generated earlier but never a
+# real, non-generated file. A plain symlink is not safe for these entries:
+# depending on the install, pnpm writes `.bin/<name>` as an sh shim that
+# derives its `basedir` from `$0`, and invoked through a symlink in
+# ~/.local/bin that `$0` points outside node_modules, so node exits with
+# MODULE_NOT_FOUND (thomasfosterau/effect-wikimedia#219). For `fallow` that
+# made the PreToolUse gate take its "exited 1, skipping" branch and let every
+# commit through unaudited. `exec`ing the entry by its real path keeps `$0`
+# inside node_modules whichever form pnpm wrote.
+REEXEC_SHIM_MARKER="# generated-by: .claude/hooks/session-start.sh (re-exec shim)"
+write_reexec_shim() {
+  src="$1"
+  name="$(basename "$src")"
+  dest="$LOCAL_BIN/$name"
+  [ -x "$src" ] || return 0
+  if [ -e "$dest" ] && [ ! -L "$dest" ] \
+    && ! grep -qF "$REEXEC_SHIM_MARKER" "$dest" 2>/dev/null; then
+    return 0
+  fi
+  # `rm` first: writing through `$dest` while it is still a symlink would
+  # overwrite whatever it points at.
+  rm -f "$dest" "$dest.tmp" 2>/dev/null
+  printf '#!/usr/bin/env bash\n%s\nexec %q "$@"\n' "$REEXEC_SHIM_MARKER" "$src" >"$dest.tmp" \
+    && chmod +x "$dest.tmp" 2>/dev/null && mv -f "$dest.tmp" "$dest" 2>/dev/null \
+    || { rm -f "$dest.tmp" 2>/dev/null; log "could not write $name shim"; }
+}
+
 # node_modules/.bin only exists after the install, so link what it provides
 # afterwards. `fallow` is what the PreToolUse fallow gate
 # (.claude/hooks/fallow-gate.sh) runs before every agent `git commit` /
-# `git push`; it is a plain link because it reads only the repo's config, not
-# a worktree's own node_modules. There is no `tsx` here: nothing in this
-# workspace runs TypeScript outside `vp` or Node's own type stripping.
+# `git push`; its shim targets the primary checkout because fallow reads only
+# the repo's config, not a worktree's own node_modules. There is no `tsx`
+# here: nothing in this workspace runs TypeScript outside `vp` or Node's own
+# type stripping.
 write_vp_shim
-link_tool "$PROJECT_DIR/node_modules/.bin/fallow"
+write_reexec_shim "$PROJECT_DIR/node_modules/.bin/fallow"
 
 # ── 3. First-checkout codegen ────────────────────────────────────────────────
 # `svelte-kit sync` writes the package's ambient types under `.svelte-kit/`.
