@@ -48,8 +48,8 @@ catalog:
   # replaced `@mpsuesser/oxlint-plugin-effect`. It declares `effect` 4.1.0
   # exactly, but the `effect` singleton override resolves it to the
   # catalog's copy, which it lints fine on: the linter is no reason to move
-  # the Effect line. Loads into vite-plus's oxlint, so it is in Dependabot's
-  # `toolchain` group.
+  # the Effect line. Loads into vite-plus's oxlint but ranges
+  # `@oxlint/plugins`, so Dependabot proposes it on its own (no group).
   '@enfect/oxlint': 0.9.0
   # ProseMirror's model / view / state / transform, re-published as one
   # package by ProseKit. Type-only for `./derive`; a runtime peer of
