@@ -1,4 +1,4 @@
-import type { Node as ProseMirrorNode } from '@prosekit/pm/model';
+import { Schema, type Node as ProseMirrorNode } from '@prosekit/pm/model';
 import type { Meta, StoryObj } from '@storybook/sveltekit';
 import { writable } from 'svelte/store';
 import FlowchartNodeView from '../lib/FlowchartNodeView.svelte';
@@ -25,9 +25,20 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The slice of a ProseMirror node the view reads: its `attrs`, and nothing else. */
-const nodeWith = (data: FlowchartData): ProseMirrorNode =>
-  ({ attrs: { data } }) as unknown as ProseMirrorNode;
+/**
+ * A minimal ProseMirror schema with a `flowchart` node. The view reads only
+ * its `attrs`, so the story needs no editor or real node spec.
+ */
+const storySchema = new Schema({
+  nodes: {
+    doc: { content: 'flowchart*' },
+    flowchart: { attrs: { data: {} } },
+    text: {},
+  },
+});
+
+/** A real `flowchart` node carrying `data`. */
+const nodeWith = (data: FlowchartData): ProseMirrorNode => storySchema.node('flowchart', { data });
 
 const diagram: FlowchartData = {
   nodes: [
