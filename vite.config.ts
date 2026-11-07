@@ -77,8 +77,8 @@ export default defineConfig({
       // per-function CRAP scores (`health.coverage` in .fallowrc.json).
       // Without it fallow estimates every function as uncovered, and any
       // function with cyclomatic complexity ≥ 5 fails the gate on its own.
-      // Run this before `fallow audit`: the PreToolUse fallow gate audits the
-      // map on disk and never refreshes it.
+      // Run this before a manual `fallow audit`. The PreToolUse fallow gate
+      // runs it itself when the map is missing or stale.
       //
       // Not the core's threshold gate: that stays the core's own
       // `test:coverage`, which CI runs. One vitest process runs every
