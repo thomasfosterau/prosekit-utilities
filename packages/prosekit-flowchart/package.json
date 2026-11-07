@@ -20,7 +20,8 @@
     "directory": "packages/prosekit-flowchart"
   },
   "files": [
-    "dist"
+    "dist",
+    "CHANGELOG.md"
   ],
   "type": "module",
   "sideEffects": false,
