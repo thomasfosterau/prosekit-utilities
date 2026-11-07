@@ -11,7 +11,7 @@
 
 | Entry | Directory | Imports ProseKit at runtime | What it holds |
 | --- | --- | --- | --- |
-| `.` | `src/*.ts`, `src/markdown/` | **never** | `NodeJSON` types, `defineDocumentShape`, allow-lists (`defineAllowList`, `checkAllowList`, `DocumentViolation`), `isSafeHref`, `extractDocumentText`, `inlineDocumentText`, the envelope helpers, the Markdown serialiser |
+| `.` | `src/*.ts`, `src/markdown/` | **never** | `NodeJSON` types, `defineDocumentShape`, allow-lists (`defineAllowList`, `checkAllowList`, `DocumentViolation`), `isSafeHref`, `extractDocumentText`, `inlineDocumentText`, `extractMentions`, `extractCitations`, the envelope helpers, the Markdown serialiser |
 | `./derive` | `src/derive/` | never (types only) | the derivation engine: `Registry`, `deriveDocumentSchema`, the attribute overlay vocabulary |
 | `./prosekit` | `src/prosekit/` | yes | node and mark definitions, the extension presets, `lazySchema`, `defineDocumentSchema`, `installDocumentGrammars`, `createHtmlRenderer` |
 | `./drizzle` | `src/drizzle/` | never | `jsonbSchemaColumn`, `documentColumn`, `documentTextSql` |

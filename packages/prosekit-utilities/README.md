@@ -22,7 +22,7 @@ A consumer that only ever imports the root entry (a browser-reachable model laye
 
 | Entry | Holds | Imports ProseKit at runtime |
 | --- | --- | --- |
-| `.` | Document shapes, allow-lists, safe URLs, plain-text extraction, the envelope remap, the Markdown serialiser | **Never** |
+| `.` | Document shapes, allow-lists, safe URLs, plain-text and reference extraction, the envelope remap, the Markdown serialiser | **Never** |
 | `./derive` | The derivation engine: an Effect Schema read back from a compiled ProseMirror schema | Never (`@prosekit/pm` types only) |
 | `./prosekit` | Node and mark definitions, the extension presets, `lazySchema`, `defineDocumentSchema`, `installDocumentGrammars`, `createHtmlRenderer` | **Yes** — `prosekit/core`, `prosekit/extensions/*` |
 | `./drizzle` | `jsonb` document columns and the SQL twin of text extraction | Never |
@@ -121,6 +121,15 @@ export const submitComment = Effect.fn(function* (body: DocumentJSON<'blockDocum
 });
 ```
 
+A host that runs its own write hooks (a content store's "before write" step, say) applies the same check there. It maps the `DocumentViolation` to its own rejection error with `Effect.mapError`. The violation's `kind`, `name` and `message` say which node, mark or `href` was refused. In the same hook, `extractMentions` and `extractCitations` read what the document references, for a backlink or notification index kept in step with the write:
+
+```ts
+import { extractCitations, extractMentions } from '@thomasfosterau/prosekit-utilities';
+
+const mentioned = extractMentions(body).map((mention) => mention.id); // first-mention order, each id once
+const cited = extractCitations(body); // the `citation` marks' workIds, each once
+```
+
 ---
 
 # `.` — the ProseKit-free surface
@@ -129,7 +138,7 @@ export const submitComment = Effect.fn(function* (body: DocumentJSON<'blockDocum
 import { defineDocumentShape, defineAllowList } from '@thomasfosterau/prosekit-utilities';
 ```
 
-Document shapes, allow-lists, safe URLs, plain-text extraction, the envelope remap and the Markdown serialiser — `effect` is the only dependency, and nothing here imports `prosekit` or `@prosekit/pm`, not even a type.
+Document shapes, allow-lists, safe URLs, plain-text and reference extraction, the envelope remap and the Markdown serialiser — `effect` is the only dependency, and nothing here imports `prosekit` or `@prosekit/pm`, not even a type.
 
 | Export | Signature | Notes |
 | --- | --- | --- |
@@ -149,6 +158,9 @@ Document shapes, allow-lists, safe URLs, plain-text extraction, the envelope rem
 | `DEFAULT_SAFE_SCHEMES` | `ReadonlyArray<string>` | `['http', 'https', 'mailto']`. |
 | `extractDocumentText` | `(doc: NodeJSON \| DocumentJSON \| null \| undefined, options?: { readonly separator?: string \| undefined } \| undefined) => string` | Default separator `' '`. Tolerant of `null`, a missing `content`, and non-object entries — a malformed row degrades to empty text rather than throwing. |
 | `inlineDocumentText` | `(doc: NodeJSON \| DocumentJSON) => string` | The `''` join, so a title never gains a space its author did not type. |
+| `extractMentions` | `(doc: NodeJSON \| DocumentJSON \| null \| undefined) => ReadonlyArray<DocumentMention>` | The `mention` nodes' `{ id, label }`, one per distinct `id`, in first-mention order; the first occurrence's `label` wins. Tolerant like `extractDocumentText`; a mention with an empty or non-string `id` (an unresolved one) is skipped. |
+| `DocumentMention` | `interface DocumentMention { readonly id: string; readonly label: string }` | One mentioned entity, as the `mention` node stores it. |
+| `extractCitations` | `(doc: NodeJSON \| DocumentJSON \| null \| undefined) => ReadonlyArray<string>` | The `citation` marks' `workId`s, one per distinct id, in first-citation order. Tolerant in the same way; an empty or non-string `workId` is skipped. |
 | `toEditorDocument` | `<N extends string>(doc: DocumentJSON<N> \| NodeJSON) => NodeJSON` | Envelope `name` → `doc`. Returns a new object. |
 | `fromEditorDocument` | `<N extends string>(name: N) => (doc: NodeJSON) => DocumentJSON<N>` | `doc` → envelope. A document with no `content` becomes an empty one. Returns a new object. |
 | `createMarkdownSerialiser` | `(options?: { readonly blocks?: Record<string, BlockSerialiser> \| undefined; readonly inlines?: Record<string, InlineSerialiser> \| undefined; readonly marks?: Record<string, MarkSerialiser> \| undefined }) => MarkdownSerialiser` | The stock cases (paragraph, heading, blockquote, code block, horizontal rule, image, table, the flat-list model, hard break, five marks) are built in; the option maps merge **over** them. |
