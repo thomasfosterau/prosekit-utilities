@@ -50,7 +50,7 @@ catalog:
   # catalog's copy, which it lints fine on: the linter is no reason to move
   # the Effect line. Loads into vite-plus's oxlint but ranges
   # `@oxlint/plugins`, so Dependabot proposes it on its own (no group).
-  '@enfect/oxlint': 0.9.0
+  '@enfect/oxlint': 0.10.0
   # ProseMirror's model / view / state / transform, re-published as one
   # package by ProseKit. Type-only for `./derive`; a runtime peer of
   # `./prosekit` and the Svelte packages.
