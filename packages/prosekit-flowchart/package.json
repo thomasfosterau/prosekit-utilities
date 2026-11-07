@@ -1,7 +1,7 @@
 {
   "$schema": "https://www.schemastore.org/package",
   "name": "@thomasfosterau/prosekit-flowchart",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A flowchart block for ProseKit documents: the node spec, its Effect Schema payload and a server-renderable SVG (no Svelte, no xyflow) under `./node`, and the @xyflow/svelte canvas, edit dialog and Svelte node view at the root",
   "keywords": [
     "editor",
