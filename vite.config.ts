@@ -182,8 +182,9 @@ export default defineConfig({
           // Fires on `?: T | undefined`, the ONLY spelling of an optional
           // member `exactOptionalPropertyTypes` lets a caller forward an
           // optional of its own into (AGENTS.md § Conventions), and on the
-          // one deliberately nullable public parameter (`extractDocumentText`
-          // takes a nullable database column). Every site today is one of
+          // deliberately nullable public parameters (`extractDocumentText`,
+          // `extractMentions` and `extractCitations` take a nullable database
+          // column). Every site today is one of
           // the two; switching to `Option` would break the published API.
           'effect/prefer-option-over-null': 'warn',
           // `NodeJSON` / `MarkJSON` and the derive options mirror
