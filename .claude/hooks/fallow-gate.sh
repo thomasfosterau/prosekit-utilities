@@ -119,10 +119,67 @@ fi
 
 TMP_JSON="$(mktemp)"
 TMP_ERR="$(mktemp)"
+TMP_COV="$(mktemp)"
 cleanup() {
-  rm -f "$TMP_JSON" "$TMP_ERR"
+  rm -f "$TMP_JSON" "$TMP_ERR" "$TMP_COV"
 }
 trap cleanup EXIT
+
+# --- Coverage map: local deviation from the generated script ---
+# `fallow audit` reads `coverage/coverage-final.json` (`health.coverage` in
+# .fallowrc.json) for per-function CRAP scores. With no map at all it exits
+# with a runtime error, which the generated script below treats as
+# non-blocking, so a commit from a fresh worktree went through unaudited
+# (#138). A stale map scores changed functions against old line numbers.
+# So the map is regenerated with the root `test:coverage` task (every
+# package's suite under one istanbul map) when it is missing, or when any
+# tracked or untracked, non-ignored file under `packages/*/src`,
+# `packages/*/tests` or `scripts/` is newer than it.
+# If regeneration fails: with no map to read, the commit is blocked (an
+# unaudited commit is what this gate exists to stop); with a stale map, the
+# audit runs against it and says so. Set FALLOW_GATE_SKIP_COVERAGE=1 to skip
+# this block. It needs the hook's `timeout` in .claude/settings.json to cover
+# a full coverage run. Re-apply after `fallow hooks install` regenerates this
+# file.
+COV_MAP="coverage/coverage-final.json"
+if [ -z "${FALLOW_GATE_SKIP_COVERAGE:-}" ]; then
+  COV_REASON=""
+  if [ ! -f "$COV_MAP" ]; then
+    COV_REASON="missing"
+  else
+    COV_NEWER="$(
+      git ls-files -z --cached --others --exclude-standard -- \
+        ':(glob)packages/*/src/**' ':(glob)packages/*/tests/**' ':(glob)scripts/**' 2>/dev/null \
+        | while IFS= read -r -d '' f; do
+          if [ -f "$f" ] && [ "$f" -nt "$COV_MAP" ]; then
+            printf '%s\n' "$f"
+            break
+          fi
+        done
+    )" || true
+    if [ -n "$COV_NEWER" ]; then
+      COV_REASON="older than $COV_NEWER"
+    fi
+  fi
+  if [ -n "$COV_REASON" ]; then
+    echo "fallow-gate: $COV_MAP is $COV_REASON; running \`vp run test:coverage\`…" >&2
+    if command -v vp >/dev/null 2>&1 && vp run test:coverage >"$TMP_COV" 2>&1 && [ -f "$COV_MAP" ]; then
+      echo "fallow-gate: coverage map regenerated." >&2
+    elif [ -f "$COV_MAP" ] && [ "$COV_REASON" != "missing" ]; then
+      echo "fallow-gate: \`vp run test:coverage\` failed; auditing against the stale map. Last lines:" >&2
+      tail -n 20 "$TMP_COV" >&2
+    else
+      {
+        echo "fallow-gate: blocked: no $COV_MAP and \`vp run test:coverage\` could not produce one,"
+        echo "fallow-gate: so the audit cannot run. Fix the run (last lines below), or set"
+        echo "fallow-gate: FALLOW_GATE_SKIP_COVERAGE=1 to commit unaudited."
+        tail -n 20 "$TMP_COV"
+      } >&2
+      exit 2
+    fi
+  fi
+fi
+# --- End coverage map ---
 
 if "${RUNNER[@]}" audit --format json --quiet --explain --gate-marker agent --base origin/trunk >"$TMP_JSON" 2>"$TMP_ERR"; then
   STATUS=0
