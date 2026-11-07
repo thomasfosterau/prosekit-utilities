@@ -15,8 +15,8 @@ pnpm add @thomasfosterau/prosekit-svelte prosekit @prosekit/pm
 | Package | Range | Why |
 | --- | --- | --- |
 | `svelte` | `^5.30.1` | A declared peer. The components are compiled by your build, not pre-compiled. |
-| `prosekit` | `^0.22.2` | A declared peer. The editor runtime, and the two stylesheets `Editor.svelte` imports. |
-| `@prosekit/pm` | `^0.1.19` | A declared peer. ProseMirror's model and view, at the version ProseKit expects. |
+| `prosekit` | `^0.23.0` | A declared peer. The editor runtime, and the two stylesheets `Editor.svelte` imports. |
+| `@prosekit/pm` | `^0.1.21` | A declared peer. ProseMirror's model and view, at the version ProseKit expects. |
 | `tailwindcss` | `^4.0.0` | Not a declared peer, but **required**: the components emit Tailwind classes and ship none. |
 | `daisyui` | `^5.0.0` | Same — the class vocabulary is daisyUI's (`btn`, `menu`, `modal-box`, `input`, `bg-base-100`). |
 
