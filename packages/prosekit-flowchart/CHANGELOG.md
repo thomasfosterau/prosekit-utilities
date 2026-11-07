@@ -1,5 +1,21 @@
 # @thomasfosterau/prosekit-flowchart
 
+## 0.2.0
+
+### Minor Changes
+
+- 21da31e: The `prosekit` peer range is now `^0.23.0` (was `^0.22.2`), and the `@prosekit/pm` peer range is now `^0.1.21` (was `^0.1.19`), so prosekit 0.23 satisfies them. Every gate already ran against prosekit 0.23.0 / `@prosekit/pm` 0.1.21, so no code changes. 0.22.x is no longer admitted: a fresh install of it resolves two copies of `@prosekit/core`, which fails ProseKit's own assertion, so it can't be supported. Upgrade prosekit to 0.23 alongside this release.
+
+### Patch Changes
+
+- a40675f: The published package now includes its `CHANGELOG.md`, so the release notes can be read from `node_modules`. No code changes.
+- 66cd1ee: `flowchartToolbarItem()` and `flowchartSlashCommand()` no longer throw when the editor's grammar has no `flowchart` node. ProseKit's `insertNode` throws `Cannot find ProseMirror node type "flowchart"` for a type the schema lacks, so the entries now check the schema first and only refocus the editor, as their documentation already said.
+- Updated dependencies [a40675f]
+- Updated dependencies [21da31e]
+- Updated dependencies [7063e0f]
+  - @thomasfosterau/prosekit-utilities@0.2.0
+  - @thomasfosterau/prosekit-svelte@0.2.0
+
 ## 0.1.0
 
 ### Minor Changes
