@@ -4,9 +4,8 @@
  *
  * The two stores and `setAttrs` are ProseKit's node-view contract, so the test
  * supplies them the way the adapter does: `writable()` values plus a spy. The
- * node itself is a stand-in carrying only `attrs`, which is all this view
- * reads — constructing a real ProseMirror node would drag a compiled schema
- * and an editor into a test about a preview and a button.
+ * node is a real one, built from a schema compiled once from
+ * `defineFlowchart()`, though this view reads nothing but its `attrs`.
  *
  * What is pinned: the preview is the SAME SVG the server renders (so the
  * editor and the published page cannot drift), the Edit button opens the
@@ -18,10 +17,15 @@
 
 import type { Attrs, Node as ProseMirrorNode } from '@prosekit/pm/model';
 import { writable } from 'svelte/store';
-import { expect, test, vi } from 'vite-plus/test';
+import { createEditor, union } from 'prosekit/core';
+import { defineDoc } from 'prosekit/extensions/doc';
+import { defineParagraph } from 'prosekit/extensions/paragraph';
+import { defineText } from 'prosekit/extensions/text';
+import { assert, expect, test, vi } from 'vite-plus/test';
 import { userEvent } from 'vite-plus/test/browser';
 import { render } from 'vitest-browser-svelte';
 import FlowchartNodeView from '../src/lib/FlowchartNodeView.svelte';
+import { defineFlowchart } from '../src/lib/node/flowchart-node.ts';
 import type { FlowchartData } from '../src/lib/node/schema.ts';
 
 const ONE_NODE: FlowchartData = {
@@ -29,12 +33,18 @@ const ONE_NODE: FlowchartData = {
   edges: [],
 };
 
-/**
- * The slice of a ProseMirror node this view touches. A full node would need a
- * compiled schema; `attrs` is the whole of what `$node` is read for.
- */
-const nodeWith = (data: FlowchartData): ProseMirrorNode =>
-  ({ attrs: { data } }) as unknown as ProseMirrorNode;
+/** The `flowchart` node type, compiled once from the real `defineFlowchart()` spec. */
+const flowchartType = (() => {
+  const { schema } = createEditor({
+    extension: union(defineDoc(), defineText(), defineParagraph(), defineFlowchart()),
+  });
+  const type = schema.nodes['flowchart'];
+  assert(type, 'the schema registers flowchart');
+  return type;
+})();
+
+/** A real `flowchart` node carrying `data`; `attrs` is all `$node` is read for. */
+const nodeWith = (data: FlowchartData): ProseMirrorNode => flowchartType.create({ data });
 
 test('renders the server SVG as the preview, and the Edit button', async () => {
   const screen = await render(FlowchartNodeView, {

@@ -51,8 +51,8 @@ test('Enter inserts nothing — no second block, no line break', async () => {
   await userEvent.keyboard('{Enter}');
   await userEvent.keyboard('Two');
 
-  const stored = hiddenInputValue('title') as { content: ReadonlyArray<{ type: string }> };
-  expect(stored.content.every((child) => child.type === 'text')).toBe(true);
+  // One text run and nothing else: no hard break, no block between the halves.
+  expect(hiddenInputValue('title')).toMatchObject({ content: [{ type: 'text', text: 'OneTwo' }] });
   expect(proseMirror().element().querySelectorAll('p')).toHaveLength(0);
   await expect.element(proseMirror()).toHaveTextContent('OneTwo');
 });

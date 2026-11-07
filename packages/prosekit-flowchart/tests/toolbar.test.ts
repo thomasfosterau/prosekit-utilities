@@ -1,12 +1,13 @@
 /**
  * Unit tests for the toolbar and insert-menu entries.
  *
- * Neither factory needs an editor, only something shaped like one: both reach
- * `insertNode` by name through `editor.commands`, which is what makes the
- * entry inert against an extension that never registered `defineFlowchart()`
- * instead of throwing on every click. So the editor here is a stand-in, and
- * what is pinned is the payload a fresh block carries, the focus hand-back,
- * the labels, and that two insertions never share one diagram object.
+ * Both factories reach `insertNode` by name through `editor.commands`, which
+ * is what makes the entry inert against an extension that never registered
+ * `defineFlowchart()` instead of throwing on every click. So each case runs
+ * the entry against a real mounted editor, with and without the flowchart
+ * node. What is pinned: the payload a fresh block carries (read back out of
+ * the document), the focus hand-back, the labels, and that two insertions
+ * never share one diagram object.
  *
  * Ported from the flowchart button and `slashFlowchart` entry of Website's
  * `BlockToolbar.svelte`.
@@ -14,8 +15,14 @@
  * @module
  */
 
+import type { Extension } from 'prosekit/core';
+import { createEditor, defineBaseCommands, union } from 'prosekit/core';
+import { defineDoc } from 'prosekit/extensions/doc';
+import { defineParagraph } from 'prosekit/extensions/paragraph';
+import { defineText } from 'prosekit/extensions/text';
 import type { ToolbarRunContext } from '@thomasfosterau/prosekit-svelte';
-import { describe, expect, it, vi } from 'vite-plus/test';
+import { describe, expect, it, onTestFinished, vi } from 'vite-plus/test';
+import { defineFlowchart } from '../src/lib/node/flowchart-node.ts';
 import type { FlowchartData } from '../src/lib/node/schema.ts';
 import { flowchartSlashCommand, flowchartToolbarItem } from '../src/lib/toolbar.ts';
 
@@ -25,23 +32,30 @@ const STARTER: FlowchartData = {
   edges: [],
 };
 
-/** What the entries hand ProseKit's `insertNode` command. */
-interface InsertNodeOptions {
-  type: string;
-  attrs: { data: FlowchartData };
-}
-
-/** Enough of a `ToolbarRunContext` for an entry that only inserts and focuses. */
-const context = () => {
-  // Typed rather than `vi.fn(() => true)`: an untyped mock records its calls as
-  // an empty tuple, so every `mock.calls[0]?.[0]` below would be a type error.
-  const insertNode = vi.fn<(options: InsertNodeOptions) => boolean>(() => true);
-  const focus = vi.fn<() => void>();
-  const run = {
-    editor: { commands: { insertNode }, focus },
+/**
+ * A `ToolbarRunContext` over a real, mounted editor carrying ProseKit's base
+ * commands (`insertNode` among them). With `flowchart` false the grammar has
+ * no flowchart node.
+ */
+const context = (flowchart: boolean = true) => {
+  const base: Extension = union(defineDoc(), defineText(), defineParagraph(), defineBaseCommands());
+  const editor = createEditor({ extension: flowchart ? union(base, defineFlowchart()) : base });
+  editor.mount(document.createElement('div'));
+  onTestFinished(() => editor.unmount());
+  const focus = vi.spyOn(editor, 'focus');
+  const run: ToolbarRunContext = {
+    editor,
     dialogs: { link: vi.fn<() => void>(), image: vi.fn<() => void>() },
-  } as unknown as ToolbarRunContext;
-  return { run, insertNode, focus };
+  };
+  /** The `data` of every flowchart node in the document, in order. */
+  const diagrams = (): Array<unknown> => {
+    const found: Array<unknown> = [];
+    editor.state.doc.descendants((node) => {
+      if (node.type.name === 'flowchart') found.push(node.attrs['data']);
+    });
+    return found;
+  };
+  return { run, focus, diagrams };
 };
 
 describe('flowchartToolbarItem', () => {
@@ -58,44 +72,38 @@ describe('flowchartToolbarItem', () => {
   });
 
   it('inserts a flowchart node carrying the starter diagram, then refocuses', () => {
-    const { run, insertNode, focus } = context();
+    const { run, focus, diagrams } = context();
 
     flowchartToolbarItem().run(run);
 
-    expect(insertNode).toHaveBeenCalledTimes(1);
-    expect(insertNode.mock.calls[0]?.[0]).toEqual({
-      type: 'flowchart',
-      attrs: { data: STARTER },
-    });
+    expect(diagrams()).toEqual([STARTER]);
     expect(focus).toHaveBeenCalledTimes(1);
   });
 
   it('gives every insertion its own diagram object', () => {
-    const { run, insertNode } = context();
+    const { run, diagrams } = context();
 
     flowchartToolbarItem().run(run);
     flowchartToolbarItem().run(run);
 
-    const first = insertNode.mock.calls[0]?.[0];
-    const second = insertNode.mock.calls[1]?.[0];
-    expect(first?.attrs.data).toEqual(STARTER);
-    expect(first?.attrs.data).toEqual(second?.attrs.data);
-    expect(first?.attrs.data).not.toBe(second?.attrs.data);
+    const [first, second] = diagrams();
+    expect(first).toEqual(STARTER);
+    expect(first).toEqual(second);
+    expect(first).not.toBe(second);
   });
 
   it('does nothing but refocus when the grammar has no flowchart node', () => {
-    const run = {
-      editor: { commands: {}, focus: vi.fn<() => void>() },
-      dialogs: { link: vi.fn<() => void>(), image: vi.fn<() => void>() },
-    } as unknown as ToolbarRunContext;
+    const { run, focus, diagrams } = context(false);
 
     expect(() => flowchartToolbarItem().run(run)).not.toThrow();
+    expect(diagrams()).toEqual([]);
+    expect(focus).toHaveBeenCalledTimes(1);
   });
 });
 
 describe('flowchartSlashCommand', () => {
   it('is the same insertion, reached from the insert menu', () => {
-    const { run, insertNode, focus } = context();
+    const { run, focus, diagrams } = context();
     const command = flowchartSlashCommand();
 
     expect(command.id).toBe('flowchart');
@@ -103,10 +111,7 @@ describe('flowchartSlashCommand', () => {
 
     command.run(run);
 
-    expect(insertNode.mock.calls[0]?.[0]).toEqual({
-      type: 'flowchart',
-      attrs: { data: STARTER },
-    });
+    expect(diagrams()).toEqual([STARTER]);
     expect(focus).toHaveBeenCalledTimes(1);
   });
 

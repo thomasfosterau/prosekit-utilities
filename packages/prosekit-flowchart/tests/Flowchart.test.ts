@@ -20,6 +20,7 @@
 import { expect, test } from 'vite-plus/test';
 import { render } from 'vitest-browser-svelte';
 import type { FlowchartData } from '../src/lib/node/schema.ts';
+import { parseFlowchartData } from '../src/lib/node/data.ts';
 import FlowchartFixture from './fixtures/FlowchartFixture.svelte';
 
 const TWO_NODES: FlowchartData = {
@@ -39,7 +40,12 @@ interface SnapshotReader {
 /** Press "Snapshot", then read back what `getSnapshot()` returned. */
 const snapshot = async (screen: SnapshotReader): Promise<FlowchartData> => {
   await screen.getByRole('button', { name: 'Snapshot' }).click();
-  return JSON.parse(screen.getByTestId('snapshot').element().textContent ?? '') as FlowchartData;
+  const text = screen.getByTestId('snapshot').element().textContent ?? '';
+  const data = parseFlowchartData(text);
+  // `parseFlowchartData` is lenient (it drops a malformed node or edge, and
+  // yields an empty diagram for garbage); pin that it dropped nothing here.
+  expect(JSON.parse(text)).toEqual(data);
+  return data;
 };
 
 test('renders a container that keeps the caller’s attributes', async () => {

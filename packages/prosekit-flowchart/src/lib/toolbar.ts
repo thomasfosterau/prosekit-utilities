@@ -39,13 +39,17 @@ function starterDiagram(): FlowchartData {
  * document.
  *
  * The command is reached by name through the editor's own `commands` record —
- * the same loose lookup the default item set uses — so the entry is inert
- * rather than throwing against an extension that never registered
- * `defineFlowchart()`.
+ * the same loose lookup the default item set uses — and only when the schema
+ * has a `flowchart` node, so the entry is inert rather than throwing against
+ * an extension that never registered `defineFlowchart()`.
  */
 function insertFlowchart({ editor }: ToolbarRunContext): void {
-  const commands = editor.commands as Record<string, ((...args: never[]) => boolean) | undefined>;
-  commands['insertNode']?.({ type: 'flowchart', attrs: { data: starterDiagram() } } as never);
+  // ProseKit's `insertNode` throws on a node type the schema lacks, so the
+  // schema is checked first. `ToolbarEditor.commands` is an open record, so an
+  // absent command reads as `undefined` rather than a type error.
+  if (editor.schema.nodes['flowchart'] !== undefined) {
+    editor.commands['insertNode']?.({ type: 'flowchart', attrs: { data: starterDiagram() } });
+  }
   editor.focus();
 }
 

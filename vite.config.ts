@@ -130,18 +130,6 @@ export default defineConfig({
         'error',
         { allow: ['**/*.css', '@testing-library/jest-dom/vitest'] },
       ],
-
-      // ---- Adoption allowances (#127) ----------------------------
-      // Sites that predate the `suspicious` category and type-aware lint. A
-      // new site is a defect; when a count reaches zero, delete the line so
-      // the rule is back at `error`.
-      //
-      // 7 sites outside the Effect code (the Svelte packages' tests, one
-      // story and the flowchart's `toolbar.ts`): narrowings of ProseMirror's `Node`
-      // / `NodeViewSpec` and of `any`-typed browser test handles. The Effect
-      // code is governed by `effect/casting-awareness` and
-      // `effect/require-safety-comment-for-type-assertion` instead (below).
-      'typescript/no-unsafe-type-assertion': 'warn',
     },
     // Registered workspace-wide (loading a plugin enables none of its rules);
     // the Effect rules themselves are switched on only for EFFECT_FILES below.
