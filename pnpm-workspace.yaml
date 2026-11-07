@@ -129,6 +129,13 @@ catalog:
   # still launches under the new release; drop the bridge once the image
   # carries the wanted revision.
   playwright: 1.60.0
+  # The editor runtime, in the `prosekit` lockstep group with `@prosekit/pm`.
+  # The packages' literal peers are `^0.23.0` / `^0.1.21` (the `@prosekit/pm`
+  # that prosekit 0.23.0 pins). Raise both when this minor moves. 0.22.x is not
+  # admitted because it can't be proven here (#153): a fresh install of
+  # prosekit 0.22.2 or 0.22.4 resolves a second `@prosekit/core` (0.13.4,
+  # under `@prosekit/extensions`) beside prosekit's own pin, and every
+  # schema-building test then fails with `[prosekit] Assertion failed`.
   prosekit: ^0.23.0
   storybook: ^10.6.6
   svelte-check: ^4.7.8

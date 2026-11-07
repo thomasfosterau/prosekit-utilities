@@ -62,10 +62,10 @@
     "vitest-browser-svelte": "catalog:"
   },
   "peerDependencies": {
-    "@prosekit/pm": "^0.1.19",
+    "@prosekit/pm": "^0.1.21",
     "@xyflow/svelte": "^1.6.6",
     "effect": "^4.0.0",
-    "prosekit": "^0.22.2",
+    "prosekit": "^0.23.0",
     "svelte": "^5.30.1"
   }
 }

@@ -57,11 +57,11 @@
     "vitest": "catalog:"
   },
   "peerDependencies": {
-    "@prosekit/pm": "^0.1.19",
+    "@prosekit/pm": "^0.1.21",
     "drizzle-orm": "^1.0.0-rc.5",
     "effect": "^4.0.0",
     "linkedom": "^0.18.13",
-    "prosekit": "^0.22.2"
+    "prosekit": "^0.23.0"
   },
   "peerDependenciesMeta": {
     "drizzle-orm": {
