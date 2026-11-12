@@ -167,6 +167,11 @@ export default defineConfig({
           // take `Schema.Json`. Both at zero sites.
           'effect/no-unsafe-dictionary-type': 'error',
           'effect/no-unknown-parameters': 'error',
+          // Every Schema class and tagged error carries its brand
+          // (`{ readonly brand: unique symbol }`), and no error payload has a
+          // `name` field to shadow `Error.prototype.name`: both at zero sites.
+          'effecttsgo/schema-class-missing-brand': 'error',
+          'effecttsgo/error-payload-shadows-name': 'error',
         },
       },
       // The test suites are the boundary where an Effect is run to a value

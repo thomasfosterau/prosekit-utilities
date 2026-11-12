@@ -105,7 +105,7 @@ export const submitComment = Effect.fn(function* (body: DocumentJSON<'blockDocum
 });
 ```
 
-A host that runs its own write hooks (a content store's "before write" step, say) applies the same check there. It maps the `DocumentViolation` to its own rejection error with `Effect.mapError`. The violation's `kind`, `name` and `message` say which node, mark or `href` was refused. In the same hook, `extractMentions` and `extractCitations` read what the document references, for a backlink or notification index kept in step with the write:
+A host that runs its own write hooks (a content store's "before write" step, say) applies the same check there. It maps the `DocumentViolation` to its own rejection error with `Effect.mapError`. The violation's `kind`, `typeName` and `message` say which node, mark or `href` was refused. In the same hook, `extractMentions` and `extractCitations` read what the document references, for a backlink or notification index kept in step with the write:
 
 ```ts
 import { extractCitations, extractMentions } from '@thomasfosterau/prosekit-utilities';
@@ -132,7 +132,7 @@ Document envelopes, allow-lists, safe URLs, plain-text and reference extraction,
 | `DocumentEnvelope<Name>` | `Schema` checks the envelope's `type` and that `content` is an array of JSON — deliberately shallow, upgraded by `install` to the full grammar for the isolate's life. `is` keeps a try/catch defect net. |
 | `AllowList` | One write surface's vocabulary. |
 | `defineAllowList` | Any iterable of type names. `checkLinkHref` defaults to `true`. |
-| `DocumentViolation` | The three violation forms as data. Yieldable in an `Effect.gen`. |
+| `DocumentViolation` | The three violation forms as data (`label`, `kind`, `typeName`, `message`), branded so a look-alike object cannot pass as one. Yieldable in an `Effect.gen`. |
 | `allowListViolation` | Depth-first, document order, first offender. The envelope's own `type` is not checked — only its `content`. |
 | `checkAllowList` | The Effect-shaped write seam. Curried so an app names the check once and applies it per write. |
 | `allowListFilter` | The same walk as a `Schema.check`-compatible filter. What `DocumentEnvelope.narrow` uses; exported so it composes onto any schema carrying `content`. |
