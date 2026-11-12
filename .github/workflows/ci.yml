@@ -4,8 +4,8 @@ name: CI
 # `vp run ci` (the `ci` task in vite.config.ts, AGENTS.md § Verification's
 # steps 1–8 in order), so a local run and CI are the same thing. It runs on
 # the current Node LTS line and the latest stable line, which `engines.node`
-# both covers. The `ci` job at the end is the one stable check name for a
-# required-check ruleset: it passes only when every matrix leg passed.
+# both covers. Each leg is its own check, `ci (node <leg>)`; a ruleset
+# requires every leg by name.
 #
 # Two CI-only steps provision rather than gate, so they stay steps: the Vite+
 # task cache restore, and Chromium for the Svelte packages' browser suites
@@ -32,7 +32,7 @@ concurrency:
 permissions: {}
 
 jobs:
-  test:
+  ci:
     name: ci (node ${{ matrix.node }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -85,19 +85,3 @@ jobs:
 
       - name: CI
         run: vp run ci
-
-  ci:
-    name: ci
-    needs: [test]
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-    steps:
-      - name: Every matrix leg passed
-        env:
-          RESULT: ${{ needs.test.result }}
-        run: |
-          echo "ci (node lts, latest): $RESULT"
-          test "$RESULT" = success
