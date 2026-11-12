@@ -1,4 +1,8 @@
-@../AGENTS.md @../CONTRIBUTING.md @../README.md
+Imports, in order:
+
+- @../AGENTS.md
+- @../CONTRIBUTING.md
+- @../README.md
 
 # Claude Code in this workspace
 
