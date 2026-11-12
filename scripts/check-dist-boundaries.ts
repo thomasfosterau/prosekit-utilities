@@ -213,8 +213,7 @@ const URL_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
  */
 const unprovable = (specifier: string): string | undefined => {
   if (specifier === '') return 'an empty specifier';
-  // oxlint-disable-next-line no-control-regex -- matching control characters is the point
-  if (/[\u0000-\u001f\u007f]/.test(specifier)) return 'a specifier with a control character';
+  if (/\p{Cc}/u.test(specifier)) return 'a specifier with a control character';
   if (specifier.startsWith('#'))
     return 'a package.json `imports` subpath, resolved outside the walk';
   if (specifier.startsWith('/')) return 'an absolute path';
