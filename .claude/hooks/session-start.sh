@@ -267,6 +267,7 @@ fi
 # file directly), the export line is logged for the caller to apply.
 PW_IMAGE_DIR="/opt/pw-browsers"
 PW_WANT_REV="1254"
+# Also read by .claude/hooks/fallow-gate.sh (GATE_PW_BRIDGE_DIR); keep in step.
 PW_BRIDGE_DIR="${HOME:-/root}/.cache/prosekit-pw-browsers"
 # The newest image revision with both builds, and its layout.
 PW_HAVE_REV=""

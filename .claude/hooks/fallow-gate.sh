@@ -137,12 +137,27 @@ trap cleanup EXIT
 # `packages/*/tests` or `scripts/` is newer than it.
 # If regeneration fails: with no map to read, the commit is blocked (an
 # unaudited commit is what this gate exists to stop); with a stale map, the
-# audit runs against it and says so. Set FALLOW_GATE_SKIP_COVERAGE=1 to skip
-# this block. It needs the hook's `timeout` in .claude/settings.json to cover
+# audit runs against it and says so. FALLOW_GATE_SKIP_COVERAGE=1 skips this
+# block; it is an escape hatch for a broken environment, not a way through:
+# a commit that needs it went through unaudited. It needs the hook's `timeout` in .claude/settings.json to cover
 # a full coverage run. Re-apply after `fallow hooks install` regenerates this
 # file.
+# The run drives the Svelte packages' browser suites, so it needs the Chromium
+# the SessionStart hook bridges to the pinned `playwright`'s revision. That
+# hook hands PLAYWRIGHT_BROWSERS_PATH to the agent's shells through
+# $CLAUDE_ENV_FILE, which Claude Code sources only before Bash *tool* commands
+# and gives only to SessionStart hooks: this PreToolUse hook never sees it,
+# and without it the suites cannot launch, the map is never written and a
+# fresh worktree's commit is blocked. So point Playwright at the bridge here
+# when it exists (a container whose image already carries the wanted revision
+# has none, and keeps its own setting).
+# Keep in step with PW_BRIDGE_DIR in .claude/hooks/session-start.sh.
+GATE_PW_BRIDGE_DIR="${HOME:-/root}/.cache/prosekit-pw-browsers"
 COV_MAP="coverage/coverage-final.json"
 if [ -z "${FALLOW_GATE_SKIP_COVERAGE:-}" ]; then
+  if [ -d "$GATE_PW_BRIDGE_DIR" ]; then
+    export PLAYWRIGHT_BROWSERS_PATH="$GATE_PW_BRIDGE_DIR"
+  fi
   COV_REASON=""
   if [ ! -f "$COV_MAP" ]; then
     COV_REASON="missing"
