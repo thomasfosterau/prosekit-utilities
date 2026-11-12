@@ -19,8 +19,8 @@
  * @module
  */
 
-import * as Predicate from 'effect/Predicate';
-import * as String from 'effect/String';
+import * as P from 'effect/Predicate';
+import * as Str from 'effect/String';
 import type { BlockSerialiser, InlineSerialiser } from './serialiser.ts';
 import { childrenOf } from './stock.ts';
 
@@ -33,7 +33,7 @@ import { childrenOf } from './stock.ts';
  * text, so a display name containing `*` cannot open emphasis.
  */
 export const mentionMarkdown: InlineSerialiser = (node, context) => {
-  const label = Predicate.isString(node.attrs?.label) ? node.attrs.label : '';
+  const label = P.isString(node.attrs?.label) ? node.attrs.label : '';
   return context.escape(`@${label}`);
 };
 
@@ -50,7 +50,7 @@ export const figureMarkdown: BlockSerialiser = (node, context) => {
   const imageLine = image === undefined ? '' : context.serialiseBlocks([image]);
   const captionText =
     caption === undefined ? '' : context.serialiseInline(childrenOf(caption)).trim();
-  return String.isNonEmpty(captionText) ? `${imageLine}\n_${captionText}_` : imageLine;
+  return Str.isNonEmpty(captionText) ? `${imageLine}\n_${captionText}_` : imageLine;
 };
 
 /**
@@ -82,5 +82,5 @@ export const sidenoteMarkdown: InlineSerialiser = (node, context) => {
     child.type === 'sidenote' ? childrenOf(child) : [child],
   );
   const body = context.serialiseInline(inlineChildren).replace(/\\?\n/g, ' ').trim();
-  return String.isNonEmpty(body) ? `^[${body}]` : '';
+  return Str.isNonEmpty(body) ? `^[${body}]` : '';
 };

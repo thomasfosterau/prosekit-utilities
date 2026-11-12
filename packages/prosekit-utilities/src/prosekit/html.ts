@@ -15,10 +15,10 @@
  * @module
  */
 
-import * as Array from 'effect/Array';
+import * as Arr from 'effect/Array';
 import * as Effect from 'effect/Effect';
 import * as Option from 'effect/Option';
-import * as Predicate from 'effect/Predicate';
+import * as P from 'effect/Predicate';
 import * as Result from 'effect/Result';
 import * as Schema from 'effect/Schema';
 import { htmlFromJSON, type NodeJSON as PkNodeJSON } from 'prosekit/core';
@@ -65,13 +65,13 @@ export function sanitiseDocument(node: NodeJSON): NodeJSON {
   // because a hand-crafted document can carry a non-array value in either.
   // A key the node does not carry stays absent from the copy.
   const copy = { ...node };
-  const marked = Array.isArray(node.marks)
+  const marked = Arr.isArray(node.marks)
     ? {
         ...copy,
         marks: node.marks.filter((mark) => mark.type !== 'link' || isSafeHref(mark.attrs?.href)),
       }
     : copy;
-  return Array.isArray(node.content)
+  return Arr.isArray(node.content)
     ? {
         ...marked,
         content: node.content
@@ -109,7 +109,7 @@ let defaultDocument: Option.Option<Promise<Document>> = /* @__PURE__ */ Option.n
 const resolveDefaultDocument = (): Promise<Document> => {
   if (Option.isNone(defaultDocument)) {
     const loading = (async (): Promise<Document> => {
-      if (!Predicate.isUndefined(globalThis.document)) return globalThis.document;
+      if (!P.isUndefined(globalThis.document)) return globalThis.document;
       const { parseHTML } = await import('linkedom');
       return parseHTML('<!doctype html><html><body></body></html>').document;
     })();

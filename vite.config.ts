@@ -149,11 +149,9 @@ export default defineConfig({
           // loosely typed `attrs` / `toDOM` structurally require. Stays
           // visible as a warning.
           'effect/casting-awareness': 'warn',
-          // Hard-codes abbreviations (`Arr`, `P`, `R`, …) with no options, so
-          // it is unsatisfiable under the full-name convention (`import * as
-          // Option from 'effect/Option'`) this family shares with its
-          // consumers.
-          'effect/prefer-namespace-imports': 'off',
+          // The workspace uses the rule's canonical aliases (`Arr`, `P`, `R`,
+          // `Str`, …), not full names.
+          'effect/prefer-namespace-imports': 'error',
           // "Shape" IS this package's domain term, not a description of
           // structure: a `DocumentShape` is the browser-cheap structural half
           // of a document schema (packages/prosekit-utilities/CLAUDE.md §

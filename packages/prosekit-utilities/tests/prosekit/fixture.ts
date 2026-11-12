@@ -16,7 +16,7 @@
  */
 
 import { assert } from 'vite-plus/test';
-import * as Predicate from 'effect/Predicate';
+import * as P from 'effect/Predicate';
 import { defineDocumentShape, type DocumentShape } from '../../src/document-shape.ts';
 import { createRegistryCache, type RegistryCache } from '../../src/derive/index.ts';
 import {
@@ -97,6 +97,6 @@ export const createSharedCacheFixture = (): DocumentFixture => {
  * case by name instead of surfacing later as a `TypeError`.
  */
 export const present = <A>(value: A, what: string): NonNullable<A> => {
-  assert(Predicate.isNotNullish(value), `${what} is present`);
+  assert(P.isNotNullish(value), `${what} is present`);
   return value;
 };

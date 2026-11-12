@@ -22,13 +22,13 @@
  * @module @thomasfosterau/prosekit-utilities/derive/Attribute
  */
 
-import * as Array from 'effect/Array';
+import * as Arr from 'effect/Array';
 import * as Option from 'effect/Option';
-import * as Predicate from 'effect/Predicate';
-import * as Record from 'effect/Record';
+import * as P from 'effect/Predicate';
+import * as R from 'effect/Record';
 import * as Result from 'effect/Result';
 import * as Schema from 'effect/Schema';
-import * as String from 'effect/String';
+import * as Str from 'effect/String';
 import type { AttributeSpec } from '@prosekit/pm/model';
 import { isRequiredAttribute, type AttributeOwner, type AttributeOverlay } from './Options.ts';
 
@@ -39,7 +39,7 @@ export interface DerivedAttribute {
   readonly optional: boolean;
 }
 
-const PRIMITIVE_BY_NAME: Readonly<Record<string, Schema.Top>> = {
+const PRIMITIVE_BY_NAME: R.ReadonlyRecord<string, Schema.Top> = {
   string: Schema.String,
   number: Schema.Finite,
   boolean: Schema.Boolean,
@@ -64,32 +64,32 @@ export function parseValidateGrammar(validate: string): {
   const tokens = validate
     .split('|')
     .map((t) => t.trim())
-    .filter(String.isNonEmpty);
+    .filter(Str.isNonEmpty);
   const optional = tokens.includes('undefined');
   // Dedupe by token so `"string | string"` collapses; `Schema.Unknown`
   // members from unrecognised tokens dedupe under the empty key.
-  const keys = Array.dedupe(
-    Array.filterMap(tokens, (token): Result.Result<string, void> =>
+  const keys = Arr.dedupe(
+    Arr.filterMap(tokens, (token): Result.Result<string, void> =>
       token === 'undefined'
         ? Result.failVoid
         : Result.succeed(token in PRIMITIVE_BY_NAME ? token : ''),
     ),
   );
-  const members = Array.map(keys, (key) => PRIMITIVE_BY_NAME[key] ?? Schema.Unknown);
-  return Array.match(members, {
+  const members = Arr.map(keys, (key) => PRIMITIVE_BY_NAME[key] ?? Schema.Unknown);
+  return Arr.match(members, {
     onEmpty: () => ({ schema: Schema.Unknown, optional }),
     onNonEmpty: (present) =>
       present.length === 1
-        ? { schema: Array.headNonEmpty(present), optional }
+        ? { schema: Arr.headNonEmpty(present), optional }
         : { schema: Schema.Union(members), optional },
   });
 }
 
 /** Best-effort schema for an attribute value inferred from its default. */
 function schemaFromDefault(value: unknown): Schema.Top {
-  if (Predicate.isString(value)) return Schema.String;
-  if (Predicate.isNumber(value)) return Schema.Finite;
-  if (Predicate.isBoolean(value)) return Schema.Boolean;
+  if (P.isString(value)) return Schema.String;
+  if (P.isNumber(value)) return Schema.Finite;
+  if (P.isBoolean(value)) return Schema.Boolean;
   // `null`, arrays, and objects carry no recoverable element/field types,
   // so fall back to `Unknown` (refine via an attribute overlay).
   return value === null ? Schema.NullOr(Schema.Unknown) : Schema.Unknown;
@@ -117,7 +117,7 @@ export function deriveAttribute(
     return { schema: value, optional: hasDefault };
   }
 
-  if (Predicate.isString(spec.validate)) {
+  if (P.isString(spec.validate)) {
     const { schema, optional } = parseValidateGrammar(spec.validate);
     // A `default` also makes the key omissible, independent of an
     // `"undefined"` member in the grammar.
@@ -144,8 +144,8 @@ export function deriveAttrsStruct(
   attrs: Option.Option<Readonly<Record<string, AttributeSpec>>>,
   overlay?: AttributeOverlay,
 ): Option.Option<Schema.Top> {
-  if (Option.isNone(attrs) || Record.isEmptyReadonlyRecord(attrs.value)) return Option.none();
-  const fields: Record<string, Schema.Top> = Record.map(attrs.value, (spec, name) => {
+  if (Option.isNone(attrs) || R.isEmptyReadonlyRecord(attrs.value)) return Option.none();
+  const fields: R.ReadonlyRecord<string, Schema.Top> = R.map(attrs.value, (spec, name) => {
     const { schema, optional } = deriveAttribute(owner, name, spec, overlay);
     return optional ? Schema.optionalKey(schema) : schema;
   });

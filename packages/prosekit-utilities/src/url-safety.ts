@@ -11,9 +11,9 @@
  * @module
  */
 
-import * as Predicate from 'effect/Predicate';
+import * as P from 'effect/Predicate';
 import * as Result from 'effect/Result';
-import * as String from 'effect/String';
+import * as Str from 'effect/String';
 
 /**
  * The schemes {@link isSafeHref} accepts when the caller names none.
@@ -49,9 +49,9 @@ export function isSafeHref(
   href: unknown,
   options?: { readonly schemes?: ReadonlyArray<string> | undefined },
 ): href is string {
-  if (!Predicate.isString(href)) return false;
+  if (!P.isString(href)) return false;
   const trimmed = href.trim();
-  if (String.isEmpty(trimmed)) return false;
+  if (Str.isEmpty(trimmed)) return false;
   if (trimmed.startsWith('/') && !trimmed.startsWith('//') && !trimmed.startsWith('/\\')) {
     return true;
   }

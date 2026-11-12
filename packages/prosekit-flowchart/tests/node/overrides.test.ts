@@ -16,15 +16,15 @@
  */
 
 import { assert, describe, expect, it } from 'vite-plus/test';
-import * as Record from 'effect/Record';
+import * as R from 'effect/Record';
 import { isRequiredAttribute } from '@thomasfosterau/prosekit-utilities/derive';
 import { FLOWCHART_ATTRIBUTE_OVERRIDES } from '../../src/lib/node/overrides.ts';
 import { FlowchartData } from '../../src/lib/node/schema.ts';
 
 describe('FLOWCHART_ATTRIBUTE_OVERRIDES', () => {
   it('carries exactly one entry: flowchart.data', () => {
-    expect(Record.keys(FLOWCHART_ATTRIBUTE_OVERRIDES)).toEqual(['flowchart']);
-    expect(Record.keys(FLOWCHART_ATTRIBUTE_OVERRIDES.flowchart)).toEqual(['data']);
+    expect(R.keys(FLOWCHART_ATTRIBUTE_OVERRIDES)).toEqual(['flowchart']);
+    expect(R.keys(FLOWCHART_ATTRIBUTE_OVERRIDES.flowchart)).toEqual(['data']);
   });
 
   it('wraps the schema in required(...)', () => {

@@ -38,7 +38,7 @@
  * @module
  */
 
-import * as Array from 'effect/Array';
+import * as Arr from 'effect/Array';
 import * as Effect from 'effect/Effect';
 import * as Option from 'effect/Option';
 import * as Result from 'effect/Result';
@@ -254,5 +254,5 @@ export function defineDocumentSchema<Name extends string>(
 export const installDocumentGrammars = (
   ...schemas: ReadonlyArray<DocumentSchema<string>>
 ): void => {
-  Array.forEach(schemas, (schema) => schema.install());
+  Arr.forEach(schemas, (schema) => schema.install());
 };

@@ -17,7 +17,7 @@
  * @module
  */
 
-import * as Predicate from 'effect/Predicate';
+import * as P from 'effect/Predicate';
 import { describe, expect, it } from 'vite-plus/test';
 import type { DocumentJSON, MarkJSON, NodeJSON } from '../src/json.ts';
 import {
@@ -678,7 +678,7 @@ describe('createMarkdownSerialiser', () => {
       inlines: {
         token: (node, context) => {
           const value = node.attrs?.value;
-          return context.escape(Predicate.isString(value) ? value : '');
+          return context.escape(P.isString(value) ? value : '');
         },
       },
     });

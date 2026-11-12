@@ -19,7 +19,7 @@
  * @module @thomasfosterau/prosekit-flowchart/node/svg
  */
 
-import * as Array from 'effect/Array';
+import * as Arr from 'effect/Array';
 import * as HashMap from 'effect/HashMap';
 import * as Option from 'effect/Option';
 import type { FlowchartData, FlowchartEdge, FlowchartNode } from './schema.ts';
@@ -89,7 +89,7 @@ export function generateFlowchartSvg(data: FlowchartData, labels?: FlowchartSvgL
 
   const sized = data.nodes.map(sizeNode);
 
-  if (Array.isArrayEmpty(sized)) {
+  if (Arr.isArrayEmpty(sized)) {
     return (
       `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 60" width="100%" ` +
       `role="img" aria-label="${escapeXml(emptyLabel)}">` +
@@ -117,7 +117,7 @@ export function generateFlowchartSvg(data: FlowchartData, labels?: FlowchartSvgL
     `</marker>` +
     `</defs>`;
 
-  const edgePaths = Array.getSomes(data.edges.map((edge) => renderEdge(edge, byId))).join('');
+  const edgePaths = Arr.getSomes(data.edges.map((edge) => renderEdge(edge, byId))).join('');
 
   const nodeRects = sized.map((node) => renderNode(node, untitledLabel)).join('');
 

@@ -1,4 +1,4 @@
-import * as Predicate from 'effect/Predicate';
+import * as P from 'effect/Predicate';
 import * as Schema from 'effect/Schema';
 import { pgTable } from 'drizzle-orm/pg-core';
 import { assert, describe, expect, it } from 'vite-plus/test';
@@ -29,7 +29,7 @@ describe('jsonbSchemaColumn', () => {
   it('round-trips a valid value through toDriver then fromDriver', () => {
     const value: Widget = { kind: 'widget', count: 3 };
     const driver = table.widget.mapToDriverValue(value);
-    assert(Predicate.isString(driver), 'toDriver writes JSON text');
+    assert(P.isString(driver), 'toDriver writes JSON text');
     expect(table.widget.mapFromDriverValue(driver)).toEqual(value);
   });
 

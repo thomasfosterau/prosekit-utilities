@@ -13,7 +13,7 @@
  */
 
 import { describe, expect, it } from 'vite-plus/test';
-import * as Array from 'effect/Array';
+import * as Arr from 'effect/Array';
 import * as Effect from 'effect/Effect';
 import * as Schema from 'effect/Schema';
 import { createHtmlRenderer, HtmlRenderError, sanitiseDocument } from '../../src/prosekit/html.ts';
@@ -192,12 +192,9 @@ describe('postProcess', () => {
         if (!html.includes('data-mention-id')) return html;
         const container = host.createElement('div');
         container.innerHTML = html;
-        Array.forEach(
-          Array.fromIterable(container.querySelectorAll('[data-mention-id]')),
-          (marker) => {
-            marker.textContent = `resolved:${marker.getAttribute('data-mention-id') ?? ''}`;
-          },
-        );
+        Arr.forEach(Arr.fromIterable(container.querySelectorAll('[data-mention-id]')), (marker) => {
+          marker.textContent = `resolved:${marker.getAttribute('data-mention-id') ?? ''}`;
+        });
         return container.innerHTML;
       },
     });

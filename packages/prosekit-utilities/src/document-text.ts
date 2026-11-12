@@ -13,8 +13,8 @@
  * @module
  */
 
-import * as Array from 'effect/Array';
-import * as Predicate from 'effect/Predicate';
+import * as Arr from 'effect/Array';
+import * as P from 'effect/Predicate';
 import type { DocumentJSON, NodeJSON } from './json.ts';
 
 /**
@@ -37,16 +37,16 @@ export function extractDocumentText(
 
 /** The `text` leaves of one node subtree, in document order. */
 function textParts(nodes: ReadonlyArray<unknown>): string[] {
-  return Array.flatMap(nodes, (node) => {
-    if (!Predicate.isObjectOrArray(node)) return [];
+  return Arr.flatMap(nodes, (node) => {
+    if (!P.isObjectOrArray(node)) return [];
     const own =
-      Predicate.hasProperty(node, 'type') &&
+      P.hasProperty(node, 'type') &&
       node.type === 'text' &&
-      Predicate.hasProperty(node, 'text') &&
-      Predicate.isString(node.text)
+      P.hasProperty(node, 'text') &&
+      P.isString(node.text)
         ? [node.text]
         : [];
-    return Predicate.hasProperty(node, 'content') && Array.isArray(node.content)
+    return P.hasProperty(node, 'content') && Arr.isArray(node.content)
       ? [...own, ...textParts(node.content)]
       : own;
   });
@@ -70,7 +70,7 @@ export function inlineDocumentText(doc: NodeJSON | DocumentJSON): string {
 /** The `text` leaves of a document subtree, in document order. */
 function inlineTextParts(node: NodeJSON | DocumentJSON): string[] {
   // `?.`: an untyped caller's missing document still yields no text.
-  return Array.flatMap(node?.content ?? [], (child) =>
+  return Arr.flatMap(node?.content ?? [], (child) =>
     child.text ? [child.text] : 'content' in child ? inlineTextParts(child) : [],
   );
 }

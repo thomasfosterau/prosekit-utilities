@@ -27,11 +27,11 @@
  * @module
  */
 
-import * as Array from 'effect/Array';
+import * as Arr from 'effect/Array';
 import * as Effect from 'effect/Effect';
 import * as HashSet from 'effect/HashSet';
 import * as Option from 'effect/Option';
-import * as Predicate from 'effect/Predicate';
+import * as P from 'effect/Predicate';
 import * as Result from 'effect/Result';
 import * as Schema from 'effect/Schema';
 import type * as SchemaAST from 'effect/SchemaAST';
@@ -123,7 +123,7 @@ interface ContentCarrier {
  * JSON, so that case is reachable.
  */
 const typeNameOf = (value: MarkJSON | NodeJSON): string =>
-  Predicate.isObjectOrArray(value) && Predicate.isString(value.type) ? value.type : '';
+  P.isObjectOrArray(value) && P.isString(value.type) ? value.type : '';
 
 const nodeViolationOf = (allowList: AllowList, type: string): DocumentViolation =>
   new DocumentViolation({
@@ -171,14 +171,14 @@ const firstMarkViolation = (
   node: NodeJSON,
 ): Option.Option<DocumentViolation> => {
   const marks = node.marks;
-  if (!Array.isArray(marks)) return Option.none();
-  return Array.head(Array.filterMap(marks, markViolation(allowList)));
+  if (!Arr.isArray(marks)) return Option.none();
+  return Arr.head(Arr.filterMap(marks, markViolation(allowList)));
 };
 
 const firstViolation = (
   allowList: AllowList,
   nodes: ReadonlyArray<NodeJSON>,
-): Option.Option<DocumentViolation> => Array.head(Array.filterMap(nodes, nodeViolation(allowList)));
+): Option.Option<DocumentViolation> => Arr.head(Arr.filterMap(nodes, nodeViolation(allowList)));
 
 const nodeViolation =
   (allowList: AllowList) =>
@@ -190,7 +190,7 @@ const nodeViolation =
     const marks = firstMarkViolation(allowList, node);
     if (Option.isSome(marks)) return Result.succeed(marks.value);
     const content = node.content;
-    if (!Array.isArray(content)) return Result.failVoid;
+    if (!Arr.isArray(content)) return Result.failVoid;
     const nested = firstViolation(allowList, content);
     return Option.isNone(nested) ? Result.failVoid : Result.succeed(nested.value);
   };

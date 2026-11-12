@@ -17,7 +17,7 @@
  */
 
 import * as Option from 'effect/Option';
-import * as Predicate from 'effect/Predicate';
+import * as P from 'effect/Predicate';
 import type * as Schema from 'effect/Schema';
 import type { AttributeSpec } from '@prosekit/pm/model';
 
@@ -56,7 +56,7 @@ export const required = (schema: Schema.Top): RequiredAttribute => ({
 
 /** True when `value` is a {@link RequiredAttribute} produced by {@link required}. */
 export const isRequiredAttribute = (value: unknown): value is RequiredAttribute =>
-  Predicate.isObjectOrArray(value) && RequiredAttributeTypeId in value;
+  P.isObjectOrArray(value) && RequiredAttributeTypeId in value;
 
 /**
  * A caller-supplied override for a single attribute's schema.
