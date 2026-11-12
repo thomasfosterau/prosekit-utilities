@@ -138,13 +138,13 @@ export interface HtmlRendererOptions {
    * server-rendered SVG, say. Runs after serialisation and before the string
    * is returned.
    */
-  readonly postProcess?: ((html: string, document: Document) => string) | undefined;
+  readonly postProcess?: (html: string, document: Document) => string;
   /**
    * Where the `Document` comes from. Defaults to capability detection: the
    * global `document` if there is one, otherwise linkedom. Resolved once per
    * renderer and cached.
    */
-  readonly document?: (() => Promise<Document>) | undefined;
+  readonly document?: () => Promise<Document>;
 }
 
 /** What {@link createHtmlRenderer} returns. */

@@ -57,11 +57,11 @@ const DEFAULT_UNTITLED_LABEL = 'Untitled';
  */
 export interface FlowchartSvgLabels {
   /** The empty-state `<svg>`'s `aria-label` and visible text. Default: `'Empty flowchart'`. */
-  readonly emptyLabel?: string | undefined;
+  readonly emptyLabel?: string;
   /** The populated diagram's `aria-label`, given the node count. Default: `Flowchart diagram with ${n} node(s)`. */
-  readonly diagramLabel?: ((nodeCount: number) => string) | undefined;
+  readonly diagramLabel?: (nodeCount: number) => string;
   /** Fallback text for a node whose label is blank. Default: `'Untitled'`. */
-  readonly untitledLabel?: string | undefined;
+  readonly untitledLabel?: string;
 }
 
 interface SizedNode extends FlowchartNode {

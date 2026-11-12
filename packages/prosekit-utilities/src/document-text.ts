@@ -21,18 +21,20 @@ import type { DocumentJSON, NodeJSON } from './json.ts';
  * Extracts plain text from a document, joining the `text` leaves with
  * `options.separator` (default `' '`).
  *
- * Tolerant by design: `null`, `undefined`, a document with no `content`, a
- * stray string or `null` inside `content`, and a `text`-typed node whose
- * `text` is not a string all contribute nothing rather than throwing. The
- * callers are database columns and queue payloads, where a malformed row
- * must degrade to empty text rather than fail a batch.
+ * Tolerant by design: a document with no `content`, a stray string or
+ * `null` inside `content`, and a `text`-typed node whose `text` is not a
+ * string all contribute nothing rather than throwing. The callers are
+ * database columns and queue payloads, where a malformed row must degrade to
+ * empty text rather than fail a batch.
+ *
+ * A column that may be absent is lifted at the read, not passed in: lift it
+ * with `Option.fromNullishOr(row.body).pipe(Option.map(extractDocumentText))`.
  */
 export function extractDocumentText(
-  doc: NodeJSON | DocumentJSON | null | undefined,
-  options?: { readonly separator?: string | undefined },
+  doc: NodeJSON | DocumentJSON,
+  options?: { readonly separator?: string },
 ): string {
-  if (!doc || !doc.content) return '';
-  return textParts(doc.content).join(options?.separator ?? ' ');
+  return textParts(doc.content ?? []).join(options?.separator ?? ' ');
 }
 
 /** The `text` leaves of one node subtree, in document order. */

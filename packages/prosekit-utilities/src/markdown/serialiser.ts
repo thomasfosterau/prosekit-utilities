@@ -134,9 +134,9 @@ const markOfType = (marks: ReadonlyArray<MarkJSON>, type: string): Option.Option
  * serialisation, and that grouping lives here.
  */
 export function createMarkdownSerialiser(options?: {
-  readonly blocks?: Record<string, BlockSerialiser> | undefined;
-  readonly inlines?: Record<string, InlineSerialiser> | undefined;
-  readonly marks?: Record<string, MarkSerialiser> | undefined;
+  readonly blocks?: Record<string, BlockSerialiser>;
+  readonly inlines?: Record<string, InlineSerialiser>;
+  readonly marks?: Record<string, MarkSerialiser>;
 }): MarkdownSerialiser {
   const blocks = serialiserLookup(stockBlocks, options?.blocks ?? {});
   const inlines = serialiserLookup(stockInlines, options?.inlines ?? {});

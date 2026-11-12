@@ -165,14 +165,10 @@ export default defineConfig({
           // is still read, while the published surface it fires on today
           // keeps its shape.
           //
-          // Fires on `?: T | undefined`, the ONLY spelling of an optional
-          // member `exactOptionalPropertyTypes` lets a caller forward an
-          // optional of its own into (AGENTS.md § Conventions), and on the
-          // deliberately nullable public parameters (`extractDocumentText`,
-          // `extractMentions` and `extractCitations` take a nullable database
-          // column). Every site today is one of
-          // the two; switching to `Option` would break the published API.
-          'effect/prefer-option-over-null': 'warn',
+          // Absence is an `Option`, never `T | null`; options-object members
+          // are `readonly x?: T` (no `| undefined`) and optional parameters
+          // `x?: T` (AGENTS.md § Conventions). Zero sites.
+          'effect/prefer-option-over-null': 'error',
           // `NodeJSON` / `MarkJSON` and the derive options mirror
           // ProseMirror's JSON model, whose `attrs` is an open record of
           // `unknown`. That is deliberate: a caller must narrow a value

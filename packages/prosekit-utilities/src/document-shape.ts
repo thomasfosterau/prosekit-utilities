@@ -122,7 +122,7 @@ export interface DocumentShape<Name extends string> {
  */
 export function defineDocumentShape<Name extends string>(options: {
   readonly name: Name;
-  readonly label?: string | undefined;
+  readonly label?: string;
 }): DocumentShape<Name> {
   const name = options.name;
   const label = options.label ?? wordsOf(name);

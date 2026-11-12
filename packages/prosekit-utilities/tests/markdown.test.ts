@@ -39,11 +39,8 @@ const inline = (...content: ReadonlyArray<NodeJSON>): DocumentJSON => ({
   type: 'inlineDocument',
   content,
 });
-const text = (value: string, marks?: ReadonlyArray<MarkJSON>): NodeJSON => ({
-  type: 'text',
-  text: value,
-  marks,
-});
+const text = (value: string, marks?: ReadonlyArray<MarkJSON>): NodeJSON =>
+  marks === undefined ? { type: 'text', text: value } : { type: 'text', text: value, marks };
 const link = (href: string): MarkJSON => ({ type: 'link', attrs: { href } });
 const para = (...content: ReadonlyArray<NodeJSON>): NodeJSON => ({ type: 'paragraph', content });
 const listItem = (

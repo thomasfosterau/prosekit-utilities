@@ -1,6 +1,6 @@
 # packages/prosekit-utilities — the core package
 
-`@thomasfosterau/prosekit-utilities`: a ProseKit document grammar as data. Four entry points, built by `vp pack` (tsdown) into `dist/{index,derive,prosekit,drizzle}.js` + `.d.ts`, tested under node Vitest. The repo-wide rules (`.ts` imports, `T | undefined`, `vite-plus/test`) live in the root [AGENTS.md](../../AGENTS.md); this file carries what is specific to the package.
+`@thomasfosterau/prosekit-utilities`: a ProseKit document grammar as data. Four entry points, built by `vp pack` (tsdown) into `dist/{index,derive,prosekit,drizzle}.js` + `.d.ts`, tested under node Vitest. The repo-wide rules (`.ts` imports, `Option` and bare `?:` optional members, `vite-plus/test`) live in the root [AGENTS.md](../../AGENTS.md); this file carries what is specific to the package.
 
 ## Boundary
 

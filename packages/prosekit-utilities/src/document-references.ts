@@ -31,17 +31,14 @@ export interface DocumentMention {
  * the order each is first mentioned.
  *
  * When one `id` is mentioned more than once, the first occurrence's `label`
- * is kept. Tolerant in the same way as `extractDocumentText`: `null`,
- * `undefined`, a document with no `content`, stray non-object entries and a
+ * is kept. Tolerant in the same way as `extractDocumentText`: a document
+ * with no `content`, stray non-object entries and a
  * mention whose `id` is not a non-empty string (the node's default is `''`,
  * an unresolved mention) all contribute nothing rather than throwing. A
  * mention whose `label` is not a string is kept with an empty label.
  */
-export function extractMentions(
-  doc: NodeJSON | DocumentJSON | null | undefined,
-): ReadonlyArray<DocumentMention> {
-  if (!doc || !doc.content) return [];
-  return Arr.dedupeWith(mentionParts(doc.content), (a, b) => a.id === b.id);
+export function extractMentions(doc: NodeJSON | DocumentJSON): ReadonlyArray<DocumentMention> {
+  return Arr.dedupeWith(mentionParts(doc.content ?? []), (a, b) => a.id === b.id);
 }
 
 /**
@@ -51,11 +48,8 @@ export function extractMentions(
  * Tolerant in the same way as {@link extractMentions}: a mark whose `workId`
  * is not a non-empty string contributes nothing.
  */
-export function extractCitations(
-  doc: NodeJSON | DocumentJSON | null | undefined,
-): ReadonlyArray<string> {
-  if (!doc || !doc.content) return [];
-  return Arr.dedupe(citationParts(doc.content));
+export function extractCitations(doc: NodeJSON | DocumentJSON): ReadonlyArray<string> {
+  return Arr.dedupe(citationParts(doc.content ?? []));
 }
 
 /** A `mention` node with a usable id; its `label` is read leniently. */

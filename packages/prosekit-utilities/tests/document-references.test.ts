@@ -72,9 +72,7 @@ describe('extractMentions', () => {
     ]);
   });
 
-  it('returns nothing for null, undefined, no content and empty content', () => {
-    expect(extractMentions(null)).toEqual([]);
-    expect(extractMentions(undefined)).toEqual([]);
+  it('returns nothing for no content and empty content', () => {
     expect(extractMentions(malformed({ type: 'blockDocument' }))).toEqual([]);
     expect(extractMentions({ type: 'blockDocument', content: [] })).toEqual([]);
   });
@@ -133,9 +131,7 @@ describe('extractCitations', () => {
     expect(extractCitations(doc)).toEqual(['w9', 'w3']);
   });
 
-  it('returns nothing for null, undefined, no content and empty content', () => {
-    expect(extractCitations(null)).toEqual([]);
-    expect(extractCitations(undefined)).toEqual([]);
+  it('returns nothing for no content and empty content', () => {
     expect(extractCitations(malformed({ type: 'blockDocument' }))).toEqual([]);
     expect(extractCitations({ type: 'blockDocument', content: [] })).toEqual([]);
   });

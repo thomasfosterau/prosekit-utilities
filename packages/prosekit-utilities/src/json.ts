@@ -24,7 +24,7 @@
  */
 export interface MarkJSON {
   readonly type: string;
-  readonly attrs?: Record<string, unknown> | undefined;
+  readonly attrs?: Record<string, unknown>;
 }
 
 /**
@@ -36,10 +36,10 @@ export interface MarkJSON {
  */
 export interface NodeJSON {
   readonly type: string;
-  readonly attrs?: Record<string, unknown> | undefined;
-  readonly content?: ReadonlyArray<NodeJSON> | undefined;
-  readonly marks?: ReadonlyArray<MarkJSON> | undefined;
-  readonly text?: string | undefined;
+  readonly attrs?: Record<string, unknown>;
+  readonly content?: ReadonlyArray<NodeJSON>;
+  readonly marks?: ReadonlyArray<MarkJSON>;
+  readonly text?: string;
 }
 
 /**

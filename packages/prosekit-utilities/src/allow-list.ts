@@ -68,7 +68,7 @@ export const defineAllowList = (options: {
   readonly label: string;
   readonly nodes: Iterable<string>;
   readonly marks: Iterable<string>;
-  readonly checkLinkHref?: boolean | undefined;
+  readonly checkLinkHref?: boolean;
 }): AllowList => ({
   label: options.label,
   nodes: HashSet.fromIterable(options.nodes),

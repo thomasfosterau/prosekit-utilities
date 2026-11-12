@@ -84,7 +84,7 @@ export interface DocumentSchemaOptions {
    * application with opt-in nodes passes
    * `mergeAttributeOverrides(STANDARD_ATTRIBUTE_OVERRIDES, …)`.
    */
-  readonly attributes?: AttributeOverrides | undefined;
+  readonly attributes?: AttributeOverrides;
   /**
    * A `RegistryCache` to share with other document schemas built from
    * overlapping extensions. Defaults to a cache private to this schema.
@@ -94,7 +94,7 @@ export interface DocumentSchemaOptions {
    * the shared `text` node's marks for the others. See
    * {@link defineDocumentSchema} for the failure this causes.
    */
-  readonly registryCache?: RegistryCache | undefined;
+  readonly registryCache?: RegistryCache;
 }
 
 /** One document surface's ProseKit half: the grammar, the wire schema and the guard. */
