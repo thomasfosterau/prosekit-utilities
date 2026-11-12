@@ -19,7 +19,7 @@ Managed by Vite+ (`vp config`, run by `prepare`). **pre-commit** runs `vp staged
 
 ## CI expectations
 
-[`ci.yml`](.github/workflows/ci.yml) runs one job whose steps are the gate list in [AGENTS.md § Verification](AGENTS.md#verification), plus `pnpm audit --audit-level high`, on every pull request against `trunk` and every push to it. [`release.yml`](.github/workflows/release.yml) versions and publishes from `trunk` ([PUBLISHING.md](PUBLISHING.md)). Both are hardened for Dependabot pull requests: `permissions: {}` at the top with per-job grants, every action pinned to a commit SHA, `persist-credentials: false` except where a step pushes, no secret or OIDC in CI, and Node as `node-version: "*"` with `check-latest` (never `latest`, which can resolve to a pre-release). `uvx zizmor --offline .github` audits the workflows.
+[`ci.yml`](.github/workflows/ci.yml) runs one job whose steps are the gate list in [AGENTS.md § Verification](AGENTS.md#verification), plus `pnpm audit --audit-level high`, on every pull request against `trunk` and every push to it. [`release.yml`](.github/workflows/release.yml) versions and publishes from `trunk` ([PUBLISHING.md](PUBLISHING.md)). Both are hardened for Dependabot pull requests: `permissions: {}` at the top with per-job grants, every action locked to its commit by `.github/workflows/actions.lock` (exact release tags in `uses:`; regenerate it with `gh actions-lock` after changing a workflow, and the `Lockfile` workflow runs `gh actions-lock --verify`), `persist-credentials: false` except where a step pushes, no secret or OIDC in CI, and Node as `node-version: "*"` with `check-latest` (never `latest`, which can resolve to a pre-release). `uvx zizmor --offline .github` audits the workflows.
 
 ## Pre-PR checklist
 
