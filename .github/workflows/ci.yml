@@ -42,7 +42,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
@@ -53,8 +53,8 @@ jobs:
       # run: the root `prepare` patches the native `tsc` and vite-plus's
       # `oxlint` with `@effect/tsgo`, which `vp check` and the core's `check`
       # need. Dependency build scripts stay gated by `allowBuilds` in
-      # pnpm-workspace.yaml. An exact tag, not a SHA, by the owner's decision
-      # (.github/zizmor.yml says why).
+      # pnpm-workspace.yaml. An exact tag, locked to its commit by
+      # .github/workflows/actions.lock, like every action here.
       - name: Setup Vite+
         uses: voidzero-dev/setup-vp@v1.22.0
         with:
@@ -67,7 +67,7 @@ jobs:
       # depends on, say) replays instead of rerunning. Keyed per commit with a
       # prefix fallback, so a PR restores the newest earlier cache.
       - name: Restore the Vite+ task cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache@v6.1.0
         with:
           path: node_modules/.vite/task-cache
           key: vp-task-v1-${{ runner.os }}-${{ github.sha }}

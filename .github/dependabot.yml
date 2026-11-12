@@ -168,9 +168,9 @@ updates:
           - 'version-update:semver-minor'
           - 'version-update:semver-patch'
 
-  # The actions in .github/workflows: SHA pins (Dependabot updates the SHA
-  # and the trailing `# vX.Y.Z` comment together) and the exact-tag
-  # `voidzero-dev/setup-vp@vX.Y.Z` (Dependabot bumps the tag).
+  # The actions in .github/workflows, each referenced by an exact `@vX.Y.Z`
+  # tag and locked to its commit in .github/workflows/actions.lock;
+  # Dependabot keeps the tags current.
   - package-ecosystem: github-actions
     directories:
       - '/'
