@@ -3,10 +3,14 @@
   // The Vite+ base image: Node + pnpm + the vp CLI. The tag is the catalog's
   // `vite-plus` pin (pnpm-workspace.yaml); move it in the same PR that bumps
   // vite-plus, since Dependabot's devcontainers updates cover only the features.
-  "image": "ghcr.io/voidzero-dev/vite-plus:1.4.0",
+  // The Dev Container workflow fails when the two differ.
+  "image": "ghcr.io/voidzero-dev/vite-plus:1.6.0",
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers-extra/features/ripgrep:1": {},
+    // Exact feature and tool versions: with `latest` the feature resolves the
+    // newest GitHub release at build time, so a build can change (or fail)
+    // with nothing in this repository changing.
+    "ghcr.io/devcontainers-extra/features/ripgrep:1.0.15": { "version": "15.2.0" },
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {},
     "ghcr.io/devcontainer-community/devcontainer-features/jq:1": {}
   },

@@ -61,6 +61,18 @@ jobs:
         uses: voidzero-dev/setup-vp@v1.22.0
         with:
           run-install: false
+      # The image tag must be the catalog's `vite-plus` pin: Dependabot's
+      # toolchain PR moves the catalog but not this tag (its devcontainers
+      # updates cover only the features), so the pair drifts unless checked.
+      - name: Assert the image tag is the catalog's vite-plus pin
+        run: |
+          pin="$(sed -nE 's/^  vite-plus: "?([0-9]+\.[0-9]+\.[0-9]+)"?$/\1/p' pnpm-workspace.yaml | head -1)"
+          tag="$(sed -nE 's#^  "image": "ghcr\.io/voidzero-dev/vite-plus:([^"]+)",?$#\1#p' .devcontainer/devcontainer.json)"
+          echo "catalog vite-plus: $pin, devcontainer image tag: $tag"
+          if [ -z "$pin" ] || [ "$tag" != "$pin" ]; then
+            echo "::error file=.devcontainer/devcontainer.json::set the image to ghcr.io/voidzero-dev/vite-plus:$pin (the catalog's vite-plus pin)"
+            exit 1
+          fi
       # `up` fails when the image, a feature or `postCreateCommand` fails.
       - name: Build and start the container
         run: |
