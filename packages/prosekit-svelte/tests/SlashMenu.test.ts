@@ -40,9 +40,11 @@ test('the entries are menu items, and the styling list never comes between them'
 
   await screen.getByRole('button', { name: 'Insert' }).click();
 
-  for (const name of ['Sow', 'Plant', 'Harvest']) {
-    await expect.element(screen.getByRole('menuitem', { name })).toBeInTheDocument();
-  }
+  await Promise.all(
+    ['Sow', 'Plant', 'Harvest'].map(async (name) => {
+      await expect.element(screen.getByRole('menuitem', { name })).toBeInTheDocument();
+    }),
+  );
 
   const menu = screen.getByRole('menu').element();
   expect(menu.querySelector('ul')?.getAttribute('role')).toBe('none');

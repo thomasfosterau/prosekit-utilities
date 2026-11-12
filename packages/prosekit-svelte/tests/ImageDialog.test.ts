@@ -22,10 +22,12 @@ test('Tab cycles within the dialog and never escapes it', async () => {
   const screen = await render(ImageDialog, { open: true, onSubmit: () => undefined });
   const dialog = screen.getByRole('dialog').element();
 
-  for (let press = 0; press < 6; press += 1) {
+  // Each press lands, and is checked, before the next: a promise chain, not a loop.
+  await Array.from({ length: 6 }).reduce<Promise<void>>(async (previous) => {
+    await previous;
     await userEvent.tab();
     expect(dialog.contains(document.activeElement)).toBe(true);
-  }
+  }, Promise.resolve());
 });
 
 test('Escape closes it', async () => {
@@ -99,9 +101,11 @@ test('every label is a prop', async () => {
   await screen.getByRole('button', { name: 'Einfügen' }).click();
   await expect.element(screen.getByRole('alert')).toHaveTextContent('Ungültige Adresse.');
 
-  for (const name of ['Abbrechen', 'Schließen']) {
-    await expect.element(screen.getByRole('button', { name })).toBeInTheDocument();
-  }
+  await Promise.all(
+    ['Abbrechen', 'Schließen'].map(async (name) => {
+      await expect.element(screen.getByRole('button', { name })).toBeInTheDocument();
+    }),
+  );
 });
 
 test('spreads native attributes on the dialog element, merges `class`, and keeps the modal wiring', async () => {

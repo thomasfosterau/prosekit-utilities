@@ -12,7 +12,8 @@
  * @module
  */
 
-import { describe, expect, it } from 'vite-plus/test';
+import { it } from '@effect/vitest';
+import { describe, expect } from 'vite-plus/test';
 import * as Arr from 'effect/Array';
 import * as Effect from 'effect/Effect';
 import * as Schema from 'effect/Schema';
@@ -32,6 +33,12 @@ class HookFailure extends Schema.TaggedError<HookFailure, { readonly brand: uniq
   'HookFailure',
   {},
 ) {}
+
+// A `postProcess` hook that throws: thrown outside the Effect so the renderer's
+// own capture of it is what the test exercises.
+const throwingHook = (): never => {
+  throw new HookFailure();
+};
 
 const blockSchema = lazySchema(() =>
   defineBlockDocumentExtension(defineMention(), defineSidenote(), defineCitation()),
@@ -223,24 +230,22 @@ describe('postProcess', () => {
     expect(html).toBe('<div><p>plain</p></div>');
   });
 
-  it('a throwing hook surfaces as a serialise HtmlRenderError', async () => {
-    const renderer = createHtmlRenderer({
-      schema: blockSchema,
-      postProcess: () => {
-        throw new HookFailure();
-      },
-    });
-    const error = await Effect.runPromise(
-      Effect.flip(
+  it.effect('a throwing hook surfaces as a serialise HtmlRenderError', () =>
+    Effect.gen(function* () {
+      const renderer = createHtmlRenderer({
+        schema: blockSchema,
+        postProcess: throwingHook,
+      });
+      const error = yield* Effect.flip(
         renderer.render({
           type: 'blockDocument',
           content: [{ type: 'paragraph', content: [{ type: 'text', text: 'x' }] }],
         }),
-      ),
-    );
-    expect(error).toBeInstanceOf(HtmlRenderError);
-    expect(error.reason).toBe('serialise');
-  });
+      );
+      expect(error).toBeInstanceOf(HtmlRenderError);
+      expect(error.reason).toBe('serialise');
+    }),
+  );
 });
 
 // ── sanitiseDocument on its own ───────────────────────────────────────

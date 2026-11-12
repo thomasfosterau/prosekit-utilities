@@ -17,7 +17,8 @@
  * @module
  */
 
-import { assert, describe, expect, it } from 'vite-plus/test';
+import { it } from '@effect/vitest';
+import { assert, describe, expect } from 'vite-plus/test';
 import * as Effect from 'effect/Effect';
 import * as Schema from 'effect/Schema';
 import { createHtmlRenderer, HtmlRenderError } from '../../src/prosekit/html.ts';
@@ -108,15 +109,15 @@ describe('createHtmlRenderer (server path)', () => {
     expect(html).toContain('bold');
   });
 
-  it('renders through the Effect channel as well', async () => {
-    const html = await Effect.runPromise(
-      blockRenderer.render({
+  it.effect('renders through the Effect channel as well', () =>
+    Effect.gen(function* () {
+      const html = yield* blockRenderer.render({
         type: 'blockDocument',
         content: [{ type: 'paragraph', content: [{ type: 'text', text: 'effectful' }] }],
-      }),
-    );
-    expect(html).toBe('<div><p>effectful</p></div>');
-  });
+      });
+      expect(html).toBe('<div><p>effectful</p></div>');
+    }),
+  );
 
   it('resolves its Document once and reuses it', async () => {
     let resolutions = 0;
@@ -139,7 +140,26 @@ describe('createHtmlRenderer (server path)', () => {
     expect(resolutions).toBe(1);
   });
 
-  it('fails with a dom-unavailable HtmlRenderError when the Document source rejects', async () => {
+  it.effect('fails with a dom-unavailable HtmlRenderError when the Document source rejects', () =>
+    Effect.gen(function* () {
+      const renderer = createHtmlRenderer({
+        schema: lazySchema(() => defineBlockDocumentExtension()),
+        document: () => Promise.reject(new NoDom()),
+      });
+      const doc = {
+        type: 'blockDocument',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'x' }] }],
+      };
+
+      const error = yield* Effect.flip(renderer.render(doc));
+      expect(error).toBeInstanceOf(HtmlRenderError);
+      expect(error._tag).toBe('HtmlRenderError');
+      expect(error.reason).toBe('dom-unavailable');
+      expect(error.cause).toBeInstanceOf(Error);
+    }),
+  );
+
+  it('rejects the promise shape with the same tagged error when the Document source rejects', async () => {
     const renderer = createHtmlRenderer({
       schema: lazySchema(() => defineBlockDocumentExtension()),
       document: () => Promise.reject(new NoDom()),
@@ -149,25 +169,18 @@ describe('createHtmlRenderer (server path)', () => {
       content: [{ type: 'paragraph', content: [{ type: 'text', text: 'x' }] }],
     };
 
-    const error = await Effect.runPromise(Effect.flip(renderer.render(doc)));
-    expect(error).toBeInstanceOf(HtmlRenderError);
-    expect(error._tag).toBe('HtmlRenderError');
-    expect(error.reason).toBe('dom-unavailable');
-    expect(error.cause).toBeInstanceOf(Error);
-
-    // The promise form rejects with the same tagged error.
     await expect(renderer.renderPromise(doc)).rejects.toBeInstanceOf(HtmlRenderError);
   });
 
-  it('fails with a serialise HtmlRenderError for a node the schema does not know', async () => {
-    const error = await Effect.runPromise(
-      Effect.flip(
+  it.effect('fails with a serialise HtmlRenderError for a node the schema does not know', () =>
+    Effect.gen(function* () {
+      const error = yield* Effect.flip(
         blockRenderer.render({
           type: 'blockDocument',
           content: [{ type: 'notARealNode' }],
         }),
-      ),
-    );
-    expect(error.reason).toBe('serialise');
-  });
+      );
+      expect(error.reason).toBe('serialise');
+    }),
+  );
 });

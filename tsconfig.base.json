@@ -22,6 +22,14 @@
     "noEmit": true,
     "erasableSyntaxOnly": true,
     "rewriteRelativeImportExtensions": true,
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "plugins": [
+      {
+        // `@effect/vitest` is `@stability unstable` as a whole module; the
+        // tests use only `it.effect`, and its range is held by the catalog.
+        "name": "@effect/language-service",
+        "allowedUnstableApis": ["@effect/vitest"]
+      }
+    ]
   }
 }

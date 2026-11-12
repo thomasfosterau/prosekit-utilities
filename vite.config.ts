@@ -29,6 +29,23 @@ const EFFECT_FILES = [
   'packages/prosekit-flowchart/tests/node/**/*.ts',
 ];
 
+/**
+ * A preset's rules with every `warn` level raised to `error`, the options
+ * of a `[level, options]` entry kept. A rule this workspace cannot satisfy
+ * is switched off by name below, with its reason, never left at `warn`.
+ */
+const atError = (rules: Readonly<Record<string, unknown>> | undefined): Record<string, unknown> =>
+  Object.fromEntries(
+    Object.entries(rules ?? {}).map(([name, level]) => [
+      name,
+      level === 'warn'
+        ? 'error'
+        : Array.isArray(level) && level[0] === 'warn'
+          ? ['error', ...level.slice(1)]
+          : level,
+    ]),
+  );
+
 export default defineConfig({
   // Staged-file checks run by `vp staged` (pre-commit). Routed by type: oxfmt
   // cannot format `.svelte`, so Svelte goes through lint alone while the
@@ -123,6 +140,9 @@ export default defineConfig({
       'eslint/no-underscore-dangle': ['error', { allow: ['_tag'] }],
       // Vitest's `expect(value, message)` takes a failure message second.
       'vitest/valid-expect': ['error', { maxArgs: 2 }],
+      // `it.effect` bodies are test blocks; `expect` inside them is not
+      // standalone.
+      'vitest/no-standalone-expect': ['error', { additionalTestBlockFunctions: ['it.effect'] }],
       // Stylesheets are imported for their side effect on purpose (AGENTS.md
       // § Common pitfalls lists the only ones `dist/` may carry), and the
       // test setup files register jest-dom's matchers the same way.
@@ -142,8 +162,10 @@ export default defineConfig({
         files: EFFECT_FILES,
         plugins: recommended.plugins ?? [],
         rules: {
-          ...recommended.rules,
-          ...effect.configs.recommended.rules,
+          // Every preset rule at `error`: the presets ship many at `warn`, and
+          // this workspace keeps no rule below error (each is at zero sites).
+          ...atError(recommended.rules),
+          ...atError(effect.configs.recommended.rules),
           // Both cast rules are at zero sites; keep them at `error`.
           'effect/casting-awareness': 'error',
           'typescript/no-unsafe-type-assertion': 'error',
@@ -167,19 +189,11 @@ export default defineConfig({
           // take `Schema.Json`. Both at zero sites.
           'effect/no-unsafe-dictionary-type': 'error',
           'effect/no-unknown-parameters': 'error',
-        },
-      },
-      // The test suites are the boundary where an Effect is run to a value
-      // and asserted on — the place the rule's own guidance sends
-      // `runSync` / `runPromise` ("the test harness"). The workspace does not
-      // use `@effect/vitest`, so there is no `it.effect` to hand the run to.
-      {
-        files: [
-          'packages/prosekit-utilities/tests/**/*.ts',
-          'packages/prosekit-flowchart/tests/node/**/*.ts',
-        ],
-        rules: {
-          'effect/effect-run-in-body': 'off',
+          // Every Schema class and tagged error carries its brand
+          // (`{ readonly brand: unique symbol }`), and no error payload has a
+          // `name` field to shadow `Error.prototype.name`: both at zero sites.
+          'effecttsgo/schema-class-missing-brand': 'error',
+          'effecttsgo/error-payload-shadows-name': 'error',
         },
       },
       // The one place a type assertion is unavoidable: a schema built at
@@ -205,10 +219,6 @@ export default defineConfig({
       {
         files: ['packages/*/tests/**/*.ts'],
         rules: {
-          // The browser suites drive the editor one keystroke or click at a
-          // time, and each must land before the next: run in parallel they
-          // would race the same focused element.
-          'eslint/no-await-in-loop': 'off',
           // A fixture builder sits inside the `describe` that uses it, next
           // to the cases it serves; hoisting each to module scope only moves
           // it away from them.

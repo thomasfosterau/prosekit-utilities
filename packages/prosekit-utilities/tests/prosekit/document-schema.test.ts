@@ -10,7 +10,8 @@
  * @module
  */
 
-import { assert, describe, expect, it } from 'vite-plus/test';
+import { it } from '@effect/vitest';
+import { assert, describe, expect } from 'vite-plus/test';
 import * as Arr from 'effect/Array';
 import * as Effect from 'effect/Effect';
 import * as Exit from 'effect/Exit';
@@ -95,34 +96,40 @@ describe('is', () => {
 describe('decode', () => {
   const { block } = createDocumentFixture();
 
-  it('succeeds with the decoded document', () => {
-    expect(Effect.runSync(block.decode(VALID))).toEqual(VALID);
-  });
+  it.effect('succeeds with the decoded document', () =>
+    Effect.gen(function* () {
+      expect(yield* block.decode(VALID)).toEqual(VALID);
+    }),
+  );
 
-  it('fails with a DocumentDecodeError naming the envelope and carrying the issue', () => {
-    const exit = Effect.runSyncExit(block.decode(GRAMMAR_INVALID));
-    expect(Exit.isFailure(exit)).toBe(true);
-    const error = Effect.runSync(Effect.flip(block.decode(GRAMMAR_INVALID)));
-    expect(error).toBeInstanceOf(DocumentDecodeError);
-    expect(error._tag).toBe('DocumentDecodeError');
-    expect(error.document).toBe('blockDocument');
-    expect(error.issue).toBeDefined();
-  });
+  it.effect('fails with a DocumentDecodeError naming the envelope and carrying the issue', () =>
+    Effect.gen(function* () {
+      const exit = yield* Effect.exit(block.decode(GRAMMAR_INVALID));
+      expect(Exit.isFailure(exit)).toBe(true);
+      const error = yield* Effect.flip(block.decode(GRAMMAR_INVALID));
+      expect(error).toBeInstanceOf(DocumentDecodeError);
+      expect(error._tag).toBe('DocumentDecodeError');
+      expect(error.document).toBe('blockDocument');
+      expect(error.issue).toBeDefined();
+    }),
+  );
 
-  it('fails the same way for a value that is not a document at all', () => {
-    const error = Effect.runSync(Effect.flip(block.decode(null)));
-    expect(error._tag).toBe('DocumentDecodeError');
-    expect(error.document).toBe('blockDocument');
-  });
+  it.effect('fails the same way for a value that is not a document at all', () =>
+    Effect.gen(function* () {
+      const error = yield* Effect.flip(block.decode(null));
+      expect(error._tag).toBe('DocumentDecodeError');
+      expect(error.document).toBe('blockDocument');
+    }),
+  );
 
-  it('is catchable by tag', () => {
-    const recovered = Effect.runSync(
-      block
+  it.effect('is catchable by tag', () =>
+    Effect.gen(function* () {
+      const recovered = yield* block
         .decode(GRAMMAR_INVALID)
-        .pipe(Effect.catchTag('DocumentDecodeError', (error) => Effect.succeed(error.document))),
-    );
-    expect(recovered).toBe('blockDocument');
-  });
+        .pipe(Effect.catchTag('DocumentDecodeError', (error) => Effect.succeed(error.document)));
+      expect(recovered).toBe('blockDocument');
+    }),
+  );
 });
 
 // ── install ───────────────────────────────────────────────────────────

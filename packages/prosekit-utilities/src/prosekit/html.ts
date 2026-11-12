@@ -37,10 +37,13 @@ import { isSafeHref } from '../url-safety.ts';
  * `Schema.Defect()`, so the error is JSON-encodable and survives a log sink.
  */
 export class HtmlRenderError
-  extends /* @__PURE__ */ Schema.TaggedError<HtmlRenderError>()('HtmlRenderError', {
-    reason: /* @__PURE__ */ Schema.Literals(['dom-unavailable', 'serialise']),
-    cause: /* @__PURE__ */ Schema.Defect(),
-  }) {}
+  extends /* @__PURE__ */ Schema.TaggedError<HtmlRenderError, { readonly brand: unique symbol }>()(
+    'HtmlRenderError',
+    {
+      reason: /* @__PURE__ */ Schema.Literals(['dom-unavailable', 'serialise']),
+      cause: /* @__PURE__ */ Schema.Defect(),
+    },
+  ) {}
 
 // ---------------------------------------------------------------------------
 // URL sanitisation

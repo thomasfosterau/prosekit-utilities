@@ -68,7 +68,10 @@ import { lazySchema } from './lazy-schema.ts';
  * wire hop to a client or a log sink.
  */
 export class DocumentDecodeError
-  extends /* @__PURE__ */ Schema.TaggedError<DocumentDecodeError>()('DocumentDecodeError', {
+  extends /* @__PURE__ */ Schema.TaggedError<
+    DocumentDecodeError,
+    { readonly brand: unique symbol }
+  >()('DocumentDecodeError', {
     document: Schema.String,
     issue: /* @__PURE__ */ Schema.Defect(),
   }) {}
