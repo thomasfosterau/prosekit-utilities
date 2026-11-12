@@ -37,6 +37,7 @@
  */
 
 import * as Arr from 'effect/Array';
+import * as MutableHashMap from 'effect/MutableHashMap';
 import * as Option from 'effect/Option';
 import * as R from 'effect/Record';
 import * as Schema from 'effect/Schema';
@@ -53,14 +54,13 @@ import type { DeriveOptions, DerivedMarkJSON, DerivedNodeJSON } from './Options.
  * doc for what goes wrong otherwise.
  */
 export interface RegistryCache {
-  readonly nodeCache: Map<string, Schema.Codec<DerivedNodeJSON>>;
-  readonly markCache: Map<string, Schema.Codec<DerivedMarkJSON>>;
+  readonly nodeCache: MutableHashMap.MutableHashMap<string, Schema.Codec<DerivedNodeJSON>>;
+  readonly markCache: MutableHashMap.MutableHashMap<string, Schema.Codec<DerivedMarkJSON>>;
 }
 
 /** A fresh, empty {@link RegistryCache} — private to one `Registry` unless explicitly shared. */
 export function createRegistryCache(): RegistryCache {
-  // oxlint-disable-next-line effect/avoid-native-object-helpers -- `RegistryCache`'s exported shape; the caches are mutated in place through `readonly` fields, which an immutable `HashMap` cannot express
-  return { nodeCache: new Map(), markCache: new Map() };
+  return { nodeCache: MutableHashMap.empty(), markCache: MutableHashMap.empty() };
 }
 
 /** The struct fields of one derived node or mark, filled in as its parts are derived. */
@@ -86,20 +86,20 @@ export class Registry {
 
   /** The derived schema for a mark type, built once and memoised by name. */
   mark(markType: MarkType): Schema.Codec<DerivedMarkJSON> {
-    const cached = this.#cache.markCache.get(markType.name);
-    if (cached) return cached;
-    const built = this.#buildMark(markType);
-    this.#cache.markCache.set(markType.name, built);
-    return built;
+    return Option.getOrElse(MutableHashMap.get(this.#cache.markCache, markType.name), () => {
+      const built = this.#buildMark(markType);
+      MutableHashMap.set(this.#cache.markCache, markType.name, built);
+      return built;
+    });
   }
 
   /** The derived schema for a node type, built once and memoised by name. */
   node(nodeType: NodeType): Schema.Codec<DerivedNodeJSON> {
-    const cached = this.#cache.nodeCache.get(nodeType.name);
-    if (cached) return cached;
-    const built = this.#buildNode(nodeType, nodeType.name);
-    this.#cache.nodeCache.set(nodeType.name, built);
-    return built;
+    return Option.getOrElse(MutableHashMap.get(this.#cache.nodeCache, nodeType.name), () => {
+      const built = this.#buildNode(nodeType, nodeType.name);
+      MutableHashMap.set(this.#cache.nodeCache, nodeType.name, built);
+      return built;
+    });
   }
 
   /**

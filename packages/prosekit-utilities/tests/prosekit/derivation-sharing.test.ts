@@ -22,6 +22,8 @@
  */
 
 import { describe, expect, it } from 'vite-plus/test';
+import * as MutableHashMap from 'effect/MutableHashMap';
+import * as Option from 'effect/Option';
 import * as Schema from 'effect/Schema';
 import { defineDocumentEnvelope } from '../../src/document-envelope.ts';
 import { defineDocumentSchema } from '../../src/prosekit/document-schema.ts';
@@ -44,24 +46,26 @@ describe('shared registry cache: inline forced first', () => {
   const { block, inline, blockCache: cache } = createSharedCacheFixture();
 
   it('nothing is derived until a document is validated', () => {
-    expect(cache.nodeCache.size).toBe(0);
-    expect(cache.markCache.size).toBe(0);
+    expect(MutableHashMap.size(cache.nodeCache)).toBe(0);
+    expect(MutableHashMap.size(cache.markCache)).toBe(0);
   });
 
   it('decodes the inline document correctly when forced first', () => {
     expect(Schema.decodeUnknownSync(inline.Document)(INLINE_DOC)).toEqual(INLINE_DOC);
     // The shared structure is now in the cache.
-    expect(cache.markCache.has('bold')).toBe(true);
-    expect(cache.nodeCache.has('text')).toBe(true);
+    expect(MutableHashMap.has(cache.markCache, 'bold')).toBe(true);
+    expect(MutableHashMap.has(cache.nodeCache, 'text')).toBe(true);
   });
 
   it('decodes the block document correctly afterwards, sharing the mark/text derivation', () => {
-    const marks = cache.markCache.get('bold');
-    const text = cache.nodeCache.get('text');
+    const marks = Option.getOrUndefined(MutableHashMap.get(cache.markCache, 'bold'));
+    const text = Option.getOrUndefined(MutableHashMap.get(cache.nodeCache, 'text'));
+    expect(marks).toBeDefined();
+    expect(text).toBeDefined();
     expect(Schema.decodeUnknownSync(block.Document)(BLOCK_DOC)).toEqual(BLOCK_DOC);
     // Reused, not rebuilt.
-    expect(cache.markCache.get('bold')).toBe(marks);
-    expect(cache.nodeCache.get('text')).toBe(text);
+    expect(Option.getOrUndefined(MutableHashMap.get(cache.markCache, 'bold'))).toBe(marks);
+    expect(Option.getOrUndefined(MutableHashMap.get(cache.nodeCache, 'text'))).toBe(text);
   });
 });
 

@@ -50,30 +50,43 @@ export type ContentCardinality =
  * order.
  */
 export function allowedContentTypes(nodeType: NodeType): ReadonlyArray<NodeType> {
-  const result: NodeType[] = [];
-  // oxlint-disable-next-line effect/avoid-native-object-helpers -- mutable accumulator inside the worklist below; `HashSet` is immutable and would force reassignment through every nested iteration
-  const seenTypes = new Set<string>();
-  // oxlint-disable-next-line effect/avoid-native-object-helpers -- keyed on ProseMirror `ContentMatch` *identity*; `HashSet` would stamp a cached hash symbol onto the compiled automaton objects it is given
-  const visited = new Set<ContentMatch>();
-  const queue: ContentMatch[] = [nodeType.contentMatch];
+  return Arr.dedupeWith(
+    Arr.flatMap(reachableMatches([nodeType.contentMatch], []), (match) =>
+      Arr.map(edgesOf(match), (edge) => edge.type),
+    ),
+    (a, b) => a.name === b.name,
+  );
+}
 
-  // oxlint-disable-next-line effect/imperative-loops -- breadth-first worklist over a cyclic automaton: the queue is appended to while it is drained, which no `Arr.*` combinator expresses
-  while (Arr.isArrayNonEmpty(queue)) {
-    const match = Arr.headNonEmpty(queue);
-    queue.shift();
-    if (visited.has(match)) continue;
-    visited.add(match);
-    // oxlint-disable-next-line effect/imperative-loops -- ProseMirror exposes edges through the indexed `edgeCount` / `edge(i)` accessor pair, not an array
-    for (let i = 0; i < match.edgeCount; i++) {
-      const edge = match.edge(i);
-      if (!seenTypes.has(edge.type.name)) {
-        seenTypes.add(edge.type.name);
-        result.push(edge.type);
-      }
-      queue.push(edge.next);
-    }
-  }
-  return result;
+/** One automaton state's outgoing edges, read through ProseMirror's indexed `edgeCount` / `edge(i)` pair. */
+const edgesOf = (match: ContentMatch): ReadonlyArray<ReturnType<ContentMatch['edge']>> =>
+  match.edgeCount === 0 ? [] : Arr.makeBy(match.edgeCount, (i) => match.edge(i));
+
+/**
+ * Compares automaton states by identity: a compiled `ContentMatch` is its own
+ * key, and hashing one would stamp a cached hash onto ProseMirror's objects.
+ */
+const sameMatch = (a: ContentMatch, b: ContentMatch): boolean => a === b;
+
+/**
+ * Every state reachable from `frontier`, in breadth-first discovery order: each
+ * level's unvisited states are appended to `visited`, then their successors
+ * become the next frontier. The automaton is cyclic, so `visited` is what ends
+ * the walk.
+ */
+function reachableMatches(
+  frontier: ReadonlyArray<ContentMatch>,
+  visited: ReadonlyArray<ContentMatch>,
+): ReadonlyArray<ContentMatch> {
+  const fresh = Arr.dedupeWith(
+    Arr.filter(frontier, (match) => !Arr.containsWith(sameMatch)(visited, match)),
+    sameMatch,
+  );
+  if (!Arr.isArrayNonEmpty(fresh)) return visited;
+  return reachableMatches(
+    Arr.flatMap(fresh, (match) => Arr.map(edgesOf(match), (edge) => edge.next)),
+    Arr.appendAll(visited, fresh),
+  );
 }
 
 /**
