@@ -9,7 +9,7 @@
  * @module
  */
 import * as Option from 'effect/Option';
-import * as Predicate from 'effect/Predicate';
+import * as P from 'effect/Predicate';
 import * as Schema from 'effect/Schema';
 import { customType } from 'drizzle-orm/pg-core';
 
@@ -40,8 +40,8 @@ const decodeJson = /* @__PURE__ */ Schema.decodeUnknownOption(JsonText);
  * back out.
  *
  * The runtime driver is expected to be node-pg (`pg`), which already parses
- * `jsonb` columns for you, so `fromDriver`'s `!Predicate.isString(value)`
- * branch is the common case and the `Predicate.isString` branch (parse a
+ * `jsonb` columns for you, so `fromDriver`'s `!P.isString(value)`
+ * branch is the common case and the `P.isString` branch (parse a
  * JSON string driver value, then validate) exists for a driver that instead
  * hands back raw text.
  *
@@ -60,7 +60,7 @@ export const jsonbSchemaColumn =
         return encodeJson(value);
       },
       fromDriver(value: string): A {
-        if (!Predicate.isString(value)) return parse(value);
+        if (!P.isString(value)) return parse(value);
         return Option.match(decodeJson(value), {
           onNone: () => parse(value),
           onSome: (parsed) => parse(parsed),

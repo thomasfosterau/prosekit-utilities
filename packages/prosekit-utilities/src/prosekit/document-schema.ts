@@ -38,9 +38,10 @@
  * @module
  */
 
-import * as Array from 'effect/Array';
+import * as Arr from 'effect/Array';
 import * as Effect from 'effect/Effect';
 import * as Option from 'effect/Option';
+import type * as P from 'effect/Predicate';
 import * as Result from 'effect/Result';
 import * as Schema from 'effect/Schema';
 import type { Extension } from 'prosekit/core';
@@ -84,7 +85,7 @@ export interface DocumentSchemaOptions {
    * application with opt-in nodes passes
    * `mergeAttributeOverrides(STANDARD_ATTRIBUTE_OVERRIDES, …)`.
    */
-  readonly attributes?: AttributeOverrides | undefined;
+  readonly attributes?: AttributeOverrides;
   /**
    * A `RegistryCache` to share with other document schemas built from
    * overlapping extensions. Defaults to a cache private to this schema.
@@ -94,7 +95,7 @@ export interface DocumentSchemaOptions {
    * the shared `text` node's marks for the others. See
    * {@link defineDocumentSchema} for the failure this causes.
    */
-  readonly registryCache?: RegistryCache | undefined;
+  readonly registryCache?: RegistryCache;
 }
 
 /** One document surface's ProseKit half: the grammar, the wire schema and the guard. */
@@ -108,9 +109,9 @@ export interface DocumentSchema<Name extends string> {
   /** The derived wire schema: the envelope, with `shape.name` in place of ProseMirror's `doc`. */
   readonly Document: Schema.Codec<DocumentJSON<Name>>;
   /** A whole-document type guard over {@link Document}, with a defect net. */
-  readonly is: (value: unknown) => value is DocumentJSON<Name>;
+  readonly is: P.Refinement<unknown, DocumentJSON<Name>>;
   /** {@link Document}'s decode in an `Effect`, failing with a {@link DocumentDecodeError}. */
-  readonly decode: (value: unknown) => Effect.Effect<DocumentJSON<Name>, DocumentDecodeError>;
+  readonly decode: (value: Schema.Json) => Effect.Effect<DocumentJSON<Name>, DocumentDecodeError>;
   /** Installs {@link is} as {@link shape}'s grammar guard, for the life of the isolate. */
   readonly install: () => void;
 }
@@ -254,5 +255,5 @@ export function defineDocumentSchema<Name extends string>(
 export const installDocumentGrammars = (
   ...schemas: ReadonlyArray<DocumentSchema<string>>
 ): void => {
-  Array.forEach(schemas, (schema) => schema.install());
+  Arr.forEach(schemas, (schema) => schema.install());
 };

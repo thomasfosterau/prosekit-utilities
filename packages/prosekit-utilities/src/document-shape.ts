@@ -38,12 +38,13 @@ import * as Schema from 'effect/Schema';
 import type { AllowList } from './allow-list.ts';
 import { allowListFilter } from './allow-list.ts';
 import type { DocumentJSON } from './json.ts';
+import type * as P from 'effect/Predicate';
 
 /**
  * A whole-document type guard — what the ProseKit entry point's `DocumentSchema.is`
  * provides and what {@link DocumentShape.install} accepts.
  */
-export type DocumentGrammarGuard = (value: unknown) => boolean;
+export type DocumentGrammarGuard = P.Predicate<unknown>;
 
 /**
  * The document's `content`: an array of ProseMirror node JSON, checked only
@@ -122,7 +123,7 @@ export interface DocumentShape<Name extends string> {
  */
 export function defineDocumentShape<Name extends string>(options: {
   readonly name: Name;
-  readonly label?: string | undefined;
+  readonly label?: string;
 }): DocumentShape<Name> {
   const name = options.name;
   const label = options.label ?? wordsOf(name);

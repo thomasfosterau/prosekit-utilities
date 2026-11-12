@@ -45,17 +45,13 @@ jobs:
         uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6.1.1
-      - name: Setup Node.js
-        uses: actions/setup-node@v7.1.0
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1.22.0
         with:
-          node-version: '*'
-          check-latest: true
-          cache: pnpm
+          cache: true
           registry-url: https://registry.npmjs.org
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts
+          run-install: |
+            - args: ['--frozen-lockfile', '--ignore-scripts']
       - name: Select mode
         id: mode
         uses: changesets/action/select-mode@v2.1.2
@@ -78,17 +74,13 @@ jobs:
         uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6.1.1
-      - name: Setup Node.js
-        uses: actions/setup-node@v7.1.0
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1.22.0
         with:
-          node-version: '*'
-          check-latest: true
-          cache: pnpm
+          cache: true
           registry-url: https://registry.npmjs.org
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts
+          run-install: |
+            - args: ['--frozen-lockfile', '--ignore-scripts']
       - name: Create or update the version PR
         uses: changesets/action/version@v2.1.2
         with:
@@ -141,42 +133,35 @@ jobs:
         with:
           persist-credentials: false
 
-      # Installs the pnpm version pinned by the package.json "packageManager"
-      # field. Must run before setup-node so its pnpm cache can find the store.
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6.1.1
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v7.1.0
-        with:
-          # Never `latest`: setup-node resolves it to the first entry of the
-          # nodejs.org index, pre-releases included (a Node 27 alpha since
-          # 2026-10-29), which would publish from an alpha. `*` with
-          # `check-latest` is the newest stable release.
-          node-version: '*'
-          check-latest: true
-          cache: pnpm
-          registry-url: https://registry.npmjs.org
-
-      # The root `release` script publishes each `pnpm pack` tarball with the
-      # npm CLI (`npm publish`), and npm's own OIDC trusted publishing needs
-      # npm >= 11.5.1. The npm bundled with Node `latest` already meets that
-      # floor (Node 26.11 ships npm 11.20.0), but which npm that is moves with
-      # every Node release. Pinned to an exact version rather than `@latest`,
-      # so what runs in this id-token job is a version that was reviewed, not
-      # whatever the registry or the Node release serves on the day (`@latest`
-      # is already npm 12). Bump it by hand; Dependabot does not see it.
-      - name: Upgrade npm (OIDC trusted publishing)
-        run: npm install -g npm@11.20.0
-
+      # Vite+, the pnpm that `packageManager` pins, and an EXACT Node:
+      # 26.13.1 (LTS) bundles npm 11.20.0, and the root `release` script
+      # publishes each `pnpm pack` tarball with the npm CLI, whose OIDC
+      # trusted publishing needs npm >= 11.5.1. Exact rather than a range, so
+      # what runs in this id-token job is a reviewed Node and npm, not
+      # whatever is newest on the day. Bump it by hand; Dependabot does not
+      # see it.
+      #
       # --ignore-scripts stops a compromised dependency from running install
       # scripts in the privileged publish job (the Shai-Hulud vector). It also
       # skips the root `prepare` (the Vite+ git hooks), which nothing here needs.
       # It only holds because `pnpm_config_verify_deps_before_run` is off for
       # this job (see the job `env` above); otherwise a later `pnpm run` /
       # `pnpm exec` could re-install with scripts.
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1.22.0
+        with:
+          node-version: '26.13.1'
+          cache: true
+          registry-url: https://registry.npmjs.org
+          run-install: |
+            - args: ['--frozen-lockfile', '--ignore-scripts']
+
+      # Fails before anything is published if the npm on PATH is not the
+      # one the Node pin above bundles.
+      - name: Check npm supports trusted publishing
+        run: |
+          npm --version
+          node -e 'const [a, b, c] = process.argv[1].split(".").map(Number); process.exit(a > 11 || (a === 11 && (b > 5 || (b === 5 && c >= 1))) ? 0 : 1)' "$(npm --version)"
 
       # `files` is `["dist"]` in every package, so a stale or missing build
       # publishes an empty package rather than failing — build here, before

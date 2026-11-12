@@ -13,40 +13,42 @@
  * @module
  */
 
-import * as Array from 'effect/Array';
-import * as Predicate from 'effect/Predicate';
+import * as Arr from 'effect/Array';
+import * as P from 'effect/Predicate';
 import type { DocumentJSON, NodeJSON } from './json.ts';
 
 /**
  * Extracts plain text from a document, joining the `text` leaves with
  * `options.separator` (default `' '`).
  *
- * Tolerant by design: `null`, `undefined`, a document with no `content`, a
- * stray string or `null` inside `content`, and a `text`-typed node whose
- * `text` is not a string all contribute nothing rather than throwing. The
- * callers are database columns and queue payloads, where a malformed row
- * must degrade to empty text rather than fail a batch.
+ * Tolerant by design: a document with no `content`, a stray string or
+ * `null` inside `content`, and a `text`-typed node whose `text` is not a
+ * string all contribute nothing rather than throwing. The callers are
+ * database columns and queue payloads, where a malformed row must degrade to
+ * empty text rather than fail a batch.
+ *
+ * A column that may be absent is lifted at the read, not passed in: lift it
+ * with `Option.fromNullishOr(row.body).pipe(Option.map(extractDocumentText))`.
  */
 export function extractDocumentText(
-  doc: NodeJSON | DocumentJSON | null | undefined,
-  options?: { readonly separator?: string | undefined },
+  doc: NodeJSON | DocumentJSON,
+  options?: { readonly separator?: string },
 ): string {
-  if (!doc || !doc.content) return '';
-  return textParts(doc.content).join(options?.separator ?? ' ');
+  return textParts(doc.content ?? []).join(options?.separator ?? ' ');
 }
 
 /** The `text` leaves of one node subtree, in document order. */
 function textParts(nodes: ReadonlyArray<unknown>): string[] {
-  return Array.flatMap(nodes, (node) => {
-    if (!Predicate.isObjectOrArray(node)) return [];
+  return Arr.flatMap(nodes, (node) => {
+    if (!P.isObjectOrArray(node)) return [];
     const own =
-      Predicate.hasProperty(node, 'type') &&
+      P.hasProperty(node, 'type') &&
       node.type === 'text' &&
-      Predicate.hasProperty(node, 'text') &&
-      Predicate.isString(node.text)
+      P.hasProperty(node, 'text') &&
+      P.isString(node.text)
         ? [node.text]
         : [];
-    return Predicate.hasProperty(node, 'content') && Array.isArray(node.content)
+    return P.hasProperty(node, 'content') && Arr.isArray(node.content)
       ? [...own, ...textParts(node.content)]
       : own;
   });
@@ -70,7 +72,7 @@ export function inlineDocumentText(doc: NodeJSON | DocumentJSON): string {
 /** The `text` leaves of a document subtree, in document order. */
 function inlineTextParts(node: NodeJSON | DocumentJSON): string[] {
   // `?.`: an untyped caller's missing document still yields no text.
-  return Array.flatMap(node?.content ?? [], (child) =>
+  return Arr.flatMap(node?.content ?? [], (child) =>
     child.text ? [child.text] : 'content' in child ? inlineTextParts(child) : [],
   );
 }

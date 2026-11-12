@@ -29,7 +29,7 @@
  * @module @thomasfosterau/prosekit-utilities/derive/Content
  */
 
-import * as Array from 'effect/Array';
+import * as Arr from 'effect/Array';
 import type { ContentMatch, NodeType } from '@prosekit/pm/model';
 
 /** How a node's content model constrains the number of children. */
@@ -58,8 +58,8 @@ export function allowedContentTypes(nodeType: NodeType): ReadonlyArray<NodeType>
   const queue: ContentMatch[] = [nodeType.contentMatch];
 
   // oxlint-disable-next-line effect/imperative-loops -- breadth-first worklist over a cyclic automaton: the queue is appended to while it is drained, which no `Arr.*` combinator expresses
-  while (Array.isArrayNonEmpty(queue)) {
-    const match = Array.headNonEmpty(queue);
+  while (Arr.isArrayNonEmpty(queue)) {
+    const match = Arr.headNonEmpty(queue);
     queue.shift();
     if (visited.has(match)) continue;
     visited.add(match);

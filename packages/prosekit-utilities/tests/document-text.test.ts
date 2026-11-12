@@ -11,6 +11,7 @@
  * @module
  */
 
+import * as Option from 'effect/Option';
 import type * as Schema from 'effect/Schema';
 import { describe, expect, it } from 'vite-plus/test';
 import { extractDocumentText, inlineDocumentText } from '../src/document-text.ts';
@@ -26,9 +27,15 @@ const malformed = (value: Schema.Json | DocumentJSON): DocumentJSON =>
   value as DocumentJSON;
 
 describe('extractDocumentText', () => {
-  it('returns the empty string for null / undefined', () => {
-    expect(extractDocumentText(null)).toBe('');
-    expect(extractDocumentText(undefined)).toBe('');
+  it('lifts over an optional document with Option.map', () => {
+    const doc: DocumentJSON = {
+      type: 'blockDocument',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'hi' }] }],
+    };
+    expect(Option.none<DocumentJSON>().pipe(Option.map(extractDocumentText))).toEqual(
+      Option.none(),
+    );
+    expect(Option.some(doc).pipe(Option.map(extractDocumentText))).toEqual(Option.some('hi'));
   });
 
   it('returns the empty string for a document with no content array', () => {
@@ -103,7 +110,7 @@ describe('extractDocumentText', () => {
     };
     expect(extractDocumentText(doc, { separator: '\n' })).toBe('one\ntwo');
     expect(extractDocumentText(doc, { separator: '' })).toBe('onetwo');
-    expect(extractDocumentText(doc, { separator: undefined })).toBe('one two');
+    expect(extractDocumentText(doc, {})).toBe('one two');
   });
 });
 

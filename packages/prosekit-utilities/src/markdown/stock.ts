@@ -10,8 +10,8 @@
  */
 
 import * as Arr from 'effect/Array';
-import * as Predicate from 'effect/Predicate';
-import * as String from 'effect/String';
+import * as P from 'effect/Predicate';
+import * as Str from 'effect/String';
 import type { DocumentJSON, MarkJSON, NodeJSON } from '../json.ts';
 import { isSafeHref } from '../url-safety.ts';
 import type { BlockSerialiser, InlineSerialiser, MarkSerialiser } from './serialiser.ts';
@@ -93,7 +93,7 @@ const paragraphMarkdown: BlockSerialiser = (node, context) =>
 
 /** `## Heading`, clamped into the 1..6 range CommonMark defines. */
 const headingMarkdown: BlockSerialiser = (node, context) => {
-  const declared = Predicate.isNumber(node.attrs?.level) ? node.attrs.level : 1;
+  const declared = P.isNumber(node.attrs?.level) ? node.attrs.level : 1;
   const level = Math.min(Math.max(declared, 1), 6);
   return `${'#'.repeat(level)} ${context.serialiseInline(childrenOf(node))}`;
 };
@@ -103,7 +103,7 @@ const blockquoteMarkdown: BlockSerialiser = (node, context) =>
   context
     .serialiseBlocks(childrenOf(node))
     .split('\n')
-    .map((line) => (String.isNonEmpty(line) ? `> ${line}` : '>'))
+    .map((line) => (Str.isNonEmpty(line) ? `> ${line}` : '>'))
     .join('\n');
 
 /**
@@ -115,7 +115,7 @@ const blockquoteMarkdown: BlockSerialiser = (node, context) =>
  * backticks cannot close the block early.
  */
 const codeBlockMarkdown: BlockSerialiser = (node) => {
-  const declared = Predicate.isString(node.attrs?.language) ? node.attrs.language : '';
+  const declared = P.isString(node.attrs?.language) ? node.attrs.language : '';
   const language = declared.replace(/[\n\r`]/g, '');
   const code = childrenOf(node)
     .map((child) => child.text ?? '')

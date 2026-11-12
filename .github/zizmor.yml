@@ -1,5 +1,5 @@
 # zizmor (GitHub Actions static analysis) configuration. Run it with
-# `uvx zizmor --offline .github`; every workflow and the setup action should
+# `uvx zizmor --offline .github`; every workflow should
 # report no findings beyond what is configured away here, each with its reason.
 rules:
   dependabot-cooldown:
@@ -9,9 +9,3 @@ rules:
       # cooldown, which counts whole days, waits 1 — longer than pnpm, so a
       # Dependabot PR never proposes a version pnpm would refuse.
       days: 1
-  adhoc-packages:
-    ignore:
-      # The Release job installs one exact, reviewed npm (`npm@11.20.0`) for
-      # OIDC trusted publishing; the step's comment says why it is pinned
-      # rather than taken from the Node release.
-      - release.yml

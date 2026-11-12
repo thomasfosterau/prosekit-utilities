@@ -15,7 +15,7 @@
 
 import * as Arr from 'effect/Array';
 import * as Option from 'effect/Option';
-import * as Predicate from 'effect/Predicate';
+import * as P from 'effect/Predicate';
 import * as Schema from 'effect/Schema';
 import {
   FlowchartData as FlowchartDataSchema,
@@ -58,13 +58,13 @@ export function parseFlowchartData(input: string): FlowchartDataSchema {
   const decoded = decodeJson(input);
   if (Option.isNone(decoded)) return { ...EMPTY_FLOWCHART };
   const parsed = decoded.value;
-  if (!Predicate.isObjectOrArray(parsed)) return { ...EMPTY_FLOWCHART };
+  if (!P.isObjectOrArray(parsed)) return { ...EMPTY_FLOWCHART };
   const nodes =
-    Predicate.hasProperty(parsed, 'nodes') && Array.isArray(parsed.nodes)
+    P.hasProperty(parsed, 'nodes') && Array.isArray(parsed.nodes)
       ? Arr.getSomes(parsed.nodes.map((node) => decodeFlowchartNode(node)))
       : [];
   const edges =
-    Predicate.hasProperty(parsed, 'edges') && Array.isArray(parsed.edges)
+    P.hasProperty(parsed, 'edges') && Array.isArray(parsed.edges)
       ? Arr.getSomes(parsed.edges.map((edge) => decodeFlowchartEdge(edge)))
       : [];
   return { nodes, edges };

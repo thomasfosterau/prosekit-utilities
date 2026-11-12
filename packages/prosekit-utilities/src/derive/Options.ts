@@ -17,7 +17,7 @@
  */
 
 import * as Option from 'effect/Option';
-import * as Predicate from 'effect/Predicate';
+import * as P from 'effect/Predicate';
 import type * as Schema from 'effect/Schema';
 import type { AttributeSpec } from '@prosekit/pm/model';
 
@@ -56,7 +56,7 @@ export const required = (schema: Schema.Top): RequiredAttribute => ({
 
 /** True when `value` is a {@link RequiredAttribute} produced by {@link required}. */
 export const isRequiredAttribute = (value: unknown): value is RequiredAttribute =>
-  Predicate.isObjectOrArray(value) && RequiredAttributeTypeId in value;
+  P.isObjectOrArray(value) && RequiredAttributeTypeId in value;
 
 /**
  * A caller-supplied override for a single attribute's schema.
@@ -110,13 +110,13 @@ export interface DeriveDocumentOptions extends DeriveOptions {
 /** A derived ProseMirror mark, as its JSON shape. */
 export interface DerivedMarkJSON {
   readonly type: string;
-  readonly attrs?: Record<string, unknown>;
+  readonly attrs?: { readonly [name: string]: Schema.Json };
 }
 
 /** A derived ProseMirror node, as its recursive JSON shape. */
 export interface DerivedNodeJSON {
   readonly type: string;
-  readonly attrs?: Record<string, unknown>;
+  readonly attrs?: { readonly [name: string]: Schema.Json };
   readonly content?: ReadonlyArray<DerivedNodeJSON>;
   readonly marks?: ReadonlyArray<DerivedMarkJSON>;
   readonly text?: string;

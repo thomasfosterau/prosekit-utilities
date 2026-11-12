@@ -19,7 +19,7 @@
  * @module @thomasfosterau/prosekit-flowchart/node/html
  */
 
-import * as Array from 'effect/Array';
+import * as Arr from 'effect/Array';
 import { parseFlowchartData } from './data.ts';
 import { generateFlowchartSvg } from './svg.ts';
 
@@ -37,7 +37,7 @@ export function postProcessFlowcharts(html: string, document: Document): string 
   if (!html.includes('data-flowchart')) return html;
   const container = document.createElement('div');
   container.innerHTML = html;
-  const placeholders = Array.fromIterable(container.querySelectorAll('[data-flowchart]'));
+  const placeholders = Arr.fromIterable(container.querySelectorAll('[data-flowchart]'));
   placeholders.forEach((placeholder) => {
     const payload = placeholder.getAttribute('data-payload') ?? '';
     const data = parseFlowchartData(payload);
