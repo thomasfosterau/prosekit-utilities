@@ -12,6 +12,9 @@ catalogs:
     '@effect/tsgo':
       specifier: 0.63.0
       version: 0.63.0
+    '@effect/vitest':
+      specifier: 4.1.2
+      version: 4.1.2
     '@enfect/oxlint':
       specifier: 0.10.0
       version: 0.10.0
@@ -293,6 +296,9 @@ importers:
 
   packages/prosekit-utilities:
     devDependencies:
+      '@effect/vitest':
+        specifier: 'catalog:'
+        version: 4.1.2(effect@4.1.2)(vitest@5.0.5)
       '@prosekit/pm':
         specifier: 'catalog:'
         version: 0.1.21
@@ -533,6 +539,12 @@ packages:
   '@effect/tsgo@0.63.0':
     resolution: {integrity: sha512-bRbvVj+YLE/nBmcBWGAwsul3mjEYlqqOmWMxvwSVKq/oNnJEuZYgi2OFDeUf7q49E2g3w+oMHMWyN2QayZ77RQ==}
     hasBin: true
+
+  '@effect/vitest@4.1.2':
+    resolution: {integrity: sha512-JJPwAHkJHxvM/woW9mMW/khjasAHcmwWdOMAgMy16rfqsxcVhFDnrRsvN9VI2+kMv8zDCCyBE2q1n5hzZlfE0w==}
+    peerDependencies:
+      effect: 4.1.2
+      vitest: 5.0.5
 
   '@emnapi/core@1.11.0':
     resolution: {integrity: sha512-l9Oo58x0HOP5znGzVhYW9U3e5wVuA4LAZU2AGezTmkhO1CgQRFDhDg4nneHsu/t3WniXg9QrG2nIXL/ZS8ln8Q==}
@@ -3892,6 +3904,11 @@ snapshots:
       '@effect/tsgo-linux-x64': 0.63.0
       '@effect/tsgo-win32-arm64': 0.63.0
       '@effect/tsgo-win32-x64': 0.63.0
+
+  '@effect/vitest@4.1.2(effect@4.1.2)(vitest@5.0.5)':
+    dependencies:
+      effect: 4.1.2
+      vitest: 5.0.5(@types/node@26.6.6)(@vitest/browser-playwright@5.0.5)(@vitest/browser-preview@5.0.5)(@vitest/coverage-istanbul@5.0.5)(@vitest/ui@5.0.5)(@voidzero-dev/vite-plus-core@1.4.0(@types/node@26.6.6)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))(happy-dom@21.0.4)
 
   '@emnapi/core@1.11.0':
     dependencies:
