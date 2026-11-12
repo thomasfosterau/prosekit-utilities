@@ -39,7 +39,7 @@
  *
  * Run it after the build: `vp run check:dist` (the root task depends on every
  * package's `build`). The boundaries themselves are documented in each
- * package's CLAUDE.md § Boundary.
+ * package's AGENTS.md § Boundary.
  */
 
 import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';

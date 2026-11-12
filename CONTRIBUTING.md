@@ -26,20 +26,15 @@ Managed by Vite+ (`vp config`, run by `prepare`). **pre-commit** runs `vp staged
 1. The gates in [AGENTS.md § Verification](AGENTS.md#verification), each with its pass/fail.
 2. A changeset (`pnpm changeset`) where [AGENTS.md](AGENTS.md#branches-and-pull-requests) requires one.
 3. `git fetch origin trunk && git rebase origin/trunk`.
-4. Docs: the package `README.md` for any exported change; the package `CLAUDE.md` for a new term or invariant.
+4. Docs: the package `README.md` for any exported change; the package `AGENTS.md` for a new term or invariant.
 
 ## Running individual checks
 
+The gate commands are in [AGENTS.md § Commands](AGENTS.md#commands); these are the narrower ones:
+
 ```sh
-vp lint                                                    # oxlint, type-aware (with the Effect rules on the Effect code)
-vp fmt                                                     # oxfmt
-vp run check                                               # the whole type gate
-vp run --filter ./packages/prosekit-utilities check        # one package's type gate
+vp lint                                                  # oxlint, type-aware (with the Effect rules on the Effect code)
+vp fmt                                                   # oxfmt
+vp run --filter ./packages/prosekit-utilities check      # one package's type gate
 cd packages/prosekit-utilities && vp test run tests/allow-list.test.ts   # one file
-vp run --filter ./packages/prosekit-utilities test:coverage  # the core's suite with its thresholds
-vp run -r build                                            # every dist/
-vp run check:dist                                          # entry-point boundaries and side effects
-vp run test:coverage                                       # one istanbul map over every suite, for fallow
-vp run fallow:audit                                        # change-set review (not a CI gate)
-vp run --filter ./packages/prosekit-svelte storybook       # the Storybook dev loop, port 6006
 ```
