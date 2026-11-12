@@ -83,17 +83,20 @@ export const defineAllowList = (options: {
  * The first thing an allow-list walk found outside its vocabulary, as data
  * rather than as a bare string.
  *
- * `kind` says which of the three checks failed and `name` says what tripped
+ * `kind` says which of the three checks failed and `typeName` says what tripped
  * it (the offending node or mark type), so a caller can map a violation onto
  * its own error envelope without re-parsing `message`. `message` carries the
  * human-readable form both source applications emitted, unchanged, because
  * it is what an API returns to the author.
  */
 export class DocumentViolation
-  extends /* @__PURE__ */ Schema.TaggedError<DocumentViolation>()('DocumentViolation', {
+  extends /* @__PURE__ */ Schema.TaggedError<
+    DocumentViolation,
+    { readonly brand: unique symbol }
+  >()('DocumentViolation', {
     label: Schema.String,
     kind: /* @__PURE__ */ Schema.Literals(['node', 'mark', 'href']),
-    name: Schema.String,
+    typeName: Schema.String,
     message: Schema.String,
   }) {}
 
@@ -143,7 +146,7 @@ const nodeViolationOf = (allowList: AllowList, type: string): DocumentViolation 
   new DocumentViolation({
     label: allowList.label,
     kind: 'node',
-    name: type,
+    typeName: type,
     message: `node type "${type}" is not permitted in ${allowList.label}`,
   });
 
@@ -151,7 +154,7 @@ const markViolationOf = (allowList: AllowList, type: string): DocumentViolation 
   new DocumentViolation({
     label: allowList.label,
     kind: 'mark',
-    name: type,
+    typeName: type,
     message: `mark type "${type}" is not permitted in ${allowList.label}`,
   });
 
@@ -159,7 +162,7 @@ const hrefViolationOf = (allowList: AllowList): DocumentViolation =>
   new DocumentViolation({
     label: allowList.label,
     kind: 'href',
-    name: 'link',
+    typeName: 'link',
     message: `link href is not a permitted URL scheme`,
   });
 

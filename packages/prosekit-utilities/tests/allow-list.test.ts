@@ -205,7 +205,9 @@ describe('allowListViolation: node allow-list', () => {
     expect(value).toBeInstanceOf(DocumentViolation);
     expect(value._tag).toBe('DocumentViolation');
     expect(value.kind).toBe('node');
-    expect(value.name).toBe('heading');
+    expect(value.typeName).toBe('heading');
+    // No payload field shadows the error's own name (#127).
+    expect(value.name).toBe('DocumentViolation');
     expect(value.label).toBe('a comment');
     expect(value.message).toBe('node type "heading" is not permitted in a comment');
   });
@@ -232,7 +234,7 @@ describe('allowListViolation: mark allow-list', () => {
     assert(Option.isSome(found));
     const violation = found.value;
     expect(violation.kind).toBe('mark');
-    expect(violation.name).toBe('highlight');
+    expect(violation.typeName).toBe('highlight');
   });
 });
 
@@ -269,7 +271,7 @@ describe('allowListViolation: link href safety', () => {
     assert(Option.isSome(found));
     const violation = found.value;
     expect(violation.kind).toBe('href');
-    expect(violation.name).toBe('link');
+    expect(violation.typeName).toBe('link');
     expect(violation.message).toBe('link href is not a permitted URL scheme');
   });
 });
@@ -493,7 +495,7 @@ describe('checkAllowList', () => {
   it('is catchable by tag', () => {
     const doc: DocumentJSON = { type: 'blockDocument', content: [{ type: 'heading' }] };
     const recovered = checkComment(doc).pipe(
-      Effect.catchTag('DocumentViolation', (violation) => Effect.succeed(violation.name)),
+      Effect.catchTag('DocumentViolation', (violation) => Effect.succeed(violation.typeName)),
     );
     expect(Effect.runSync(recovered)).toBe('heading');
   });
