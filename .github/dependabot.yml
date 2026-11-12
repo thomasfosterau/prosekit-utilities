@@ -34,6 +34,7 @@ updates:
     open-pull-requests-limit: 10
     commit-message:
       prefix: chore
+    assignees: ['thomasfosterau']
     # pnpm holds a newly published version for 8 hours at install
     # (`minimumReleaseAge: 480` in pnpm-workspace.yaml). `cooldown` takes
     # whole days only, so 1 day is the smallest setting, and it is longer
@@ -114,7 +115,7 @@ updates:
       # Pinned EXACTLY under `overrides:` in pnpm-workspace.yaml: the
       # derivation in `./derive` walks ProseMirror's compiled schema, and a
       # stored document is only guaranteed to decode identically while that
-      # model is the same (packages/prosekit-utilities/CLAUDE.md §
+      # model is the same (packages/prosekit-utilities/AGENTS.md §
       # Invariants — a bump is a major changeset, decided by a person).
       - dependency-name: prosemirror-model
         update-types:
@@ -178,6 +179,7 @@ updates:
       interval: weekly
     commit-message:
       prefix: chore
+    assignees: ['thomasfosterau']
     cooldown:
       default-days: 1
     # No groups: each action updates in its own PR.
@@ -188,5 +190,6 @@ updates:
       interval: weekly
     commit-message:
       prefix: chore
+    assignees: ['thomasfosterau']
     cooldown:
       default-days: 1

@@ -1,0 +1,28 @@
+name: Auto-assign
+
+# Assigns every new pull request to the owner, so each one shows up in their
+# assigned-PRs view. No checkout and no third-party action: one `gh` call
+# against the event's PR URL, with the token scoped to pull requests.
+# Dependabot PRs are assigned by `assignees:` in .github/dependabot.yml, and a
+# PR that already has an assignee is left alone.
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+
+permissions: {}
+
+jobs:
+  assign:
+    name: Assign the owner
+    if: github.event.pull_request.assignees[0] == null && github.event.pull_request.user.login != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Assign
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr edit "$PR_URL" --add-assignee thomasfosterau
