@@ -14,9 +14,9 @@
  * @module
  */
 
-import * as Array from 'effect/Array';
+import * as Arr from 'effect/Array';
 import * as Option from 'effect/Option';
-import * as Predicate from 'effect/Predicate';
+import * as P from 'effect/Predicate';
 import * as Schema from 'effect/Schema';
 import type { DocumentJSON, NodeJSON } from './json.ts';
 
@@ -31,17 +31,14 @@ export interface DocumentMention {
  * the order each is first mentioned.
  *
  * When one `id` is mentioned more than once, the first occurrence's `label`
- * is kept. Tolerant in the same way as `extractDocumentText`: `null`,
- * `undefined`, a document with no `content`, stray non-object entries and a
+ * is kept. Tolerant in the same way as `extractDocumentText`: a document
+ * with no `content`, stray non-object entries and a
  * mention whose `id` is not a non-empty string (the node's default is `''`,
  * an unresolved mention) all contribute nothing rather than throwing. A
  * mention whose `label` is not a string is kept with an empty label.
  */
-export function extractMentions(
-  doc: NodeJSON | DocumentJSON | null | undefined,
-): ReadonlyArray<DocumentMention> {
-  if (!doc || !doc.content) return [];
-  return Array.dedupeWith(mentionParts(doc.content), (a, b) => a.id === b.id);
+export function extractMentions(doc: NodeJSON | DocumentJSON): ReadonlyArray<DocumentMention> {
+  return Arr.dedupeWith(mentionParts(doc.content ?? []), (a, b) => a.id === b.id);
 }
 
 /**
@@ -51,11 +48,8 @@ export function extractMentions(
  * Tolerant in the same way as {@link extractMentions}: a mark whose `workId`
  * is not a non-empty string contributes nothing.
  */
-export function extractCitations(
-  doc: NodeJSON | DocumentJSON | null | undefined,
-): ReadonlyArray<string> {
-  if (!doc || !doc.content) return [];
-  return Array.dedupe(citationParts(doc.content));
+export function extractCitations(doc: NodeJSON | DocumentJSON): ReadonlyArray<string> {
+  return Arr.dedupe(citationParts(doc.content ?? []));
 }
 
 /** A `mention` node with a usable id; its `label` is read leniently. */
@@ -79,15 +73,15 @@ const decodeCitation = /* @__PURE__ */ Schema.decodeUnknownOption(
 
 /** The mentions of one node subtree, in document order, duplicates kept. */
 function mentionParts(nodes: ReadonlyArray<unknown>): Array<DocumentMention> {
-  return Array.flatMap(nodes, (node) => {
-    if (!Predicate.isObject(node)) return [];
-    const own = Array.fromOption(
+  return Arr.flatMap(nodes, (node) => {
+    if (!P.isObject(node)) return [];
+    const own = Arr.fromOption(
       Option.map(decodeMention(node), ({ attrs }) => ({
         id: attrs.id,
-        label: Predicate.isString(attrs.label) ? attrs.label : '',
+        label: P.isString(attrs.label) ? attrs.label : '',
       })),
     );
-    return Predicate.hasProperty(node, 'content') && Array.isArray(node.content)
+    return P.hasProperty(node, 'content') && Arr.isArray(node.content)
       ? [...own, ...mentionParts(node.content)]
       : own;
   });
@@ -95,14 +89,14 @@ function mentionParts(nodes: ReadonlyArray<unknown>): Array<DocumentMention> {
 
 /** The cited work ids of one node subtree, in document order, duplicates kept. */
 function citationParts(nodes: ReadonlyArray<unknown>): Array<string> {
-  return Array.flatMap(nodes, (node) => {
-    if (!Predicate.isObject(node)) return [];
+  return Arr.flatMap(nodes, (node) => {
+    if (!P.isObject(node)) return [];
     const marks: ReadonlyArray<unknown> =
-      Predicate.hasProperty(node, 'marks') && Array.isArray(node.marks) ? node.marks : [];
-    const own = Array.flatMap(marks, (mark) =>
-      Array.fromOption(Option.map(decodeCitation(mark), ({ attrs }) => attrs.workId)),
+      P.hasProperty(node, 'marks') && Arr.isArray(node.marks) ? node.marks : [];
+    const own = Arr.flatMap(marks, (mark) =>
+      Arr.fromOption(Option.map(decodeCitation(mark), ({ attrs }) => attrs.workId)),
     );
-    return Predicate.hasProperty(node, 'content') && Array.isArray(node.content)
+    return P.hasProperty(node, 'content') && Arr.isArray(node.content)
       ? [...own, ...citationParts(node.content)]
       : own;
   });

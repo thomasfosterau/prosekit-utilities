@@ -17,7 +17,7 @@
  * @module
  */
 
-import * as Predicate from 'effect/Predicate';
+import * as P from 'effect/Predicate';
 import { describe, expect, it } from 'vite-plus/test';
 import type { DocumentJSON, MarkJSON, NodeJSON } from '../src/json.ts';
 import {
@@ -39,11 +39,8 @@ const inline = (...content: ReadonlyArray<NodeJSON>): DocumentJSON => ({
   type: 'inlineDocument',
   content,
 });
-const text = (value: string, marks?: ReadonlyArray<MarkJSON>): NodeJSON => ({
-  type: 'text',
-  text: value,
-  marks,
-});
+const text = (value: string, marks?: ReadonlyArray<MarkJSON>): NodeJSON =>
+  marks === undefined ? { type: 'text', text: value } : { type: 'text', text: value, marks };
 const link = (href: string): MarkJSON => ({ type: 'link', attrs: { href } });
 const para = (...content: ReadonlyArray<NodeJSON>): NodeJSON => ({ type: 'paragraph', content });
 const listItem = (
@@ -678,7 +675,7 @@ describe('createMarkdownSerialiser', () => {
       inlines: {
         token: (node, context) => {
           const value = node.attrs?.value;
-          return context.escape(Predicate.isString(value) ? value : '');
+          return context.escape(P.isString(value) ? value : '');
         },
       },
     });

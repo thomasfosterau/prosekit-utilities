@@ -19,7 +19,7 @@ Each package's `CLAUDE.md` holds its boundary and invariants (the derivation con
 
 ## Conventions
 
-- **Optional props and fields are declared `T | undefined`, never bare `x?: T`.** The workspace compiles with `exactOptionalPropertyTypes`; parenthesise function types: `onSelect?: (() => void) | undefined`.
+- **Absence is an `Option`, and optional members are bare `?:`.** In the Effect code (the core and the flowchart's `./node`), a value that may be missing is `Option.Option<T>`, never `T | null`; an optional property that holds one is `x?: Option.Option<T>`; an options-object member is `readonly x?: T` (no `| undefined`); an optional parameter is `x?: T`. The workspace compiles with `exactOptionalPropertyTypes`, so a caller forwarding an optional of its own spreads it in only when present. `effect/prefer-option-over-null` is at error. ProseMirror document and JSON wire shapes (`NodeJSON`, `MarkJSON`: ProseMirror's own bare `?:`) and Svelte props keep their native forms; Svelte props stay `x?: T | undefined`, with function types parenthesised: `onSelect?: (() => void) | undefined`.
 - **Relative imports carry their `.ts` extension** (`allowImportingTsExtensions` + `rewriteRelativeImportExtensions` in `tsconfig.base.json`).
 - **Tests import from `vite-plus/test`**, never `vitest`. A `.ts` test file under `tests/` mirrors the module it covers.
 - **Every export is documented** with a doc comment whose first sentence says what it is for, in words that stand alone in a consumer's hover — no app names there. Provenance (which app behaviour it carries) goes below the summary or in a `//` comment. A comment that cites a Website issue (`#NNN`) or an invariant id (`SEC-XSS-001`, `PERF-CPU-001`) is pointing at the app repos' evidence, not at anything here.

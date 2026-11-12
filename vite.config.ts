@@ -149,11 +149,9 @@ export default defineConfig({
           // loosely typed `attrs` / `toDOM` structurally require. Stays
           // visible as a warning.
           'effect/casting-awareness': 'warn',
-          // Hard-codes abbreviations (`Arr`, `P`, `R`, …) with no options, so
-          // it is unsatisfiable under the full-name convention (`import * as
-          // Option from 'effect/Option'`) this family shares with its
-          // consumers.
-          'effect/prefer-namespace-imports': 'off',
+          // The workspace uses the rule's canonical aliases (`Arr`, `P`, `R`,
+          // `Str`, …), not full names.
+          'effect/prefer-namespace-imports': 'error',
           // "Shape" IS this package's domain term, not a description of
           // structure: a `DocumentShape` is the browser-cheap structural half
           // of a document schema (packages/prosekit-utilities/CLAUDE.md §
@@ -167,25 +165,15 @@ export default defineConfig({
           // is still read, while the published surface it fires on today
           // keeps its shape.
           //
-          // Fires on `?: T | undefined`, the ONLY spelling of an optional
-          // member `exactOptionalPropertyTypes` lets a caller forward an
-          // optional of its own into (AGENTS.md § Conventions), and on the
-          // deliberately nullable public parameters (`extractDocumentText`,
-          // `extractMentions` and `extractCitations` take a nullable database
-          // column). Every site today is one of
-          // the two; switching to `Option` would break the published API.
-          'effect/prefer-option-over-null': 'warn',
-          // `NodeJSON` / `MarkJSON` and the derive options mirror
-          // ProseMirror's JSON model, whose `attrs` is an open record of
-          // `unknown`. That is deliberate: a caller must narrow a value
-          // before using it, which is what keeps an `href` from skipping
-          // `isSafeHref`.
-          'effect/no-unsafe-dictionary-type': 'warn',
-          // `unknown` is the honest type at a decode boundary: the public
-          // `DocumentGrammarGuard` and `DocumentSchema.decode` exist to take
-          // unparsed input, and `schemaFromDefault` reads ProseMirror's
-          // `any`-typed `AttributeSpec.default`.
-          'effect/no-unknown-parameters': 'warn',
+          // Absence is an `Option`, never `T | null`; options-object members
+          // are `readonly x?: T` (no `| undefined`) and optional parameters
+          // `x?: T` (AGENTS.md § Conventions). Zero sites.
+          'effect/prefer-option-over-null': 'error',
+          // `NodeJSON` / `MarkJSON` attrs are `Schema.Json`-valued; guards are
+          // `Predicate` / `Refinement` over `unknown`, and decode boundaries
+          // take `Schema.Json`. Both at zero sites.
+          'effect/no-unsafe-dictionary-type': 'error',
+          'effect/no-unknown-parameters': 'error',
           // The Effect code's assertions are already gated twice, by
           // `effect/casting-awareness` (a warning on each `as`) and by
           // `effect/require-safety-comment-for-type-assertion` (a `SAFETY:`

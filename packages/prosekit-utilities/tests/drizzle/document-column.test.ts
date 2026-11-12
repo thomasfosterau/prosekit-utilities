@@ -1,4 +1,4 @@
-import * as Predicate from 'effect/Predicate';
+import * as P from 'effect/Predicate';
 import * as Schema from 'effect/Schema';
 import { pgTable } from 'drizzle-orm/pg-core';
 import { assert, describe, expect, it } from 'vite-plus/test';
@@ -27,7 +27,7 @@ describe('documentColumn', () => {
   it('delegates to the Document codec: a valid document round-trips', () => {
     const value: FakeDocument = { type: 'doc', content: [] };
     const driver = table.document.mapToDriverValue(value);
-    assert(Predicate.isString(driver), 'toDriver writes JSON text');
+    assert(P.isString(driver), 'toDriver writes JSON text');
     expect(table.document.mapFromDriverValue(driver)).toEqual(value);
   });
 

@@ -18,9 +18,9 @@
 
 import * as Arr from 'effect/Array';
 import * as Option from 'effect/Option';
-import * as Predicate from 'effect/Predicate';
+import * as P from 'effect/Predicate';
 import * as Result from 'effect/Result';
-import * as String from 'effect/String';
+import * as Str from 'effect/String';
 import type { DocumentJSON, MarkJSON, NodeJSON } from '../json.ts';
 import { escapeMarkdown } from './escape.ts';
 import { childrenOf, stockBlocks, stockInlines, stockMarks } from './stock.ts';
@@ -93,7 +93,7 @@ const listMarker = (item: NodeJSON, index: number): string => {
   // No attrs at all renders as a bullet, exactly as an absent/unknown `kind` does.
   if (attrs === undefined) return '- ';
   if (attrs.kind === 'ordered') {
-    const start = Predicate.isNumber(attrs.order) ? attrs.order : 1;
+    const start = P.isNumber(attrs.order) ? attrs.order : 1;
     return `${start + index}. `;
   }
   if (attrs.kind === 'task') {
@@ -134,9 +134,9 @@ const markOfType = (marks: ReadonlyArray<MarkJSON>, type: string): Option.Option
  * serialisation, and that grouping lives here.
  */
 export function createMarkdownSerialiser(options?: {
-  readonly blocks?: Record<string, BlockSerialiser> | undefined;
-  readonly inlines?: Record<string, InlineSerialiser> | undefined;
-  readonly marks?: Record<string, MarkSerialiser> | undefined;
+  readonly blocks?: Record<string, BlockSerialiser>;
+  readonly inlines?: Record<string, InlineSerialiser>;
+  readonly marks?: Record<string, MarkSerialiser>;
 }): MarkdownSerialiser {
   const blocks = serialiserLookup(stockBlocks, options?.blocks ?? {});
   const inlines = serialiserLookup(stockInlines, options?.inlines ?? {});
@@ -194,7 +194,7 @@ export function createMarkdownSerialiser(options?: {
   /** Serialise a run of inline nodes to a single line-ish string. */
   const serialiseInline = (nodes: ReadonlyArray<NodeJSON>): string =>
     Arr.map(nodes, (node) =>
-      node.type === 'text' && Predicate.isString(node.text)
+      node.type === 'text' && P.isString(node.text)
         ? applyMarks(node.text, node.marks ?? [])
         : // An inline node with no serialiser contributes nothing: it is inside
           // a paragraph whose surrounding text must not gain a stray placeholder.
@@ -227,7 +227,7 @@ export function createMarkdownSerialiser(options?: {
         (bodyLines[0] ?? '') +
         bodyLines
           .slice(1)
-          .map((next) => '\n' + (String.isNonEmpty(next) ? continuation + next : ''))
+          .map((next) => '\n' + (Str.isNonEmpty(next) ? continuation + next : ''))
           .join('');
       return Arr.match(nested, {
         onEmpty: () => [line],
@@ -258,7 +258,7 @@ export function createMarkdownSerialiser(options?: {
           (group) => {
             if (group[0].type === 'list') return Result.succeed(serialiseListRun(group, ''));
             const rendered = serialiseBlock(group[0]);
-            return String.isNonEmpty(rendered) ? Result.succeed(rendered) : Result.failVoid;
+            return Str.isNonEmpty(rendered) ? Result.succeed(rendered) : Result.failVoid;
           },
         ).join('\n\n'),
     });

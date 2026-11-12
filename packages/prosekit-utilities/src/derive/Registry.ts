@@ -36,9 +36,9 @@
  * @module @thomasfosterau/prosekit-utilities/derive/Registry
  */
 
-import * as Array from 'effect/Array';
+import * as Arr from 'effect/Array';
 import * as Option from 'effect/Option';
-import * as Record from 'effect/Record';
+import * as R from 'effect/Record';
 import * as Schema from 'effect/Schema';
 import type { MarkType, NodeType, Schema as PmSchema } from '@prosekit/pm/model';
 import { deriveAttrsStruct } from './Attribute.ts';
@@ -61,6 +61,11 @@ export interface RegistryCache {
 export function createRegistryCache(): RegistryCache {
   // oxlint-disable-next-line effect/avoid-native-object-helpers -- `RegistryCache`'s exported shape; the caches are mutated in place through `readonly` fields, which an immutable `HashMap` cannot express
   return { nodeCache: new Map(), markCache: new Map() };
+}
+
+/** The struct fields of one derived node or mark, filled in as its parts are derived. */
+interface StructFields {
+  [name: PropertyKey]: Schema.Top;
 }
 
 /** Builds and memoises the derived schemas for a single ProseMirror schema. */
@@ -107,7 +112,7 @@ export class Registry {
   }
 
   #buildMark(markType: MarkType): Schema.Codec<DerivedMarkJSON> {
-    const fields: Record<string, Schema.Top> = {
+    const fields: StructFields = {
       type: Schema.Literal(markType.name),
     };
     const attrs = deriveAttrsStruct(
@@ -141,20 +146,17 @@ export class Registry {
    */
   #inlineMarks(): ReadonlyArray<MarkType> {
     if (Option.isSome(this.#inlineMarkCache)) return this.#inlineMarkCache.value;
-    const inlineNodes = Array.filter(
-      Record.values(this.#schema.nodes),
-      (node) => node.inlineContent,
-    );
+    const inlineNodes = Arr.filter(R.values(this.#schema.nodes), (node) => node.inlineContent);
     // A `null` `markSet` on any textblock means all marks.
-    if (Array.some(inlineNodes, (node) => node.markSet === null)) {
-      const all = Record.values(this.#schema.marks);
+    if (Arr.some(inlineNodes, (node) => node.markSet === null)) {
+      const all = R.values(this.#schema.marks);
       this.#inlineMarkCache = Option.some(all);
       return all;
     }
     // Dedupe by name, keeping first-discovery order — same-named marks within
     // one ProseMirror schema are the same `MarkType` instance.
-    const deduped = Array.dedupeWith(
-      Array.flatMap(inlineNodes, (node) => node.markSet ?? []),
+    const deduped = Arr.dedupeWith(
+      Arr.flatMap(inlineNodes, (node) => node.markSet ?? []),
       (a: MarkType, b: MarkType) => a.name === b.name,
     );
     this.#inlineMarkCache = Option.some(deduped);
@@ -167,9 +169,9 @@ export class Registry {
     // Marks serialise on inline nodes only; block nodes carry none.
     if (!nodeType.isInline) return Option.none();
     const markTypes = this.#inlineMarks();
-    if (!Array.isReadonlyArrayNonEmpty(markTypes)) return Option.none();
-    const members = Array.map(markTypes, (m) => this.mark(m));
-    return Option.some(members.length === 1 ? Array.headNonEmpty(members) : Schema.Union(members));
+    if (!Arr.isReadonlyArrayNonEmpty(markTypes)) return Option.none();
+    const members = Arr.map(markTypes, (m) => this.mark(m));
+    return Option.some(members.length === 1 ? Arr.headNonEmpty(members) : Schema.Union(members));
   }
 
   /** The content field schema for a node, or `Option.none()` for a leaf. */
@@ -177,15 +179,15 @@ export class Registry {
     const cardinality = contentCardinality(nodeType);
     if (cardinality === 'none') return Option.none();
     const childTypes = allowedContentTypes(nodeType);
-    if (!Array.isReadonlyArrayNonEmpty(childTypes)) return Option.none();
+    if (!Arr.isReadonlyArrayNonEmpty(childTypes)) return Option.none();
 
     // Reference each admissible child lazily so the mutually recursive node
     // graph terminates and declaration order does not matter.
-    const childMembers = Array.map(childTypes, (child): Schema.Codec<DerivedNodeJSON> =>
+    const childMembers = Arr.map(childTypes, (child): Schema.Codec<DerivedNodeJSON> =>
       Schema.suspend((): Schema.Codec<DerivedNodeJSON> => this.node(child)),
     );
     const child =
-      childMembers.length === 1 ? Array.headNonEmpty(childMembers) : Schema.Union(childMembers);
+      childMembers.length === 1 ? Arr.headNonEmpty(childMembers) : Schema.Union(childMembers);
 
     if (cardinality === 'required' && this.#options.nonEmptyRequiredContent !== false) {
       return Option.some(Schema.NonEmptyArray(child));
@@ -194,7 +196,7 @@ export class Registry {
   }
 
   #buildNode(nodeType: NodeType, typeName: string): Schema.Codec<DerivedNodeJSON> {
-    const fields: Record<string, Schema.Top> = {
+    const fields: StructFields = {
       type: Schema.Literal(typeName),
     };
 

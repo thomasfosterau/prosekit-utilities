@@ -20,7 +20,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 import * as Arr from 'effect/Array';
 import * as Order from 'effect/Order';
-import * as Record from 'effect/Record';
+import * as R from 'effect/Record';
 import * as Schema from 'effect/Schema';
 import type { MarkType, NodeType, Schema as PmSchema } from '@prosekit/pm/model';
 import { createEditor, union } from 'prosekit/core';
@@ -72,8 +72,8 @@ const nodeOf = (schema: PmSchema, name: string): NodeType =>
 const markOf = (schema: PmSchema, name: string): MarkType =>
   present(schema.marks[name], `mark ${name}`);
 
-const sortedKeys = <A>(record: Record.ReadonlyRecord<string, A>): ReadonlyArray<string> =>
-  Arr.sort(Record.keys(record), Order.String);
+const sortedKeys = <A>(record: R.ReadonlyRecord<string, A>): ReadonlyArray<string> =>
+  Arr.sort(R.keys(record), Order.String);
 
 // ── The presets ───────────────────────────────────────────────────────
 
@@ -171,7 +171,7 @@ describe('defineEditorBehaviour', () => {
       extension: union(defineDoc(), defineText(), defineParagraph(), defineEditorBehaviour()),
     }).schema;
     expect(sortedKeys(schema.nodes)).toEqual(['doc', 'paragraph', 'text']);
-    expect(Record.keys(schema.marks)).toEqual([]);
+    expect(R.keys(schema.marks)).toEqual([]);
   });
 });
 

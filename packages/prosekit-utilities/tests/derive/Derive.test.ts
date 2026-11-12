@@ -12,8 +12,8 @@ import {
 } from '../../src/derive/index.ts';
 import { figureTestSchema, inlineTestSchema, testSchema } from './fixture.ts';
 
-const decodes = (schema: Schema.Codec<unknown>, value: unknown): boolean =>
-  Result.isSuccess(Result.try(() => Schema.decodeUnknownSync(schema)(value)));
+const decodes = (schema: Schema.Codec<unknown>, value: Schema.Json): boolean =>
+  Result.isSuccess(Result.try(() => Schema.decodeSync(schema)(value)));
 
 describe('deriveMarkSchema', () => {
   it('models an attribute-less mark by its type literal', () => {
@@ -158,7 +158,7 @@ describe('deriveDocumentSchema: a fixed-sequence content expression (`image figc
   const Document = deriveDocumentSchema(figureTestSchema);
   const image = { type: 'image', attrs: { src: null } };
   const caption = { type: 'figcaption', content: [{ type: 'text', text: 'A caption' }] };
-  const figure = (content: ReadonlyArray<unknown>) => ({
+  const figure = (content: ReadonlyArray<Schema.Json>) => ({
     type: 'doc',
     content: [{ type: 'figure', content }],
   });

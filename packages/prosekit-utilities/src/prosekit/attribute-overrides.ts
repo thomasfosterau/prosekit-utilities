@@ -12,8 +12,8 @@
  * @module
  */
 
-import * as Array from 'effect/Array';
-import * as Record from 'effect/Record';
+import * as Arr from 'effect/Array';
+import * as R from 'effect/Record';
 import * as Schema from 'effect/Schema';
 import { required, type RequiredAttribute } from '../derive/index.ts';
 
@@ -22,8 +22,9 @@ import { required, type RequiredAttribute } from '../derive/index.ts';
  * name, then the Effect Schema for that attribute's value — optionally
  * wrapped in `required(…)`.
  */
-export type AttributeOverrides = Readonly<
-  Record<string, Readonly<Record<string, Schema.Top | RequiredAttribute>>>
+export type AttributeOverrides = R.ReadonlyRecord<
+  string,
+  R.ReadonlyRecord<string, Schema.Top | RequiredAttribute>
 >;
 
 /** The value schema both table cell types' `colwidth` attribute carries. */
@@ -106,7 +107,7 @@ export const mergeAttributeOverrides = (
   ...overrides: ReadonlyArray<AttributeOverrides>
 ): AttributeOverrides => {
   const none: AttributeOverrides = {};
-  return Array.reduce(overrides, none, (merged, current) =>
-    Record.union(merged, current, (left, right) => ({ ...left, ...right })),
+  return Arr.reduce(overrides, none, (merged, current) =>
+    R.union(merged, current, (left, right) => ({ ...left, ...right })),
   );
 };
