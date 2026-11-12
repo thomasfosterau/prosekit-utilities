@@ -1,5 +1,54 @@
 # @thomasfosterau/prosekit-utilities
 
+## 0.2.0
+
+### Minor Changes
+
+- 06cbf7e: **Breaking:** `DocumentViolation`'s `name` field is renamed to `typeName`. It is the offending node or mark type (or `'link'` for a refused `href`). Under its old name it shadowed `Error.prototype.name`, so `String(violation)` and loggers printed `heading` instead of `DocumentViolation`. To migrate, read `violation.typeName` where you read `violation.name`.
+
+  `DocumentViolation`, `DocumentDecodeError` and `HtmlRenderError` are now branded (`Schema.TaggedError<Self, { readonly brand: unique symbol }>()`). A plain object with the same fields no longer type-checks as one of these errors; construct them with `new` as before. Matching on `_tag` and `Effect.catchTag` are unchanged. Neither change touches the derivation or any node or mark spec.
+
+- 20df3b2: **Breaking (types only):** the JSON shapes and the decode boundary name their value types.
+
+  - `NodeJSON` / `MarkJSON` and the derived `DerivedNodeJSON` / `DerivedMarkJSON` now type `attrs` as `{ readonly [name: string]: Schema.Json }`, not `Record<string, unknown>`. A stored ProseMirror document's attributes are JSON values, and reading one still needs narrowing. A document built in code with a non-JSON attribute value (a `Date`, a function) no longer type-checks.
+  - `DocumentSchema.decode` takes a `Schema.Json` (the parsed body of a `jsonb` column or `JSON.parse`) rather than `unknown`. `DocumentSchema.is` stays a guard over `unknown`, now spelled `Predicate.Refinement<unknown, DocumentJSON<Name>>`, and `DocumentGrammarGuard` is now `Predicate.Predicate<unknown>`. Both are the same function types as before.
+
+  Nothing changes at runtime, and neither the derivation nor any node or mark spec changes.
+
+- e603ece: **Breaking:** absence is now modelled with `Option`, and optional members drop `| undefined`.
+
+  - `extractDocumentText`, `extractMentions` and `extractCitations` take the document itself (`NodeJSON | DocumentJSON`) instead of `… | null | undefined`. To read a nullable column, lift it at the read: `Option.fromNullishOr(row.body).pipe(Option.map(extractDocumentText))`. They still tolerate a missing `content` and malformed entries.
+  - Options-object members are now `readonly x?: T`, not `readonly x?: T | undefined`. This covers `defineDocumentEnvelope`'s `label`, `defineAllowList`'s `checkLinkHref`, `isSafeHref`'s `schemes`, `extractDocumentText`'s `separator`, `createMarkdownSerialiser`'s `blocks` / `inlines` / `marks`, `DocumentSchemaOptions`, `HtmlRendererOptions`, and the flowchart's `FlowchartSvgLabels`. `NodeJSON` / `MarkJSON` use ProseMirror's own bare `?:`. Under `exactOptionalPropertyTypes`, a caller that passes an explicit `undefined` (`{ label: maybeLabel }`) must now spread the member in only when it is defined.
+
+  Nothing changes at runtime, and neither the derivation nor any node or mark spec changes.
+
+- 21da31e: The `prosekit` peer range is now `^0.23.0` (was `^0.22.2`), and the `@prosekit/pm` peer range is now `^0.1.21` (was `^0.1.19`), so prosekit 0.23 satisfies them. Every gate already ran against prosekit 0.23.0 / `@prosekit/pm` 0.1.21, so no code changes. 0.22.x is no longer admitted: a fresh install of it resolves two copies of `@prosekit/core`, which fails ProseKit's own assertion, so it can't be supported. Upgrade prosekit to 0.23 alongside this release.
+- 7063e0f: Adds `extractMentions` and `extractCitations` to the root entry. They list the entities a stored document mentions (`{ id, label }`, from the `mention` node) and the works it cites (`workId`, from the `citation` mark), each id once, in document order. Both are pure, DOM-free and ProseKit-free, and tolerant of malformed rows in the same way as `extractDocumentText`. Neither changes the derivation or any node or mark spec.
+- 175b783: `RegistryCache`'s `nodeCache` and `markCache` are now `effect/MutableHashMap`s instead of native `Map`s. Code that only passes a cache from `createRegistryCache()` to `Registry` or `defineDocumentSchema` is unaffected; code that reads the fields directly uses `MutableHashMap.get` / `has` / `size`. The derived schemas are unchanged.
+- 3ba4763: Removes every type assertion from the package. Three changes are visible to consumers:
+
+  - `NodeJSON`, `MarkJSON` and `DocumentJSON` are now type aliases rather than interfaces, so each is assignable to `Schema.Json`. Their members are unchanged.
+  - `allowListViolation`, `checkAllowList` and `allowListFilter` accept any document whose `content` is a `ReadonlyArray<Schema.Json>`, which covers every `DocumentJSON`. That is what the walk always tolerated: a `null` entry or a node without a `type` is reported as a violation. Every document that type-checked before still does.
+  - `deriveDocumentSchemas` returns `{ readonly [K in Extract<keyof Specs, string>]: Schema.Codec<DerivedNodeJSON> }`, which has the same keys for a literal specs object.
+
+  **Behaviour:** `sanitiseDocument` (and so the HTML renderer) now drops a non-array `marks` or `content` from its copy instead of passing it through. Before, a malformed row like that made the render fail; now it renders without the malformed member.
+
+- 36cdb15: **Breaking:** "shape" is renamed to "envelope" across the public API. The type that declares a document's persisted `{ type, content }` envelope is now `DocumentEnvelope`. Nothing changes at runtime, on the wire, in the derivation or in any node or mark spec: a stored `blockDocument` still decodes exactly as before.
+
+  | Before | After |
+  | --- | --- |
+  | `DocumentShape<Name>` | `DocumentEnvelope<Name>` |
+  | `DocumentShape.narrow(allowList)` | `DocumentEnvelope.narrow(allowList)` |
+  | `defineDocumentShape({ name, label? })` | `defineDocumentEnvelope({ name, label? })` |
+  | `DocumentSchema#shape` | `DocumentSchema#envelope` |
+  | `defineDocumentSchema(shape, options)` | `defineDocumentSchema(envelope, options)` (positional) |
+
+  Update imports from `@thomasfosterau/prosekit-utilities` and read `schema.envelope` where you read `schema.shape`.
+
+### Patch Changes
+
+- a40675f: The published package now includes its `CHANGELOG.md`, so the release notes can be read from `node_modules`. No code changes.
+
 ## 0.1.0
 
 ### Minor Changes
