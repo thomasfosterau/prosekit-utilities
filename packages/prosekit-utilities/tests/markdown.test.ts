@@ -20,6 +20,7 @@
 import * as P from 'effect/Predicate';
 import { describe, expect, it } from 'vite-plus/test';
 import type { DocumentJSON, MarkJSON, NodeJSON } from '../src/json.ts';
+import { malformed } from './malformed.ts';
 import {
   createMarkdownSerialiser,
   escapeMarkdown,
@@ -450,9 +451,9 @@ describe('document: fallbacks', () => {
 
   it('returns the empty string for an empty or content-less document', () => {
     expect(document(block())).toBe('');
-    // SAFETY: a content-less envelope, ill-typed on purpose — a stored row can
+    // A content-less envelope, ill-typed on purpose — a stored row can
     // hold one, and the serialiser must degrade to the empty string.
-    expect(document({ type: 'blockDocument' } as DocumentJSON)).toBe('');
+    expect(document(malformed({ type: 'blockDocument' }))).toBe('');
   });
 
   it('skips an inline node with no serialiser', () => {

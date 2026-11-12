@@ -19,6 +19,8 @@
  * @module
  */
 
+import * as Option from 'effect/Option';
+import * as P from 'effect/Predicate';
 import { defineNodeSpec, union } from 'prosekit/core';
 
 // ---------------------------------------------------------------------------
@@ -98,9 +100,11 @@ export function defineMention() {
       },
     ],
     toDOM(node) {
-      // SAFETY: `id` and `label` have string defaults and `parseDOM` only ever
-      // yields strings, so ProseMirror's loosely typed `attrs` holds two here.
-      const { id, label } = node.attrs as { id: string; label: string };
+      // ProseMirror types `attrs` loosely; `id` and `label` have string
+      // defaults and `parseDOM` only ever yields strings, so the fallbacks
+      // are unreachable.
+      const id = Option.getOrElse(Option.liftPredicate(node.attrs.id, P.isString), () => '');
+      const label = Option.getOrElse(Option.liftPredicate(node.attrs.label, P.isString), () => '');
       return [
         'span',
         { 'data-mention-id': id, 'data-mention-label': label, class: 'mention' },

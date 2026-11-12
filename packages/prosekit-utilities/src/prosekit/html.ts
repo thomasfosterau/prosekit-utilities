@@ -23,7 +23,6 @@ import * as Result from 'effect/Result';
 import * as Schema from 'effect/Schema';
 import { htmlFromJSON, type NodeJSON as PkNodeJSON } from 'prosekit/core';
 import type { Schema as PmSchema } from '@prosekit/pm/model';
-import { toEditorDocument } from '../envelope.ts';
 import type { DocumentJSON, NodeJSON } from '../json.ts';
 import { isSafeHref } from '../url-safety.ts';
 
@@ -61,24 +60,28 @@ export class HtmlRenderError
  * to something which will render it, not only to {@link createHtmlRenderer}.
  */
 export function sanitiseDocument(node: NodeJSON): NodeJSON {
-  // `NodeJSON` already declares `marks` and `content`; the array guards stay
-  // because a hand-crafted document can carry a non-array value in either.
-  // A key the node does not carry stays absent from the copy.
-  const copy = { ...node };
-  const marked = Arr.isArray(node.marks)
-    ? {
-        ...copy,
-        marks: node.marks.filter((mark) => mark.type !== 'link' || isSafeHref(mark.attrs?.href)),
-      }
-    : copy;
-  return Arr.isArray(node.content)
-    ? {
-        ...marked,
-        content: node.content
-          .filter((child) => child.type !== 'image' || isSafeHref(child.attrs?.src))
-          .map(sanitiseDocument),
-      }
-    : marked;
+  return sanitiseNode(node);
+}
+
+// The same pass, typed as ProseKit's own `NodeJSON` (mutable arrays), which
+// is what `htmlFromJSON` takes. `filter` / `map` already build fresh mutable
+// arrays, so the copy needs no assertion to satisfy it.
+//
+// `NodeJSON` already declares `marks` and `content`; the array guards stay
+// because a hand-crafted document can carry a non-array value in either,
+// which is dropped from the copy. A key the node does not carry stays absent.
+function sanitiseNode(node: NodeJSON): PkNodeJSON {
+  const { marks, content, ...rest } = node;
+  const copy: PkNodeJSON = { ...rest };
+  if (Arr.isArray(marks)) {
+    copy.marks = marks.filter((mark) => mark.type !== 'link' || isSafeHref(mark.attrs?.href));
+  }
+  if (Arr.isArray(content)) {
+    copy.content = content
+      .filter((child) => child.type !== 'image' || isSafeHref(child.attrs?.src))
+      .map(sanitiseNode);
+  }
+  return copy;
 }
 
 // ---------------------------------------------------------------------------
@@ -191,11 +194,9 @@ export function createHtmlRenderer(options: HtmlRendererOptions): HtmlRenderer {
   };
 
   const serialise = (doc: NodeJSON | DocumentJSON, host: Document): string => {
-    const editorDocument = toEditorDocument(sanitiseDocument(doc));
-    // SAFETY: `NodeJSON` here is deeply readonly and ProseKit's is not; the
-    // two are structural twins otherwise, and nothing downstream mutates the
-    // tree.
-    const html = htmlFromJSON(editorDocument as PkNodeJSON, {
+    // Rewrite the envelope's `type` back to ProseMirror's own `doc`.
+    const editorDocument: PkNodeJSON = { ...sanitiseNode(doc), type: 'doc' };
+    const html = htmlFromJSON(editorDocument, {
       schema: options.schema(),
       document: host,
     });

@@ -142,8 +142,8 @@ Document shapes, allow-lists, safe URLs, plain-text and reference extraction, th
 
 | Export | Signature | Notes |
 | --- | --- | --- |
-| `NodeJSON` | `interface NodeJSON { readonly type: string; readonly attrs?: { readonly [name: string]: Schema.Json }; readonly content?: ReadonlyArray<NodeJSON>; readonly marks?: ReadonlyArray<MarkJSON>; readonly text?: string }` | A structural twin of `prosekit/core`'s `NodeJSON`, restated so this entry needs no ProseKit type import. |
-| `MarkJSON` | `interface MarkJSON { readonly type: string; readonly attrs?: { readonly [name: string]: Schema.Json } }` |  |
+| `NodeJSON` | `type NodeJSON = { readonly type: string; readonly attrs?: { readonly [name: string]: Schema.Json }; readonly content?: ReadonlyArray<NodeJSON>; readonly marks?: ReadonlyArray<MarkJSON>; readonly text?: string }` | A structural twin of `prosekit/core`'s `NodeJSON`, restated so this entry needs no ProseKit type import. |
+| `MarkJSON` | `type MarkJSON = { readonly type: string; readonly attrs?: { readonly [name: string]: Schema.Json } }` |  |
 | `DocumentJSON<Name>` | `{ readonly type: Name; readonly content: ReadonlyArray<NodeJSON> }` | The persisted envelope. `Name` defaults to `string`. |
 | `DocumentGrammarGuard` | `Predicate.Predicate<unknown>` (`(value: unknown) => boolean`) | What `./prosekit`'s `DocumentSchema.is` provides, and what `DocumentShape.install` accepts. |
 | `defineDocumentShape` | `<Name extends string>(options: { readonly name: Name; readonly label?: string }) => DocumentShape<Name>` | One closure per shape, so two shapes never share an install. `label` defaults to the name split into words (`blockDocument` → `block document`). |
@@ -151,9 +151,9 @@ Document shapes, allow-lists, safe URLs, plain-text and reference extraction, th
 | `AllowList` | `{ readonly label: string; readonly nodes: HashSet.HashSet<string>; readonly marks: HashSet.HashSet<string>; readonly checkLinkHref: boolean }` | One write surface's vocabulary. |
 | `defineAllowList` | `(options: { readonly label: string; readonly nodes: Iterable<string>; readonly marks: Iterable<string>; readonly checkLinkHref?: boolean }) => AllowList` | Any iterable of type names. `checkLinkHref` defaults to `true`. |
 | `DocumentViolation` | `class DocumentViolation extends Schema.TaggedError<DocumentViolation>()('DocumentViolation', { label: Schema.String, kind: Schema.Literals(['node', 'mark', 'href']), name: Schema.String, message: Schema.String }) {}` | The three violation forms as data. Yieldable in an `Effect.gen`. |
-| `allowListViolation` | `(allowList: AllowList, doc: { readonly content: ReadonlyArray<NodeJSON> }) => Option.Option<DocumentViolation>` | Depth-first, document order, first offender. The envelope's own `type` is not checked — only its `content`. |
-| `checkAllowList` | `(allowList: AllowList) => <D extends { readonly content: ReadonlyArray<NodeJSON> }>(doc: D) => Effect.Effect<D, DocumentViolation>` | The Effect-shaped write seam. Curried so an app names the check once and applies it per write. |
-| `allowListFilter` | `(allowList: AllowList) => SchemaAST.Filter<{ readonly content: ReadonlyArray<unknown> }>` | The same walk as a `Schema.check`-compatible filter. What `DocumentShape.narrow` uses; exported so it composes onto any schema carrying `content`. |
+| `allowListViolation` | `(allowList: AllowList, doc: { readonly content: ReadonlyArray<Schema.Json> }) => Option.Option<DocumentViolation>` | Depth-first, document order, first offender. The envelope's own `type` is not checked — only its `content`. |
+| `checkAllowList` | `(allowList: AllowList) => <D extends { readonly content: ReadonlyArray<Schema.Json> }>(doc: D) => Effect.Effect<D, DocumentViolation>` | The Effect-shaped write seam. Curried so an app names the check once and applies it per write. |
+| `allowListFilter` | `(allowList: AllowList) => SchemaAST.Filter<{ readonly content: ReadonlyArray<Schema.Json> }>` | The same walk as a `Schema.check`-compatible filter. What `DocumentShape.narrow` uses; exported so it composes onto any schema carrying `content`. |
 | `isSafeHref` | `(href: unknown, options?: { readonly schemes?: ReadonlyArray<string> }) => href is string` | Default schemes `http`, `https`, `mailto`; root-relative paths and fragment links always allowed. Parses with `URL` rather than a string prefix, so obfuscated schemes (`JaVaScRiPt:`, leading whitespace) are rejected. |
 | `DEFAULT_SAFE_SCHEMES` | `ReadonlyArray<string>` | `['http', 'https', 'mailto']`. |
 | `extractDocumentText` | `(doc: NodeJSON \| DocumentJSON, options?: { readonly separator?: string }) => string` | Default separator `' '`. Tolerant of a missing `content` and of non-object entries — a malformed row degrades to empty text rather than throwing. For a column that may be absent, `Option.fromNullishOr(row.body).pipe(Option.map(extractDocumentText))`. |
@@ -256,7 +256,7 @@ Reads an Effect Schema back out of a compiled ProseMirror schema at runtime, so 
 | Export | Signature | Notes |
 | --- | --- | --- |
 | `deriveDocumentSchema` | `(schema: PmSchema, options?: DeriveDocumentOptions) => Schema.Codec<DerivedNodeJSON>` | Rooted at `schema.topNodeType`; `topTypeName` renames it. |
-| `deriveDocumentSchemas` | `<Specs extends Record<string, DocumentSchemaSpec>>(schemas: Specs, options?: DeriveOptions) => { readonly [K in keyof Specs]: Schema.Codec<DerivedNodeJSON> }` | Several related document schemas, sharing one `Registry` so common structure (a shared `text` node, shared marks) derives once. Results stay fully independent codecs — only the derivation is shared. Eager: every entry compiles up front. |
+| `deriveDocumentSchemas` | `<Specs extends Record<string, DocumentSchemaSpec>>(schemas: Specs, options?: DeriveOptions) => { readonly [K in Extract<keyof Specs, string>]: Schema.Codec<DerivedNodeJSON> }` | Several related document schemas, sharing one `Registry` so common structure (a shared `text` node, shared marks) derives once. Results stay fully independent codecs — only the derivation is shared. Eager: every entry compiles up front. |
 | `deriveNodeSchema` | `(nodeType: NodeType, options?: DeriveOptions) => Schema.Codec<DerivedNodeJSON>` | One node's recursive subtree. |
 | `deriveMarkSchema` | `(markType: MarkType, options?: DeriveOptions) => Schema.Codec<DerivedMarkJSON>` | One mark's `{ type, attrs? }` shape. |
 | `DocumentSchemaSpec` | `{ readonly schema: PmSchema; readonly topTypeName?: string }` | One entry in a `deriveDocumentSchemas` call. |

@@ -27,6 +27,7 @@ import {
   DocumentViolation,
 } from '../src/allow-list.ts';
 import type { DocumentJSON, MarkJSON, NodeJSON } from '../src/json.ts';
+import { malformed } from './malformed.ts';
 
 // ── The four vocabularies the source applications ship ────────────────
 
@@ -89,15 +90,6 @@ const paragraph = (text: string, marks: ReadonlyArray<MarkJSON> = []): DocumentJ
     },
   ],
 });
-
-/**
- * A stored-row value the envelope type rules out (a `null` entry, a node
- * missing its `type`, a non-array `marks`), typed as a document on purpose:
- * the walk runs on values only proved to be JSON, so these are reachable.
- */
-const malformed = (value: Schema.Json | DocumentJSON): DocumentJSON =>
-  // SAFETY: deliberately ill-typed input is the point of every caller.
-  value as DocumentJSON;
 
 /** The violation's message, if there is one. */
 const message = (

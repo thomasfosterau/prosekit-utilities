@@ -144,11 +144,9 @@ export default defineConfig({
         rules: {
           ...recommended.rules,
           ...effect.configs.recommended.rules,
-          // `casting-awareness` is an awareness prompt, not a defect rule —
-          // it fires on every `as`, including the narrowings ProseMirror's
-          // loosely typed `attrs` / `toDOM` structurally require. Stays
-          // visible as a warning.
-          'effect/casting-awareness': 'warn',
+          // Both cast rules are at zero sites; keep them at `error`.
+          'effect/casting-awareness': 'error',
+          'typescript/no-unsafe-type-assertion': 'error',
           // The workspace uses the rule's canonical aliases (`Arr`, `P`, `R`,
           // `Str`, …), not full names.
           'effect/prefer-namespace-imports': 'error',
@@ -174,12 +172,6 @@ export default defineConfig({
           // take `Schema.Json`. Both at zero sites.
           'effect/no-unsafe-dictionary-type': 'error',
           'effect/no-unknown-parameters': 'error',
-          // The Effect code's assertions are already gated twice, by
-          // `effect/casting-awareness` (a warning on each `as`) and by
-          // `effect/require-safety-comment-for-type-assertion` (a `SAFETY:`
-          // invariant above it). What is left narrows ProseMirror's untyped
-          // `attrs` or re-types a mapped record no generic can prove.
-          'typescript/no-unsafe-type-assertion': 'off',
         },
       },
       // The test suites are the boundary where an Effect is run to a value

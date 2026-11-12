@@ -1,4 +1,5 @@
 import * as Option from 'effect/Option';
+import * as Fn from 'effect/Function';
 import * as Schema from 'effect/Schema';
 import { describe, expect, it } from 'vite-plus/test';
 import {
@@ -13,9 +14,9 @@ const owner: AttributeOwner = { kind: 'node', name: 'test' };
 
 /** `decodeUnknownSync` over an erased `Schema.Top` — see effect-forms/src/Command.ts's identical cast. */
 const decodeSync = (schema: Schema.Top) =>
-  // SAFETY: every schema these cases build is a context-free codec; `Top`
-  // only erases its type parameters, which a sync decode never reads.
-  Schema.decodeUnknownSync(schema as Schema.Codec<unknown>);
+  // `Top` only erases the type parameters; every schema these cases build is
+  // a context-free codec, which a sync decode never needs more than.
+  Schema.decodeUnknownSync(Fn.cast<Schema.Top, Schema.Codec<unknown>>(schema));
 
 describe('parseValidateGrammar', () => {
   it('maps a single primitive name', () => {

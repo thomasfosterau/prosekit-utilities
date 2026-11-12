@@ -24,10 +24,10 @@ import type * as Schema from 'effect/Schema';
  * reads `mark.attrs?.href` has to narrow it, which is what keeps the
  * `isSafeHref` check from being accidentally skipped.
  */
-export interface MarkJSON {
+export type MarkJSON = {
   readonly type: string;
   readonly attrs?: { readonly [name: string]: Schema.Json };
-}
+};
 
 /**
  * One ProseMirror node in its JSON form.
@@ -36,13 +36,13 @@ export interface MarkJSON {
  * serialisation is: a text leaf carries `text`, a container carries
  * `content`, an atom carries neither.
  */
-export interface NodeJSON {
+export type NodeJSON = {
   readonly type: string;
   readonly attrs?: { readonly [name: string]: Schema.Json };
   readonly content?: ReadonlyArray<NodeJSON>;
   readonly marks?: ReadonlyArray<MarkJSON>;
   readonly text?: string;
-}
+};
 
 /**
  * The persisted document envelope: a ProseMirror document whose top-level
@@ -54,7 +54,7 @@ export interface NodeJSON {
  * editor itself wants, and `toEditorDocument` / `fromEditorDocument` move
  * between the two.
  */
-export interface DocumentJSON<Name extends string = string> {
+export type DocumentJSON<Name extends string = string> = {
   readonly type: Name;
   readonly content: ReadonlyArray<NodeJSON>;
-}
+};

@@ -9,15 +9,10 @@
  * @module
  */
 
-import type * as Schema from 'effect/Schema';
 import { describe, expect, it } from 'vite-plus/test';
 import { extractCitations, extractMentions } from '../src/document-references.ts';
 import type { DocumentJSON, NodeJSON } from '../src/json.ts';
-
-/** A stored-row value the envelope type rules out, typed as a document on purpose. */
-const malformed = (value: Schema.Json | DocumentJSON): DocumentJSON =>
-  // SAFETY: deliberately ill-typed input is the point of every caller.
-  value as DocumentJSON;
+import { malformed } from './malformed.ts';
 
 const mention = (id: string, label: string): NodeJSON => ({
   type: 'mention',

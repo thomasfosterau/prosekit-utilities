@@ -32,6 +32,7 @@
  * @module
  */
 
+import * as Fn from 'effect/Function';
 import * as Option from 'effect/Option';
 import * as Result from 'effect/Result';
 import * as Schema from 'effect/Schema';
@@ -160,7 +161,7 @@ export function defineDocumentShape<Name extends string>(options: {
   // assertion, so it goes through `Schema.Top`. This is the single documented
   // seam where it is pinned to the declared shape; the grammar guard, once
   // installed, is what proves the narrower type.
-  const documentSchema = structural as Schema.Codec<DocumentJSON<Name>>;
+  const documentSchema = Fn.cast<Schema.Top, Schema.Codec<DocumentJSON<Name>>>(structural);
 
   const guard = Schema.is(documentSchema);
 

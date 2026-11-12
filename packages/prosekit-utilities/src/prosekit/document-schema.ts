@@ -40,6 +40,7 @@
 
 import * as Arr from 'effect/Array';
 import * as Effect from 'effect/Effect';
+import * as Fn from 'effect/Function';
 import * as Option from 'effect/Option';
 import type * as P from 'effect/Predicate';
 import * as Result from 'effect/Result';
@@ -204,7 +205,7 @@ export function defineDocumentSchema<Name extends string>(
   // `type` is `string`, not the literal). This is the single documented seam
   // where it is pinned to the declared shape — the same convention the
   // `Registry` itself uses internally.
-  const Document = derived as Schema.Codec<DocumentJSON<Name>>;
+  const Document = Fn.cast<Schema.Top, Schema.Codec<DocumentJSON<Name>>>(derived);
 
   const guard = Schema.is(Document);
   const decodeUnknown = Schema.decodeUnknownEffect(Document);

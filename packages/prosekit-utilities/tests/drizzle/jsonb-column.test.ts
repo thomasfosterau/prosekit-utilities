@@ -48,9 +48,9 @@ describe('jsonbSchemaColumn', () => {
     // common case in production, and the one the source comment calls out as
     // making the JSON-string branch above dead under that driver.
     const parsed = { kind: 'widget', count: 7 };
-    // SAFETY: the column is typed for the string driver; this case feeds the
+    // The column is typed for the string driver; this case feeds the
     // already-parsed object node-pg hands Drizzle at runtime, on purpose.
-    expect(table.widget.mapFromDriverValue(parsed as never)).toEqual(parsed);
+    expect(table.widget.mapFromDriverValue(parsed)).toEqual(parsed);
   });
 
   it('throws on the read side when a non-string driver value is invalid', () => {
@@ -63,10 +63,9 @@ describe('jsonbSchemaColumn', () => {
     // on jsonbSchemaColumn): toDriver must accept a shape the schema would
     // reject and simply JSON-encode it.
     const invalid = { kind: 'gadget', count: 'nope' };
-    // SAFETY: a value the schema rejects, typed past `Widget` on purpose —
-    // the point is that toDriver never validates.
-    expect(() => table.widget.mapToDriverValue(invalid as never)).not.toThrow();
-    // SAFETY: as above.
-    expect(decodeJson(table.widget.mapToDriverValue(invalid as never))).toEqual(invalid);
+    // `mapToDriverValue` takes `unknown`, so the value the schema rejects
+    // needs no cast: the point is that toDriver never validates.
+    expect(() => table.widget.mapToDriverValue(invalid)).not.toThrow();
+    expect(decodeJson(table.widget.mapToDriverValue(invalid))).toEqual(invalid);
   });
 });

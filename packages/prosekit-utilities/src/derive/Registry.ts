@@ -37,6 +37,7 @@
  */
 
 import * as Arr from 'effect/Array';
+import * as Fn from 'effect/Function';
 import * as Option from 'effect/Option';
 import * as R from 'effect/Record';
 import * as Schema from 'effect/Schema';
@@ -128,7 +129,7 @@ export class Registry {
     // A struct built from a runtime-computed field record has no static
     // relation to `DerivedMarkJSON` (there is nothing to decode here), so the
     // documented shape is asserted at this single seam, from `Schema.Top`.
-    return struct as Schema.Codec<DerivedMarkJSON>;
+    return Fn.cast<Schema.Top, Schema.Codec<DerivedMarkJSON>>(struct);
   }
 
   #inlineMarkCache: Option.Option<ReadonlyArray<MarkType>> = Option.none();
@@ -231,6 +232,6 @@ export class Registry {
     // SAFETY: see the mark seam above — the dynamic struct matches
     // `DerivedNodeJSON` by construction, so assert it here rather than
     // propagate a wider type.
-    return struct as Schema.Codec<DerivedNodeJSON>;
+    return Fn.cast<Schema.Top, Schema.Codec<DerivedNodeJSON>>(struct);
   }
 }
