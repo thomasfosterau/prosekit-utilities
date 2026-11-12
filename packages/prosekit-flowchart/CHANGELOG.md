@@ -1,5 +1,35 @@
 # @thomasfosterau/prosekit-flowchart
 
+## 0.2.0
+
+### Minor Changes
+
+- e603ece: **Breaking:** absence is now modelled with `Option`, and optional members drop `| undefined`.
+
+  - `extractDocumentText`, `extractMentions` and `extractCitations` take the document itself (`NodeJSON | DocumentJSON`) instead of `… | null | undefined`. To read a nullable column, lift it at the read: `Option.fromNullishOr(row.body).pipe(Option.map(extractDocumentText))`. They still tolerate a missing `content` and malformed entries.
+  - Options-object members are now `readonly x?: T`, not `readonly x?: T | undefined`. This covers `defineDocumentEnvelope`'s `label`, `defineAllowList`'s `checkLinkHref`, `isSafeHref`'s `schemes`, `extractDocumentText`'s `separator`, `createMarkdownSerialiser`'s `blocks` / `inlines` / `marks`, `DocumentSchemaOptions`, `HtmlRendererOptions`, and the flowchart's `FlowchartSvgLabels`. `NodeJSON` / `MarkJSON` use ProseMirror's own bare `?:`. Under `exactOptionalPropertyTypes`, a caller that passes an explicit `undefined` (`{ label: maybeLabel }`) must now spread the member in only when it is defined.
+
+  Nothing changes at runtime, and neither the derivation nor any node or mark spec changes.
+
+- 21da31e: The `prosekit` peer range is now `^0.23.0` (was `^0.22.2`), and the `@prosekit/pm` peer range is now `^0.1.21` (was `^0.1.19`), so prosekit 0.23 satisfies them. Every gate already ran against prosekit 0.23.0 / `@prosekit/pm` 0.1.21, so no code changes. 0.22.x is no longer admitted: a fresh install of it resolves two copies of `@prosekit/core`, which fails ProseKit's own assertion, so it can't be supported. Upgrade prosekit to 0.23 alongside this release.
+
+### Patch Changes
+
+- a40675f: The published package now includes its `CHANGELOG.md`, so the release notes can be read from `node_modules`. No code changes.
+- 66cd1ee: `flowchartToolbarItem()` and `flowchartSlashCommand()` no longer throw when the editor's grammar has no `flowchart` node. ProseKit's `insertNode` throws `Cannot find ProseMirror node type "flowchart"` for a type the schema lacks, so the entries now check the schema first and only refocus the editor, as their documentation already said.
+- Updated dependencies [06cbf7e]
+- Updated dependencies [a40675f]
+- Updated dependencies [20df3b2]
+- Updated dependencies [e603ece]
+- Updated dependencies [21da31e]
+- Updated dependencies [7063e0f]
+- Updated dependencies [175b783]
+- Updated dependencies [3ba4763]
+- Updated dependencies [36cdb15]
+- Updated dependencies [1e12a89]
+  - @thomasfosterau/prosekit-utilities@0.2.0
+  - @thomasfosterau/prosekit-svelte@0.2.0
+
 ## 0.1.0
 
 ### Minor Changes

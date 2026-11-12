@@ -1,5 +1,26 @@
 # @thomasfosterau/prosekit-svelte
 
+## 0.2.0
+
+### Minor Changes
+
+- 21da31e: The `prosekit` peer range is now `^0.23.0` (was `^0.22.2`), and the `@prosekit/pm` peer range is now `^0.1.21` (was `^0.1.19`), so prosekit 0.23 satisfies them. Every gate already ran against prosekit 0.23.0 / `@prosekit/pm` 0.1.21, so no code changes. 0.22.x is no longer admitted: a fresh install of it resolves two copies of `@prosekit/core`, which fails ProseKit's own assertion, so it can't be supported. Upgrade prosekit to 0.23 alongside this release.
+
+### Patch Changes
+
+- a40675f: The published package now includes its `CHANGELOG.md`, so the release notes can be read from `node_modules`. No code changes.
+- 1e12a89: Escape from the toolbar's insert menu returns focus to the Insert button again under bits-ui 2.21. Before this fix it was left on the page body: bits-ui 2.21 stopped restoring focus to a trigger with `tabindex="-1"`, which the toolbar's roving tabindex sets.
+- Updated dependencies [06cbf7e]
+- Updated dependencies [a40675f]
+- Updated dependencies [20df3b2]
+- Updated dependencies [e603ece]
+- Updated dependencies [21da31e]
+- Updated dependencies [7063e0f]
+- Updated dependencies [175b783]
+- Updated dependencies [3ba4763]
+- Updated dependencies [36cdb15]
+  - @thomasfosterau/prosekit-utilities@0.2.0
+
 ## 0.1.0
 
 ### Minor Changes
