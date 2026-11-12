@@ -129,24 +129,33 @@
     returnFocusToEditor = !opening;
   }
 
+  // The trigger, whatever renders it (bits-ui's own `ref`). bits-ui 2.21's
+  // focus scope no longer restores focus to a trigger with `tabindex="-1"`
+  // (the toolbar's roving tabindex leaves every button but the current one
+  // at -1), so the return is made explicit here.
+  let triggerRef = $state<HTMLElement | null>(null);
+
   /**
-   * Redirects bits-ui's focus return.
+   * Decides where focus goes when the menu closes.
    *
-   * On close it puts focus back on the trigger, which is right for Escape
-   * and wrong after an insertion — the caret belongs where the block just
-   * landed. Preventing the default and focusing the document is the
+   * After Escape, back to the trigger (the menu-button pattern). After an
+   * insertion, into the document: the caret belongs where the block just
+   * landed. Preventing the default and focusing the target is the
    * primitive's own seam for exactly this.
    */
   function closeAutoFocus(event: Event): void {
-    if (!returnFocusToEditor) return;
-    returnFocusToEditor = false;
     event.preventDefault();
-    $editorStore.focus();
+    if (returnFocusToEditor) {
+      returnFocusToEditor = false;
+      $editorStore.focus();
+      return;
+    }
+    triggerRef?.focus();
   }
 </script>
 
 <DropdownMenu.Root bind:open>
-  <DropdownMenu.Trigger>
+  <DropdownMenu.Trigger bind:ref={triggerRef}>
     {#snippet child({ props })}
       {#if trigger}
         {@render trigger({ props })}
