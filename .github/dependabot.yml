@@ -168,12 +168,12 @@ updates:
           - 'version-update:semver-minor'
           - 'version-update:semver-patch'
 
-  # The SHA-pinned actions in .github/workflows and .github/actions.
-  # Dependabot updates the SHA and the trailing `# vX.Y.Z` comment together.
+  # The actions in .github/workflows: SHA pins (Dependabot updates the SHA
+  # and the trailing `# vX.Y.Z` comment together) and the exact-tag
+  # `voidzero-dev/setup-vp@vX.Y.Z` (Dependabot bumps the tag).
   - package-ecosystem: github-actions
     directories:
       - '/'
-      - '/.github/actions/setup'
     schedule:
       interval: weekly
     commit-message:

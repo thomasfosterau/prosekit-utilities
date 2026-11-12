@@ -1,5 +1,5 @@
 # zizmor (GitHub Actions static analysis) configuration. Run it with
-# `uvx zizmor --offline .github`; every workflow and the setup action should
+# `uvx zizmor --offline .github`; every workflow should
 # report no findings beyond what is configured away here, each with its reason.
 rules:
   dependabot-cooldown:
@@ -9,13 +9,12 @@ rules:
       # cooldown, which counts whole days, waits 1 — longer than pnpm, so a
       # Dependabot PR never proposes a version pnpm would refuse.
       days: 1
-  self-repository:
-    # `./.github/actions/setup` is the documented local-action path; the
-    # `$/` spelling buys nothing for a single-repo composite action.
-    disable: true
-  adhoc-packages:
-    ignore:
-      # The Release job installs one exact, reviewed npm (`npm@11.20.0`) for
-      # OIDC trusted publishing; the step's comment says why it is pinned
-      # rather than taken from the Node release.
-      - release.yml
+  unpinned-uses:
+    config:
+      policies:
+        # The owner's decision (#162): Vite+'s own setup action is taken at
+        # an exact release tag (`@vX.Y.Z`, never the frozen `@v1`), as its
+        # README recommends; every other action stays pinned to a full
+        # commit SHA.
+        'voidzero-dev/setup-vp': ref-pin
+        '*': hash-pin
