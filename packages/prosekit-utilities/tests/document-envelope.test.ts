@@ -275,6 +275,11 @@ describe('DocumentEnvelope.Schema: grammar installed', () => {
 
 // ── narrow ────────────────────────────────────────────────────────────
 
+const paragraph = (...content: ReadonlyArray<NodeJSON>) => ({
+  type: 'blockDocument',
+  content: [{ type: 'paragraph', content }],
+});
+
 describe('DocumentEnvelope.narrow', () => {
   const envelope = defineDocumentEnvelope({ name: 'blockDocument' });
   const comment = defineAllowList({
@@ -283,11 +288,6 @@ describe('DocumentEnvelope.narrow', () => {
     marks: ['bold', 'italic', 'strike', 'code', 'link'],
   });
   const decodeNarrow = Schema.decodeUnknownSync(envelope.narrow(comment));
-
-  const paragraph = (...content: ReadonlyArray<NodeJSON>) => ({
-    type: 'blockDocument',
-    content: [{ type: 'paragraph', content }],
-  });
 
   it('accepts a document inside the allow-list', () => {
     const doc = paragraph({ type: 'text', text: 'hello' });
