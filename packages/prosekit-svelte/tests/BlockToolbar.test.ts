@@ -55,11 +55,13 @@ test('is a toolbar named by `label`', async () => {
 test('renders every default item as a button carrying its label', async () => {
   const screen = await render(ToolbarFixture, {});
 
-  for (const item of defaultButtons) {
-    await expect
-      .element(screen.getByRole('button', { name: item.label, exact: true }))
-      .toBeInTheDocument();
-  }
+  await Promise.all(
+    defaultButtons.map(async (item) => {
+      await expect
+        .element(screen.getByRole('button', { name: item.label, exact: true }))
+        .toBeInTheDocument();
+    }),
+  );
   // Plus the insert trigger.
   await expect
     .element(screen.getByRole('button', { name: 'Insert', exact: true }))

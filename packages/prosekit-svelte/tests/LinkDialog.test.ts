@@ -30,10 +30,12 @@ test('Tab cycles within the dialog and never escapes it', async () => {
   const screen = await render(LinkDialog, { open: true, onSubmit: () => undefined });
   const dialog = screen.getByRole('dialog').element();
 
-  for (let press = 0; press < 7; press += 1) {
+  // Each press lands, and is checked, before the next: a promise chain, not a loop.
+  await Array.from({ length: 7 }).reduce<Promise<void>>(async (previous) => {
+    await previous;
     await userEvent.tab();
     expect(dialog.contains(document.activeElement)).toBe(true);
-  }
+  }, Promise.resolve());
 });
 
 test('Escape closes it', async () => {
@@ -147,9 +149,11 @@ test('every label is a prop', async () => {
   await expect.element(screen.getByRole('dialog')).toHaveAccessibleName('Lien');
   await expect.element(screen.getByLabelText('Adresse')).toBeInTheDocument();
   await expect.element(screen.getByLabelText('Titre')).toBeInTheDocument();
-  for (const name of ['Appliquer', 'Retirer', 'Annuler', 'Fermer']) {
-    await expect.element(screen.getByRole('button', { name })).toBeInTheDocument();
-  }
+  await Promise.all(
+    ['Appliquer', 'Retirer', 'Annuler', 'Fermer'].map(async (name) => {
+      await expect.element(screen.getByRole('button', { name })).toBeInTheDocument();
+    }),
+  );
 });
 
 test('spreads native attributes on the dialog element, merges `class`, and keeps the modal wiring', async () => {
