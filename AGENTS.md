@@ -1,6 +1,6 @@
 # AGENTS.md
 
-A publishable library workspace, not an application: `packages/*/dist` is the product, and it must stay wire-compatible with documents the owner's apps have already persisted. The toolchain is the family's standard (Vite+ on pnpm, the Effect lint presets, fallow), as in `thomasfosterau/effect-web` and `thomasfosterau/components`. There is no docgen: the API reference is each package's hand-written `README.md`.
+A publishable library workspace, not an application: `packages/*/dist` is the product, and it must stay wire-compatible with documents the owner's apps have already persisted. The toolchain is the family's standard (Vite+ on pnpm, the Effect lint presets, fallow), as in `thomasfosterau/effect-web` and `thomasfosterau/components`. There is no docgen: the API reference is the hand-written TSDoc on each export (what a consumer sees on hover), the guides are [`docs/*.md`](docs), and each package's `README.md` is only its landing page.
 
 | Package | Directory | Purpose / boundary |
 | --- | --- | --- |
@@ -84,7 +84,7 @@ Effect is used by the core package and by `prosekit-flowchart`'s `./node` entry 
 
 ## Documentation surfaces
 
-Each fact has one home: a decision, findings report or invariant discovered while working an issue → a comment on that issue; a rule scoped to some files → `.claude/rules/`; a package's boundary, invariants and terms → that package's `AGENTS.md`; the API reference → each package's `README.md` (what npm shows); the landing page → the root `README.md`; human setup, hooks and single checks → [CONTRIBUTING.md](CONTRIBUTING.md); the release mechanics → the comments in `scripts/release.sh` and `release.yml`; the release flow and one-time owner setup → [PUBLISHING.md](PUBLISHING.md); the reporting channel and supply-chain posture → [SECURITY.md](SECURITY.md); Claude Code's hooks, settings and session specifics → [`.claude/CLAUDE.md`](.claude/CLAUDE.md). There is no `docs/` tree.
+Each fact has one home: a decision, findings report or invariant discovered while working an issue → a comment on that issue; a rule scoped to some files → `.claude/rules/`; a package's boundary, invariants and terms → that package's `AGENTS.md`; the API reference → the TSDoc on each export; usage guides and worked examples → [`docs/*.md`](docs); a package's landing page → its `README.md` (what npm shows): what it is, install and peers, one minimal example, an entry-point table and links, nothing more; the repository landing page → the root `README.md`; human setup, hooks and single checks → [CONTRIBUTING.md](CONTRIBUTING.md); the release mechanics → the comments in `scripts/release.sh` and `release.yml`; the release flow and one-time owner setup → [PUBLISHING.md](PUBLISHING.md); the reporting channel and supply-chain posture → [SECURITY.md](SECURITY.md); Claude Code's hooks, settings and session specifics → [`.claude/CLAUDE.md`](.claude/CLAUDE.md). `docs/` holds the guides (document surfaces, derivation, nodes and marks, HTML and Markdown, Drizzle, the Svelte editor, the flowchart block); each starts with a one-paragraph purpose and links to the TSDoc rather than restating signatures.
 
 ---
 

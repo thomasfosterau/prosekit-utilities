@@ -96,6 +96,16 @@ function defineFlowchartCommands() {
  * the `updateFlowchartData` editing command. The Svelte-backed node view
  * lives at this package's root and is composed in by the consuming app's
  * editor component at instantiation time.
+ *
+ * The node is `group: 'block'`, `atom`, `isolating`, `draggable` and
+ * `selectable`. `toDOM` emits `<div data-flowchart data-payload="…">` with the
+ * JSON unicode-escaped (`<`, `>`, `&`, `'` become `\uXXXX`) so a label can
+ * never break out of the attribute; `parseDOM` prefers `data-payload`, falls
+ * back to the element's `textContent` for older documents, then to
+ * {@link EMPTY_FLOWCHART} for anything unparseable.
+ *
+ * `updateFlowchartData(pos, data)` is a no-op (returns `false`, dispatches
+ * nothing) when `pos` is not a `flowchart` node.
  */
 export function defineFlowchart() {
   return union(defineFlowchartNodeSpec(), defineFlowchartCommands());
