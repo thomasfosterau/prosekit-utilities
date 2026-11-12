@@ -141,7 +141,7 @@ catalog:
   # prosekit 0.22.2 or 0.22.4 resolves a second `@prosekit/core` (0.13.4,
   # under `@prosekit/extensions`) beside prosekit's own pin, and every
   # schema-building test then fails with `[prosekit] Assertion failed`.
-  prosekit: ^0.23.0
+  prosekit: ^0.23.1
   storybook: ^10.6.6
   svelte-check: ^4.7.8
   svelte: ^5.57.3
