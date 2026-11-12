@@ -140,6 +140,9 @@ export default defineConfig({
       'eslint/no-underscore-dangle': ['error', { allow: ['_tag'] }],
       // Vitest's `expect(value, message)` takes a failure message second.
       'vitest/valid-expect': ['error', { maxArgs: 2 }],
+      // `it.effect` bodies are test blocks; `expect` inside them is not
+      // standalone.
+      'vitest/no-standalone-expect': ['error', { additionalTestBlockFunctions: ['it.effect'] }],
       // Stylesheets are imported for their side effect on purpose (AGENTS.md
       // § Common pitfalls lists the only ones `dist/` may carry), and the
       // test setup files register jest-dom's matchers the same way.
@@ -191,19 +194,6 @@ export default defineConfig({
           // `name` field to shadow `Error.prototype.name`: both at zero sites.
           'effecttsgo/schema-class-missing-brand': 'error',
           'effecttsgo/error-payload-shadows-name': 'error',
-        },
-      },
-      // The test suites are the boundary where an Effect is run to a value
-      // and asserted on — the place the rule's own guidance sends
-      // `runSync` / `runPromise` ("the test harness"). The workspace does not
-      // use `@effect/vitest`, so there is no `it.effect` to hand the run to.
-      {
-        files: [
-          'packages/prosekit-utilities/tests/**/*.ts',
-          'packages/prosekit-flowchart/tests/node/**/*.ts',
-        ],
-        rules: {
-          'effect/effect-run-in-body': 'off',
         },
       },
       // The one place a type assertion is unavoidable: a schema built at

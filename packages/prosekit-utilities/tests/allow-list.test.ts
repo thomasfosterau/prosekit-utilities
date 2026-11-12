@@ -18,7 +18,8 @@ import * as Option from 'effect/Option';
 import * as Order from 'effect/Order';
 import * as Result from 'effect/Result';
 import * as Schema from 'effect/Schema';
-import { assert, describe, expect, it } from 'vite-plus/test';
+import { it } from '@effect/vitest';
+import { assert, describe, expect } from 'vite-plus/test';
 import {
   allowListFilter,
   allowListViolation,
@@ -474,37 +475,45 @@ describe('post / article / title vocabularies', () => {
 describe('checkAllowList', () => {
   const checkComment = checkAllowList(COMMENT);
 
-  it('succeeds with the document it was given', () => {
-    const doc = paragraph('hello world');
-    expect(Effect.runSync(checkComment(doc))).toBe(doc);
-  });
+  it.effect('succeeds with the document it was given', () =>
+    Effect.gen(function* () {
+      const doc = paragraph('hello world');
+      expect(yield* checkComment(doc)).toBe(doc);
+    }),
+  );
 
-  it('fails with the tagged violation', () => {
-    const doc: DocumentJSON = { type: 'blockDocument', content: [{ type: 'heading' }] };
-    const result = Effect.runSync(Effect.result(checkComment(doc)));
-    expect(Result.isFailure(result)).toBe(true);
-    const failed = Result.getFailure(result);
-    assert(Option.isSome(failed));
-    const failure = failed.value;
-    expect(failure).toBeInstanceOf(DocumentViolation);
-    expect(failure._tag).toBe('DocumentViolation');
-    expect(failure.kind).toBe('node');
-    expect(failure.message).toBe('node type "heading" is not permitted in a comment');
-  });
+  it.effect('fails with the tagged violation', () =>
+    Effect.gen(function* () {
+      const doc: DocumentJSON = { type: 'blockDocument', content: [{ type: 'heading' }] };
+      const result = yield* Effect.result(checkComment(doc));
+      expect(Result.isFailure(result)).toBe(true);
+      const failed = Result.getFailure(result);
+      assert(Option.isSome(failed));
+      const failure = failed.value;
+      expect(failure).toBeInstanceOf(DocumentViolation);
+      expect(failure._tag).toBe('DocumentViolation');
+      expect(failure.kind).toBe('node');
+      expect(failure.message).toBe('node type "heading" is not permitted in a comment');
+    }),
+  );
 
-  it('is catchable by tag', () => {
-    const doc: DocumentJSON = { type: 'blockDocument', content: [{ type: 'heading' }] };
-    const recovered = checkComment(doc).pipe(
-      Effect.catchTag('DocumentViolation', (violation) => Effect.succeed(violation.typeName)),
-    );
-    expect(Effect.runSync(recovered)).toBe('heading');
-  });
+  it.effect('is catchable by tag', () =>
+    Effect.gen(function* () {
+      const doc: DocumentJSON = { type: 'blockDocument', content: [{ type: 'heading' }] };
+      const recovered = yield* checkComment(doc).pipe(
+        Effect.catchTag('DocumentViolation', (violation) => Effect.succeed(violation.typeName)),
+      );
+      expect(recovered).toBe('heading');
+    }),
+  );
 
-  it('preserves the document type through the check', () => {
-    const doc = { type: 'blockDocument', content: [], extra: 1 } as const;
-    const out: typeof doc = Effect.runSync(checkComment(doc));
-    expect(out.extra).toBe(1);
-  });
+  it.effect('preserves the document type through the check', () =>
+    Effect.gen(function* () {
+      const doc = { type: 'blockDocument', content: [], extra: 1 } as const;
+      const out: typeof doc = yield* checkComment(doc);
+      expect(out.extra).toBe(1);
+    }),
+  );
 });
 
 // ── allowListFilter ───────────────────────────────────────────────────

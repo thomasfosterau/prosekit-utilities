@@ -42,6 +42,10 @@ catalog:
   # in node_modules/@effect/tsgo/dist/effect-tsgo.cjs before bumping any of
   # the three.
   '@effect/tsgo': 0.63.0
+  # `it.effect` for tests that return an Effect, so no test calls
+  # `Effect.runSync` / `runPromise`. Same release train as `effect` (pin it
+  # equal); it peers `vitest` ^5, which vite-plus's pin satisfies.
+  '@effect/vitest': 4.1.2
   # Effect lint rules (`effect.configs.recommended` in vite.config.ts, the
   # 74 `effect/*` rules including the anti-slop set), scoped there to the
   # Effect-using code: the core package and the flowchart's `./node`. It
