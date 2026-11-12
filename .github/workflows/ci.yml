@@ -39,11 +39,21 @@ jobs:
         with:
           persist-credentials: false
 
-      # pnpm, Node.js, the pnpm store cache and a frozen-lockfile install
-      # (with the root `prepare`, which applies the `@effect/tsgo` patch).
-      # The steps below run the toolchain through `pnpm exec`. See the
-      # action's own comments.
-      - uses: ./.github/actions/setup
+      # Vite+ (the catalog's `vite-plus` pin, resolved through
+      # pnpm-workspace.yaml), the Node that `engines.node` selects, the pnpm
+      # that `packageManager` pins, the pnpm store cache (keyed on
+      # pnpm-lock.yaml), and a frozen-lockfile `vp install`. Install scripts
+      # run: the root `prepare` patches the native `tsc` and vite-plus's
+      # `oxlint` with `@effect/tsgo`, which `vp check` and the core's `check`
+      # need. Dependency build scripts stay gated by `allowBuilds` in
+      # pnpm-workspace.yaml. An exact tag, not a SHA, by the owner's decision
+      # (.github/zizmor.yml says why).
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1.22.0
+        with:
+          cache: true
+          run-install: |
+            - args: ['--frozen-lockfile']
 
       # The Vite+ task cache: a step whose inputs are unchanged since the last
       # run on this runner OS (the core's `build` that every Svelte task
@@ -67,10 +77,10 @@ jobs:
       # Lint is type-aware (oxlint-tsgolint), and runs before any build: the
       # Svelte packages' tsconfig.json maps the siblings to their `src/`.
       - name: Format and lint
-        run: pnpm exec vp check
+        run: vp check
 
       - name: Type check
-        run: pnpm exec vp run check
+        run: vp run check
 
       # The core's node suite runs ONCE, under istanbul coverage, so the
       # thresholds in packages/prosekit-utilities/vite.config.ts (statements
@@ -78,13 +88,13 @@ jobs:
       # are missed. The Svelte packages' browser suites keep plain
       # `test:unit`; the `!` filter selects every package but the core.
       - name: Unit tests with coverage thresholds (the core, node)
-        run: pnpm exec vp run --filter ./packages/prosekit-utilities test:coverage
+        run: vp run --filter ./packages/prosekit-utilities test:coverage
 
       - name: Unit tests (the Svelte packages, browser)
-        run: pnpm exec vp run --filter '!./packages/prosekit-utilities' test:unit
+        run: vp run --filter '!./packages/prosekit-utilities' test:unit
 
       - name: Build the libraries
-        run: pnpm exec vp run -r build
+        run: vp run -r build
 
       # Reads the dist/ the step above wrote: the core's `.`, `./derive` and
       # `./drizzle` must reach no ProseKit, and the flowchart's `./node` no
@@ -92,10 +102,10 @@ jobs:
       # (scripts/check-dist-boundaries.ts). Its `build` dependencies are cache
       # hits here.
       - name: Entry-point boundaries and side effects (built dist/)
-        run: pnpm exec vp run check:dist
+        run: vp run check:dist
 
       - name: Build Storybook
-        run: pnpm exec vp run --filter ./packages/prosekit-svelte storybook:build
+        run: vp run --filter ./packages/prosekit-svelte storybook:build
 
       # Known high/critical advisories in the resolved dependency tree.
       - name: Audit

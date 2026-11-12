@@ -112,23 +112,24 @@ catalog:
   # The ONLY consumer is the Vitest browser provider above (`playwright: "*"`
   # peer); this repo has no Playwright test suite of its own.
   #
-  # PINNED EXACT, and behind the app repos' 1.63.0 on purpose. 1.60.0 is the
-  # oldest release whose bundled zip extractor completes on Node 26: through
-  # 1.59.1 it stalls at the first large deflated entry, so CI's browser
-  # install hung until the job timed out on Node `latest` (#65, #53).
+  # PINNED EXACT. At least 1.65.0: GitHub's `ubuntu-latest` is Ubuntu 26.04,
+  # and through 1.64 `playwright install --with-deps` refuses it ("Playwright
+  # does not support chromium on ubuntu26.04-x64"), which failed every CI run.
+  # (1.60.0 was the floor before that: through 1.59.1 the bundled zip
+  # extractor stalls on Node 26, #65, #53.)
   #
-  # 1.60.0 expects Chromium revision 1223 (Chrome 148). CI installs exactly
+  # 1.65.0 expects Chromium revision 1254 (Chrome 158). CI installs exactly
   # that itself (`pnpm exec playwright install --with-deps chromium`). The
   # agent-session image pre-installs a different revision under
-  # /opt/pw-browsers (1194, Chrome 141, at first; 1243 since), so the
-  # SessionStart hook (.claude/hooks/session-start.sh, section 5) builds a
-  # directory of symlinks named for 1223 that point at whichever build the
-  # image carries and exports `PLAYWRIGHT_BROWSERS_PATH` to it. That is what lets
-  # `vp run -r test:unit` launch a real browser in a session with no download.
+  # /opt/pw-browsers (1243 at the time of writing), so the SessionStart hook
+  # (.claude/hooks/session-start.sh, section 5) builds a directory of symlinks
+  # named for 1254 that point at whichever build the image carries and exports
+  # `PLAYWRIGHT_BROWSERS_PATH` to it. That is what lets `vp run -r test:unit`
+  # launch a real browser in a session with no download.
   # Bump this together with the hook's PW_WANT_REV, and check the image's build
   # still launches under the new release; drop the bridge once the image
   # carries the wanted revision.
-  playwright: 1.60.0
+  playwright: 1.65.0
   # The editor runtime, in the `prosekit` lockstep group with `@prosekit/pm`.
   # The packages' literal peers are `^0.23.0` / `^0.1.21` (the `@prosekit/pm`
   # that prosekit 0.23.0 pins). Raise both when this minor moves. 0.22.x is not
