@@ -18,6 +18,13 @@ on:
     types: [opened, reopened, synchronize, ready_for_review]
   push:
     branches: [trunk]
+  # A manual run, for the "chore: version packages" PR. changesets/action
+  # pushes that branch with GITHUB_TOKEN, and GitHub starts no workflow for a
+  # GITHUB_TOKEN push, so the PR's head never gets this required check by
+  # itself. Run this workflow on `changeset-release/trunk` from the Actions
+  # tab. The check run lands on that branch's head commit under the same job
+  # name, which is what branch protection matches.
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
