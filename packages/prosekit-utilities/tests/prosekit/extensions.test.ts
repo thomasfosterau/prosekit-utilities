@@ -22,6 +22,7 @@ import * as Arr from 'effect/Array';
 import * as Order from 'effect/Order';
 import * as R from 'effect/Record';
 import * as Schema from 'effect/Schema';
+import { DOMParser as PmDOMParser } from '@prosekit/pm/model';
 import type { MarkType, NodeType, Schema as PmSchema } from '@prosekit/pm/model';
 import { createEditor, union } from 'prosekit/core';
 import { isRequiredAttribute } from '../../src/derive/index.ts';
@@ -369,14 +370,15 @@ describe('defineCitation', () => {
   it('parses `cite[data-work-id]` back into its attribute', () => {
     const rule = present(markOf(fullSchema(), 'citation').spec.parseDOM?.[0], 'parse rule');
     expect(rule.tag).toBe('cite[data-work-id]');
-    const element = document.createElement('cite');
-    element.setAttribute('data-work-id', 'w-2');
-    // SAFETY: a mark parse rule's `getAttrs` is typed for both the `tag` and
-    // `style` forms (`HTMLElement & string`); this rule is a `tag` one, so it
-    // only ever sees the element.
-    expect(present(rule.getAttrs, 'getAttrs')(element as HTMLElement & string)).toEqual({
-      workId: 'w-2',
-    });
+    // Parse through ProseMirror itself rather than calling `getAttrs`
+    // directly: the rule's parameter is typed for both the `tag` and `style`
+    // forms, and this one only ever sees an element.
+    const container = document.createElement('div');
+    container.innerHTML = '<p><cite data-work-id="w-2">text</cite></p>';
+    const parsed = PmDOMParser.fromSchema(fullSchema()).parse(container);
+    const mark = present(parsed.firstChild?.firstChild?.marks[0], 'parsed citation mark');
+    expect(mark.type.name).toBe('citation');
+    expect(mark.attrs).toEqual({ workId: 'w-2' });
   });
 
   it('defineCitation() returns an extension object', () => {

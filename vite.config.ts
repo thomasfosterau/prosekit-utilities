@@ -144,21 +144,14 @@ export default defineConfig({
         rules: {
           ...recommended.rules,
           ...effect.configs.recommended.rules,
-          // `casting-awareness` is an awareness prompt, not a defect rule —
-          // it fires on every `as`, including the narrowings ProseMirror's
-          // loosely typed `attrs` / `toDOM` structurally require. Stays
-          // visible as a warning.
-          'effect/casting-awareness': 'warn',
+          // Both cast rules are at zero sites; keep them at `error`.
+          'effect/casting-awareness': 'error',
+          'typescript/no-unsafe-type-assertion': 'error',
           // The workspace uses the rule's canonical aliases (`Arr`, `P`, `R`,
           // `Str`, …), not full names.
           'effect/prefer-namespace-imports': 'error',
-          // "Shape" IS this package's domain term, not a description of
-          // structure: a `DocumentShape` is the browser-cheap structural half
-          // of a document schema (packages/prosekit-utilities/CLAUDE.md §
-          // Terms), and `DocumentShape` / `defineDocumentShape` /
-          // `DocumentShape.narrow` are published API that consumers' apps
-          // name. Renaming them is a major break for no behavioural gain.
-          'effect/no-shape-in-symbol-names': 'off',
+          // No "Shape" in symbol names: the document type is `DocumentEnvelope`.
+          'effect/no-shape-in-symbol-names': 'error',
 
           // ---- Rules this workspace's conventions cut across --------------
           // As in effect-web: each stays visible as a warning, so a NEW site
@@ -174,12 +167,6 @@ export default defineConfig({
           // take `Schema.Json`. Both at zero sites.
           'effect/no-unsafe-dictionary-type': 'error',
           'effect/no-unknown-parameters': 'error',
-          // The Effect code's assertions are already gated twice, by
-          // `effect/casting-awareness` (a warning on each `as`) and by
-          // `effect/require-safety-comment-for-type-assertion` (a `SAFETY:`
-          // invariant above it). What is left narrows ProseMirror's untyped
-          // `attrs` or re-types a mapped record no generic can prove.
-          'typescript/no-unsafe-type-assertion': 'off',
         },
       },
       // The test suites are the boundary where an Effect is run to a value
@@ -193,6 +180,25 @@ export default defineConfig({
         ],
         rules: {
           'effect/effect-run-in-body': 'off',
+        },
+      },
+      // The one place a type assertion is unavoidable: a schema built at
+      // runtime from configuration has no static type to decode into, so
+      // its `Schema.Top` is asserted to the codec type it was built to be,
+      // once, each beside a `SAFETY:` comment. These are the dynamic
+      // `Schema.Struct`s the Registry derives per node and mark, the derived
+      // and structural document schemas pinned to `DocumentJSON<Name>`, and
+      // the test helper that decodes those erased schemas.
+      {
+        files: [
+          'packages/prosekit-utilities/src/derive/Registry.ts',
+          'packages/prosekit-utilities/src/prosekit/document-schema.ts',
+          'packages/prosekit-utilities/src/document-envelope.ts',
+          'packages/prosekit-utilities/tests/derive/Attribute.test.ts',
+        ],
+        rules: {
+          'effect/casting-awareness': 'off',
+          'typescript/no-unsafe-type-assertion': 'off',
         },
       },
       // Every package's tests.

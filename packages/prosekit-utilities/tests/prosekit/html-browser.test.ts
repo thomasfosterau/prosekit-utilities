@@ -25,6 +25,7 @@ import {
   defineInlineDocumentExtension,
 } from '../../src/prosekit/presets.ts';
 import { present } from './fixture.ts';
+import { malformed } from '../malformed.ts';
 
 /** The failure the throwing `postProcess` hook below raises. */
 class HookFailure extends Schema.TaggedError<HookFailure, { readonly brand: unique symbol }>()(
@@ -295,5 +296,12 @@ describe('sanitiseDocument', () => {
 
   it('leaves a node with no marks and no content untouched', () => {
     expect(sanitiseDocument({ type: 'horizontalRule' })).toEqual({ type: 'horizontalRule' });
+  });
+});
+
+describe('sanitiseDocument on malformed rows', () => {
+  it('drops a non-array `marks` or `content` from the copy instead of passing it through', () => {
+    const node = malformed({ type: 'paragraph', marks: 'bold', content: 'text' });
+    expect(sanitiseDocument(node)).toEqual({ type: 'paragraph' });
   });
 });

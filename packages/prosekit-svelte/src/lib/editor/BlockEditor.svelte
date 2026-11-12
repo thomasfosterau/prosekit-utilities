@@ -11,13 +11,13 @@
   ProseMirror schema's top node is always `doc`. This component is that
   boundary, so it remaps in both directions: `defaultContent` is rewritten to
   `doc` on the way in, and the hidden input always carries the application
-  shape. Feeding the stored shape straight into ProseKit throws
+  envelope. Feeding the stored envelope straight into ProseKit throws
   `RangeError: Unknown node type: blockDocument` and takes the hosting page
   down with it — the bug both applications this package was extracted from
   hit (#459).
 
   The hidden input. Given a `name`, the editor is a progressive-enhancement
-  form field: the JSON of the current document, in the application's shape,
+  form field: the JSON of the current document, in the application's envelope,
   posts with the form.
 
   `toolbar` is one prop carrying both halves of the design: `true` (the

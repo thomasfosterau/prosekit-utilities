@@ -155,7 +155,7 @@ describe('createHtmlRenderer (server path)', () => {
     expect(error.reason).toBe('dom-unavailable');
     expect(error.cause).toBeInstanceOf(Error);
 
-    // The promise shape rejects with the same tagged error.
+    // The promise form rejects with the same tagged error.
     await expect(renderer.renderPromise(doc)).rejects.toBeInstanceOf(HtmlRenderError);
   });
 

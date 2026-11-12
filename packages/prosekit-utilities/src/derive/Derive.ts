@@ -131,11 +131,11 @@ export interface DocumentSchemaSpec {
 export function deriveDocumentSchemas<Specs extends Record<string, DocumentSchemaSpec>>(
   schemas: Specs,
   options?: DeriveOptions,
-): { readonly [K in keyof Specs]: Schema.Codec<DerivedNodeJSON> } {
+): { readonly [K in Extract<keyof Specs, string>]: Schema.Codec<DerivedNodeJSON> } {
   const cache = createRegistryCache();
-  // SAFETY: `R.map` keeps exactly the keys of `schemas` and maps each to
-  // a `Schema.Codec<DerivedNodeJSON>`; its return type only loses the key set.
-  return R.map(schemas, ({ schema, topTypeName }) =>
-    documentNode(new Registry(schema, options, cache), schema, Option.fromNullishOr(topTypeName)),
-  ) as { readonly [K in keyof Specs]: Schema.Codec<DerivedNodeJSON> };
+  return R.map<Extract<keyof Specs, string>, DocumentSchemaSpec, Schema.Codec<DerivedNodeJSON>>(
+    schemas,
+    ({ schema, topTypeName }) =>
+      documentNode(new Registry(schema, options, cache), schema, Option.fromNullishOr(topTypeName)),
+  );
 }

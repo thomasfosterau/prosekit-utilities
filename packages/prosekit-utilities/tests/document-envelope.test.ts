@@ -1,7 +1,7 @@
 /**
- * Unit tests for `defineDocumentShape`.
+ * Unit tests for `defineDocumentEnvelope`.
  *
- * Two properties carry the shape/grammar split:
+ * Two properties carry the envelope/grammar split:
  *
  * 1. **Uninstalled, the check is structural and PERMISSIVE.** A browser
  *    bundle validates the top-level `type` and that `content` is an array of
@@ -9,15 +9,15 @@
  *    ProseMirror schema would accept, because that would break authoring on
  *    the client while the server (which decides) was perfectly happy. The
  *    check is deliberately shallow rather than a full node walk: see
- *    `ContentShape`'s doc for the measurement behind that.
+ *    `ContentEnvelope`'s doc for the measurement behind that.
  * 2. **Installed, the check is the full grammar.** A server runtime installs
  *    the guard derived from the compiled ProseMirror schema, so the API edge
  *    rejects exactly what that schema rejects — SEC-XSS-001 unchanged.
  *
- * The blocks below are order-dependent within a shape: an install is global
- * to that shape for the life of the isolate (that is the point — it is a
+ * The blocks below are order-dependent within a envelope: an install is global
+ * to that envelope for the life of the isolate (that is the point — it is a
  * per-isolate upgrade, not a per-call option), so the uninstalled
- * expectations run against their own shape.
+ * expectations run against their own envelope.
  *
  * The guard installed here is a hand-written stand-in for the ProseKit-
  * derived one: the root entry cannot import ProseKit, and what these tests
@@ -31,7 +31,7 @@ import * as DateTime from 'effect/DateTime';
 import * as Schema from 'effect/Schema';
 import { describe, expect, it } from 'vite-plus/test';
 import { defineAllowList } from '../src/allow-list.ts';
-import { defineDocumentShape } from '../src/document-shape.ts';
+import { defineDocumentEnvelope } from '../src/document-envelope.ts';
 import type { NodeJSON } from '../src/json.ts';
 
 // ── A stand-in grammar guard ──────────────────────────────────────────
@@ -96,35 +96,37 @@ const unknownNodeBlock = {
 
 // ── Declaration ───────────────────────────────────────────────────────
 
-describe('defineDocumentShape: declaration', () => {
+describe('defineDocumentEnvelope: declaration', () => {
   it('keeps the name and derives a label from it', () => {
-    const shape = defineDocumentShape({ name: 'blockDocument' });
-    expect(shape.name).toBe('blockDocument');
-    expect(shape.label).toBe('block document');
+    const envelope = defineDocumentEnvelope({ name: 'blockDocument' });
+    expect(envelope.name).toBe('blockDocument');
+    expect(envelope.label).toBe('block document');
   });
 
   it('splits every camel-case boundary in the derived label', () => {
-    expect(defineDocumentShape({ name: 'articleSectionBody' }).label).toBe('article section body');
-    expect(defineDocumentShape({ name: 'note' }).label).toBe('note');
+    expect(defineDocumentEnvelope({ name: 'articleSectionBody' }).label).toBe(
+      'article section body',
+    );
+    expect(defineDocumentEnvelope({ name: 'note' }).label).toBe('note');
   });
 
   it('prefers an explicit label', () => {
-    const shape = defineDocumentShape({ name: 'blockDocument', label: 'a post body' });
-    expect(shape.label).toBe('a post body');
-    expect(() => Schema.decodeUnknownSync(shape.Schema)({ type: 'nope' })).toThrow(
+    const envelope = defineDocumentEnvelope({ name: 'blockDocument', label: 'a post body' });
+    expect(envelope.label).toBe('a post body');
+    expect(() => Schema.decodeUnknownSync(envelope.Schema)({ type: 'nope' })).toThrow(
       'Expected "blockDocument"',
     );
   });
 
-  it('empty() is a valid document of the shape', () => {
-    const shape = defineDocumentShape({ name: 'inlineDocument' });
-    expect(shape.empty()).toEqual({ type: 'inlineDocument', content: [] });
-    expect(Schema.decodeSync(shape.Schema)(shape.empty())).toEqual(shape.empty());
+  it('empty() is a valid document of the envelope', () => {
+    const envelope = defineDocumentEnvelope({ name: 'inlineDocument' });
+    expect(envelope.empty()).toEqual({ type: 'inlineDocument', content: [] });
+    expect(Schema.decodeSync(envelope.Schema)(envelope.empty())).toEqual(envelope.empty());
   });
 
-  it('gives each shape its own guard slot', () => {
-    const one = defineDocumentShape({ name: 'blockDocument' });
-    const two = defineDocumentShape({ name: 'blockDocument' });
+  it('gives each envelope its own guard slot', () => {
+    const one = defineDocumentEnvelope({ name: 'blockDocument' });
+    const two = defineDocumentEnvelope({ name: 'blockDocument' });
     one.install(isBlockDocument);
     expect(one.isInstalled()).toBe(true);
     expect(two.isInstalled()).toBe(false);
@@ -133,9 +135,9 @@ describe('defineDocumentShape: declaration', () => {
 
 // ── Uninstalled ───────────────────────────────────────────────────────
 
-describe('DocumentShape.Schema: structural check, grammar not installed', () => {
-  const block = defineDocumentShape({ name: 'blockDocument' });
-  const inline = defineDocumentShape({ name: 'inlineDocument' });
+describe('DocumentEnvelope.Schema: structural check, grammar not installed', () => {
+  const block = defineDocumentEnvelope({ name: 'blockDocument' });
+  const inline = defineDocumentEnvelope({ name: 'inlineDocument' });
   const decodeBlock = Schema.decodeUnknownSync(block.Schema);
   const decodeInline = Schema.decodeUnknownSync(inline.Schema);
 
@@ -178,7 +180,7 @@ describe('DocumentShape.Schema: structural check, grammar not installed', () => 
     );
   });
 
-  it('does NOT check per-node shape — that is the grammar guard s job, not this one', () => {
+  it('does NOT check per-node structure — that is the grammar guard s job, not this one', () => {
     const nodeWithoutType = { type: 'blockDocument', content: [{ attrs: {} }] };
     expect(isBlockDocument(nodeWithoutType)).toBe(false);
     expect(decodeBlock(nodeWithoutType)).toEqual(nodeWithoutType);
@@ -200,9 +202,9 @@ describe('DocumentShape.Schema: structural check, grammar not installed', () => 
 
 // ── Installed ─────────────────────────────────────────────────────────
 
-describe('DocumentShape.Schema: grammar installed', () => {
-  const block = defineDocumentShape({ name: 'blockDocument' });
-  const inline = defineDocumentShape({ name: 'inlineDocument' });
+describe('DocumentEnvelope.Schema: grammar installed', () => {
+  const block = defineDocumentEnvelope({ name: 'blockDocument' });
+  const inline = defineDocumentEnvelope({ name: 'inlineDocument' });
   block.install(isBlockDocument);
   inline.install(isInlineDocument);
   const decodeBlock = Schema.decodeUnknownSync(block.Schema);
@@ -222,7 +224,7 @@ describe('DocumentShape.Schema: grammar installed', () => {
     expect(() => decodeBlock(unknownNodeBlock)).toThrow('must be a valid block document');
   });
 
-  it('now rejects the per-node shape errors the structural check waves through', () => {
+  it('now rejects the per-node structure errors the structural check waves through', () => {
     expect(() => decodeBlock({ type: 'blockDocument', content: [{ attrs: {} }] })).toThrow(
       'must be a valid block document',
     );
@@ -234,7 +236,7 @@ describe('DocumentShape.Schema: grammar installed', () => {
     ).toThrow('must be a valid block document');
   });
 
-  it('names the shape in the failure message', () => {
+  it('names the envelope in the failure message', () => {
     expect(() => decodeBlock(grammarInvalidBlock)).toThrow(/block document/);
   });
 
@@ -255,7 +257,7 @@ describe('DocumentShape.Schema: grammar installed', () => {
   it('reads the guard at validation time, not at construction time', () => {
     // The schema is built before any install; a document that was accepted
     // uninstalled stops being accepted the moment the guard lands.
-    const late = defineDocumentShape({ name: 'blockDocument' });
+    const late = defineDocumentEnvelope({ name: 'blockDocument' });
     const decode = Schema.decodeUnknownSync(late.Schema);
     expect(decode(unknownNodeBlock)).toEqual(unknownNodeBlock);
     late.install(isBlockDocument);
@@ -263,7 +265,7 @@ describe('DocumentShape.Schema: grammar installed', () => {
   });
 
   it('is() degrades a guard that throws to false rather than propagating the defect', () => {
-    const exploding = defineDocumentShape({ name: 'blockDocument' });
+    const exploding = defineDocumentEnvelope({ name: 'blockDocument' });
     exploding.install(() => {
       throw new RangeError('Maximum call stack size exceeded');
     });
@@ -273,14 +275,14 @@ describe('DocumentShape.Schema: grammar installed', () => {
 
 // ── narrow ────────────────────────────────────────────────────────────
 
-describe('DocumentShape.narrow', () => {
-  const shape = defineDocumentShape({ name: 'blockDocument' });
+describe('DocumentEnvelope.narrow', () => {
+  const envelope = defineDocumentEnvelope({ name: 'blockDocument' });
   const comment = defineAllowList({
     label: 'a comment',
     nodes: ['paragraph', 'text', 'hardBreak'],
     marks: ['bold', 'italic', 'strike', 'code', 'link'],
   });
-  const decodeNarrow = Schema.decodeUnknownSync(shape.narrow(comment));
+  const decodeNarrow = Schema.decodeUnknownSync(envelope.narrow(comment));
 
   const paragraph = (...content: ReadonlyArray<NodeJSON>) => ({
     type: 'blockDocument',
@@ -316,8 +318,8 @@ describe('DocumentShape.narrow', () => {
     );
   });
 
-  it('leaves the shape s own schema unnarrowed', () => {
+  it('leaves the envelope s own schema unnarrowed', () => {
     const doc = { type: 'blockDocument', content: [{ type: 'heading' }] };
-    expect(Schema.decodeUnknownSync(shape.Schema)(doc)).toEqual(doc);
+    expect(Schema.decodeUnknownSync(envelope.Schema)(doc)).toEqual(doc);
   });
 });

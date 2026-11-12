@@ -1,11 +1,11 @@
 /**
  * `defineDocumentSchema`'s own surface: the guard's defect net, the `Effect`
- * decode and its tagged failure, and the install that upgrades a shape from a
+ * decode and its tagged failure, and the install that upgrades a envelope from a
  * structural check to the full grammar.
  *
- * The install cases each build their own shape pair: installing is a
+ * The install cases each build their own envelope pair: installing is a
  * per-isolate, irreversible upgrade, so a suite that installs must not share
- * shapes with one that asserts the uninstalled behaviour.
+ * envelopes with one that asserts the uninstalled behaviour.
  *
  * @module
  */
@@ -15,7 +15,7 @@ import * as Arr from 'effect/Array';
 import * as Effect from 'effect/Effect';
 import * as Exit from 'effect/Exit';
 import * as Schema from 'effect/Schema';
-import { defineDocumentShape } from '../../src/document-shape.ts';
+import { defineDocumentEnvelope } from '../../src/document-envelope.ts';
 import type { NodeJSON } from '../../src/json.ts';
 import {
   defineDocumentSchema,
@@ -37,10 +37,10 @@ const GRAMMAR_INVALID = { type: 'blockDocument', content: [{ type: 'notARealNode
 // ── The pieces a document schema hands back ───────────────────────────
 
 describe('defineDocumentSchema', () => {
-  const { block, blockShape } = createDocumentFixture();
+  const { block, blockEnvelope } = createDocumentFixture();
 
-  it('carries the shape it was declared against and its grammar factory', () => {
-    expect(block.shape).toBe(blockShape);
+  it('carries the envelope it was declared against and its grammar factory', () => {
+    expect(block.envelope).toBe(blockEnvelope);
     expect(block.extension).toBeTypeOf('function');
   });
 
@@ -50,7 +50,7 @@ describe('defineDocumentSchema', () => {
     expect(compiled.topNodeType.name).toBe('doc');
   });
 
-  it('names the envelope after the shape, not after ProseMirror`s `doc`', () => {
+  it('names the envelope after the envelope, not after ProseMirror`s `doc`', () => {
     expect(Schema.decodeUnknownSync(block.Document)(VALID)).toEqual(VALID);
     expect(() => Schema.decodeUnknownSync(block.Document)({ ...VALID, type: 'doc' })).toThrow(
       'Expected "blockDocument"',
@@ -99,7 +99,7 @@ describe('decode', () => {
     expect(Effect.runSync(block.decode(VALID))).toEqual(VALID);
   });
 
-  it('fails with a DocumentDecodeError naming the shape and carrying the issue', () => {
+  it('fails with a DocumentDecodeError naming the envelope and carrying the issue', () => {
     const exit = Effect.runSyncExit(block.decode(GRAMMAR_INVALID));
     expect(Exit.isFailure(exit)).toBe(true);
     const error = Effect.runSync(Effect.flip(block.decode(GRAMMAR_INVALID)));
@@ -128,45 +128,45 @@ describe('decode', () => {
 // ── install ───────────────────────────────────────────────────────────
 
 describe('install', () => {
-  it('upgrades the shape from a structural check to the full grammar', () => {
-    const { block, blockShape } = createDocumentFixture();
+  it('upgrades the envelope from a structural check to the full grammar', () => {
+    const { block, blockEnvelope } = createDocumentFixture();
 
-    // Before: the shape is permissive — it checks the envelope and that
+    // Before: the envelope is permissive — it checks the envelope and that
     // `content` is an array of JSON, and nothing about the grammar.
-    expect(blockShape.isInstalled()).toBe(false);
-    expect(blockShape.is(GRAMMAR_INVALID)).toBe(true);
+    expect(blockEnvelope.isInstalled()).toBe(false);
+    expect(blockEnvelope.is(GRAMMAR_INVALID)).toBe(true);
 
     block.install();
 
-    expect(blockShape.isInstalled()).toBe(true);
-    expect(blockShape.is(GRAMMAR_INVALID)).toBe(false);
-    expect(blockShape.is(VALID)).toBe(true);
-    // The shape's own codec rejects it too, not just its guard.
-    expect(() => Schema.decodeUnknownSync(blockShape.Schema)(GRAMMAR_INVALID)).toThrow(
+    expect(blockEnvelope.isInstalled()).toBe(true);
+    expect(blockEnvelope.is(GRAMMAR_INVALID)).toBe(false);
+    expect(blockEnvelope.is(VALID)).toBe(true);
+    // The envelope's own codec rejects it too, not just its guard.
+    expect(() => Schema.decodeUnknownSync(blockEnvelope.Schema)(GRAMMAR_INVALID)).toThrow(
       'must be a valid block document',
     );
-    expect(Schema.decodeUnknownSync(blockShape.Schema)(VALID)).toEqual(VALID);
+    expect(Schema.decodeUnknownSync(blockEnvelope.Schema)(VALID)).toEqual(VALID);
   });
 
   it('leaves the structural check in place for things that were never envelopes', () => {
-    const { block, blockShape } = createDocumentFixture();
+    const { block, blockEnvelope } = createDocumentFixture();
     block.install();
-    expect(blockShape.is({ type: 'inlineDocument', content: [] })).toBe(false);
-    expect(blockShape.is(null)).toBe(false);
+    expect(blockEnvelope.is({ type: 'inlineDocument', content: [] })).toBe(false);
+    expect(blockEnvelope.is(null)).toBe(false);
   });
 });
 
 describe('installDocumentGrammars', () => {
   it('installs every schema it is given', () => {
-    const { block, inline, blockShape, inlineShape } = createDocumentFixture();
-    expect(blockShape.isInstalled()).toBe(false);
-    expect(inlineShape.isInstalled()).toBe(false);
+    const { block, inline, blockEnvelope, inlineEnvelope } = createDocumentFixture();
+    expect(blockEnvelope.isInstalled()).toBe(false);
+    expect(inlineEnvelope.isInstalled()).toBe(false);
 
     installDocumentGrammars(block, inline);
 
-    expect(blockShape.isInstalled()).toBe(true);
-    expect(inlineShape.isInstalled()).toBe(true);
-    expect(inlineShape.is({ type: 'inlineDocument', content: [{ type: 'paragraph' }] })).toBe(
+    expect(blockEnvelope.isInstalled()).toBe(true);
+    expect(inlineEnvelope.isInstalled()).toBe(true);
+    expect(inlineEnvelope.is({ type: 'inlineDocument', content: [{ type: 'paragraph' }] })).toBe(
       false,
     );
   });
@@ -178,12 +178,12 @@ describe('installDocumentGrammars', () => {
   it('forces no derivation of its own', () => {
     // Installing stores a guard; it must not compile a grammar. A schema whose
     // extension factory would throw still installs cleanly.
-    const shape = defineDocumentShape({ name: 'blockDocument' });
-    const schema = defineDocumentSchema(shape, {
+    const envelope = defineDocumentEnvelope({ name: 'blockDocument' });
+    const schema = defineDocumentSchema(envelope, {
       extension: () => assert.fail('the grammar must not be compiled by install()'),
     });
     expect(() => installDocumentGrammars(schema)).not.toThrow();
-    expect(shape.isInstalled()).toBe(true);
+    expect(envelope.isInstalled()).toBe(true);
   });
 });
 
@@ -191,8 +191,8 @@ describe('installDocumentGrammars', () => {
 
 describe('defineDocumentSchema without an `attributes` option', () => {
   it('falls back to the standard overrides', () => {
-    const shape = defineDocumentShape({ name: 'blockDocument' });
-    const schema = defineDocumentSchema(shape, {
+    const envelope = defineDocumentEnvelope({ name: 'blockDocument' });
+    const schema = defineDocumentSchema(envelope, {
       extension: () => defineBlockDocumentExtension(),
     });
     // `heading.level` is `required(Literals([1..6]))` in the standard overlay.

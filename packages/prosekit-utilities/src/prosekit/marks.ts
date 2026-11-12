@@ -20,6 +20,8 @@
  * @module
  */
 
+import * as Option from 'effect/Option';
+import * as P from 'effect/Predicate';
 import { defineMarkSpec, union } from 'prosekit/core';
 import { defineBold } from 'prosekit/extensions/bold';
 import { defineCode } from 'prosekit/extensions/code';
@@ -113,9 +115,13 @@ export function defineCitation() {
       },
     ],
     toDOM(mark) {
-      // SAFETY: `workId` has a string default and `parseDOM` only ever yields
-      // a string, so ProseMirror's loosely typed `attrs` holds one here.
-      return ['cite', { 'data-work-id': (mark.attrs as { workId: string }).workId }, 0];
+      // ProseMirror types `attrs` loosely; `workId` has a string default and
+      // `parseDOM` only ever yields a string, so the fallback is unreachable.
+      const workId = Option.getOrElse(
+        Option.liftPredicate(mark.attrs.workId, P.isString),
+        () => '',
+      );
+      return ['cite', { 'data-work-id': workId }, 0];
     },
   });
 }

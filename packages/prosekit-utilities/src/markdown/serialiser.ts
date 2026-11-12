@@ -52,7 +52,7 @@ export type InlineSerialiser = (node: NodeJSON, context: MarkdownContext) => str
 /** Wraps already-rendered text in one mark's Markdown syntax. */
 export type MarkSerialiser = (text: string, mark: MarkJSON) => string;
 
-/** A configured serialiser: one entry point per document shape. */
+/** A configured serialiser: one entry point per document kind. */
 export interface MarkdownSerialiser {
   /** A block document → multi-line Markdown, trimmed. */
   readonly document: (doc: NodeJSON | DocumentJSON) => string;

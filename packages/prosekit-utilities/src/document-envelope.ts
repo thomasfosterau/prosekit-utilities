@@ -1,5 +1,5 @@
 /**
- * Document shapes: the ProseKit-free view onto a document wire schema.
+ * Document envelopes: the ProseKit-free view onto a document wire schema.
  *
  * ## Why this module exists
  *
@@ -11,14 +11,14 @@
  * statically bundles the editor, the single largest client chunk, into every
  * page including anonymous read-only ones.
  *
- * ## What a shape does instead
+ * ## What a envelope does instead
  *
- * A {@link DocumentShape} validates the ProseMirror JSON tree
+ * A {@link DocumentEnvelope} validates the ProseMirror JSON tree
  * **structurally** — the top-level `type`, and that `content` is an array of
  * JSON — with no ProseKit import at all. On top of that sits a pluggable
- * grammar check: a server runtime calls {@link DocumentShape.install} once
+ * grammar check: a server runtime calls {@link DocumentEnvelope.install} once
  * (the ProseKit entry point's `installDocumentGrammars` does it for a whole set), and
- * from then on the shape rejects exactly what the derived schema rejects.
+ * from then on the envelope rejects exactly what the derived schema rejects.
  *
  * The structural check is a strict superset of the grammar check — anything
  * the compiled ProseMirror schema accepts passes it — so an uninstalled
@@ -42,7 +42,7 @@ import type * as P from 'effect/Predicate';
 
 /**
  * A whole-document type guard — what the ProseKit entry point's `DocumentSchema.is`
- * provides and what {@link DocumentShape.install} accepts.
+ * provides and what {@link DocumentEnvelope.install} accepts.
  */
 export type DocumentGrammarGuard = P.Predicate<unknown>;
 
@@ -60,7 +60,7 @@ export type DocumentGrammarGuard = P.Predicate<unknown>;
  * against the grammar check's own 0.141 ms — a 1.76x decode, per document,
  * on a path an API runs per row. Flattening to `Schema.Json` takes the
  * structural walk to 0.039 ms (1.26x), and costs the browser only per-node
- * shape errors it was never the right place to catch.
+ * envelope errors it was never the right place to catch.
  *
  * `Schema.Json` rather than `Schema.Unknown` because an open leaf here would
  * put a fresh `Unknown` inside the response schema of every endpoint
@@ -70,10 +70,10 @@ export type DocumentGrammarGuard = P.Predicate<unknown>;
  * and JSON-safe by construction — and a non-JSON value (a `Date`, a
  * function) is still rejected rather than waved through.
  */
-const ContentShape = /* @__PURE__ */ Schema.Array(Schema.Json);
+const ContentEnvelope = /* @__PURE__ */ Schema.Array(Schema.Json);
 
 /**
- * Splits a camel-case shape name into the words a violation message reads
+ * Splits a camel-case envelope name into the words a violation message reads
  * with: `blockDocument` → `block document`.
  */
 const wordsOf = (name: string): string =>
@@ -90,7 +90,7 @@ const wordsOf = (name: string): string =>
  * it; `install` upgrades every one of them, for the life of the isolate, to
  * the full grammar check.
  */
-export interface DocumentShape<Name extends string> {
+export interface DocumentEnvelope<Name extends string> {
   /** The envelope's top-level `type` — `blockDocument`, `inlineDocument`, … */
   readonly name: Name;
   /** The human-readable noun phrase used in validation messages. */
@@ -103,7 +103,7 @@ export interface DocumentShape<Name extends string> {
   readonly install: (guard: DocumentGrammarGuard) => void;
   /** Whether a grammar guard is installed. For tests; production code should not branch on it. */
   readonly isInstalled: () => boolean;
-  /** An empty document of this shape — the value a fresh editor field starts from. */
+  /** An empty document of this envelope — the value a fresh editor field starts from. */
   readonly empty: () => DocumentJSON<Name>;
   /** {@link Schema} with an allow-list filter appended. */
   readonly narrow: (allowList: AllowList) => Schema.Codec<DocumentJSON<Name>>;
@@ -113,18 +113,18 @@ export interface DocumentShape<Name extends string> {
  * Declares a document surface.
  *
  * ```ts
- * const blockDocument = defineDocumentShape({ name: 'blockDocument' });
+ * const blockDocument = defineDocumentEnvelope({ name: 'blockDocument' });
  * ```
  *
- * Each call gets its own guard slot, so two shapes never share an install.
+ * Each call gets its own guard slot, so two envelopes never share an install.
  * `label` defaults to the name split into words (`blockDocument` → `block
  * document`), which is what the validation message reads with: `must be a
  * valid block document`.
  */
-export function defineDocumentShape<Name extends string>(options: {
+export function defineDocumentEnvelope<Name extends string>(options: {
   readonly name: Name;
   readonly label?: string;
-}): DocumentShape<Name> {
+}): DocumentEnvelope<Name> {
   const name = options.name;
   const label = options.label ?? wordsOf(name);
 
@@ -132,7 +132,7 @@ export function defineDocumentShape<Name extends string>(options: {
 
   const structural: Schema.Top = Schema.Struct({
     type: Schema.Literal(name),
-    content: ContentShape,
+    content: ContentEnvelope,
   }).pipe(
     Schema.check(
       Schema.makeFilter(
@@ -158,7 +158,7 @@ export function defineDocumentShape<Name extends string>(options: {
   // `DocumentJSON<Name>` (its `content` is `ReadonlyArray<Json>`, not
   // `ReadonlyArray<NodeJSON>`), and the two do not overlap enough for one
   // assertion, so it goes through `Schema.Top`. This is the single documented
-  // seam where it is pinned to the declared shape; the grammar guard, once
+  // seam where it is pinned to the declared envelope; the grammar guard, once
   // installed, is what proves the narrower type.
   const documentSchema = structural as Schema.Codec<DocumentJSON<Name>>;
 

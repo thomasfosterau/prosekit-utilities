@@ -66,12 +66,7 @@ function defineFlowchartNodeSpec() {
     toDOM: (node) => {
       // ProseMirror `attrs` is a foreign plain object; convert at the
       // boundary rather than pushing `Option` into the node spec.
-      // SAFETY: `data` is only ever written by this spec's default
-      // (`EMPTY_FLOWCHART`), by `parseDOM` (`parseFlowchartData`) and by
-      // `updateFlowchartData`, all of which produce a `FlowchartData`; a
-      // caller-supplied nullish `data` is still caught below.
-      const attrs = node.attrs as { readonly data: FlowchartData };
-      const data = Option.getOrElse(Option.fromNullishOr(attrs.data), () => EMPTY_FLOWCHART);
+      const data = Option.getOrElse(Option.fromNullishOr(node.attrs.data), () => EMPTY_FLOWCHART);
       // Persist the JSON in an attribute so the element's inner content is
       // free for the post-rendered SVG (see `./html.ts`). The JSON is
       // unicode-escaped so user-supplied labels containing `<`, `>`, `&`, `'`

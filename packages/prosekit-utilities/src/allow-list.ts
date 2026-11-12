@@ -16,7 +16,7 @@
  * They are also cheap to apply as a tree-walk and expensive to apply as a
  * schema: the derived schema is `Schema.suspend`-wrapped so the ProseMirror
  * compile stays lazy, and `Schema.check` cannot be appended to a `Suspend`.
- * {@link allowListFilter} is composable onto a `DocumentShape`'s schema
+ * {@link allowListFilter} is composable onto a `DocumentEnvelope`'s schema
  * (which is not suspended) for that reason; {@link checkAllowList} is the
  * Effect-shaped seam for everything else.
  *
@@ -35,7 +35,6 @@ import * as P from 'effect/Predicate';
 import * as Result from 'effect/Result';
 import * as Schema from 'effect/Schema';
 import type * as SchemaAST from 'effect/SchemaAST';
-import type { MarkJSON, NodeJSON } from './json.ts';
 import { isSafeHref } from './url-safety.ts';
 
 // ---------------------------------------------------------------------------
@@ -98,21 +97,36 @@ export class DocumentViolation
     message: Schema.String,
   }) {}
 
-/** A document as the walk needs to see it: an envelope with `content`. */
+/**
+ * A document as the walk needs to see it: anything whose `content` is an
+ * array, whatever the element type. A document envelope's `content` is
+ * `ReadonlyArray<Json>` at the schema level — a `null` entry gets past the
+ * structural check — so the walk below never assumes an entry is an object.
+ */
 interface WithContent {
-  readonly content: ReadonlyArray<NodeJSON>;
+  readonly content: ReadonlyArray<WalkEntry>;
 }
 
 /**
- * The widest thing {@link allowListFilter} can be pointed at: anything whose
- * `content` is an array, whatever the element type. A document shape's
- * `content` is `ReadonlyArray<Json>` at the schema level — a `null` entry
- * gets past the structural check — so the walk below never assumes an entry
- * is an object.
+ * One entry the walk visits: any JSON value. `NodeJSON` and `MarkJSON` are
+ * JSON values, and so is whatever a structural check let through in their
+ * place.
  */
-interface ContentCarrier {
-  readonly content: ReadonlyArray<unknown>;
-}
+type WalkEntry = Schema.Json;
+
+/** Whether a JSON value is an object (not an array, not `null`). */
+const isJsonObject = (value: Schema.Json): value is Schema.JsonObject =>
+  P.isObject(value) && !Arr.isArray(value);
+
+/** Whether a JSON value is an array. */
+const isJsonArray = (value: Schema.Json): value is Schema.JsonArray => Arr.isArray(value);
+
+/** A node's `marks` or `content`, when it carries an array there. */
+const entriesOf = (node: WalkEntry, key: 'marks' | 'content'): ReadonlyArray<WalkEntry> => {
+  if (!isJsonObject(node)) return [];
+  const value = node[key];
+  return value !== undefined && isJsonArray(value) ? value : [];
+};
 
 /**
  * A node's or mark's `type`, or `''` for anything that is not one at all.
@@ -122,8 +136,8 @@ interface ContentCarrier {
  * walk. The walk runs on values a structural check has only proved to be
  * JSON, so that case is reachable.
  */
-const typeNameOf = (value: MarkJSON | NodeJSON): string =>
-  P.isObjectOrArray(value) && P.isString(value.type) ? value.type : '';
+const typeNameOf = (value: WalkEntry): string =>
+  isJsonObject(value) && P.isString(value['type']) ? value['type'] : '';
 
 const nodeViolationOf = (allowList: AllowList, type: string): DocumentViolation =>
   new DocumentViolation({
@@ -153,14 +167,26 @@ const hrefViolationOf = (allowList: AllowList): DocumentViolation =>
 // The walk
 // ---------------------------------------------------------------------------
 
+/** A mark's string `attrs.href`, or `None` when it carries none. */
+const hrefOf = (mark: WalkEntry): Option.Option<string> => {
+  if (!isJsonObject(mark)) return Option.none();
+  const attrs = mark['attrs'];
+  if (attrs === undefined || !isJsonObject(attrs)) return Option.none();
+  return Option.liftPredicate(attrs['href'], P.isString);
+};
+
 const markViolation =
   (allowList: AllowList) =>
-  (mark: MarkJSON): Result.Result<DocumentViolation, void> => {
+  (mark: WalkEntry): Result.Result<DocumentViolation, void> => {
     const type = typeNameOf(mark);
     if (!HashSet.has(allowList.marks, type)) {
       return Result.succeed(markViolationOf(allowList, type));
     }
-    if (allowList.checkLinkHref && type === 'link' && !isSafeHref(mark.attrs?.href)) {
+    if (
+      allowList.checkLinkHref &&
+      type === 'link' &&
+      !Option.exists(hrefOf(mark), (href) => isSafeHref(href))
+    ) {
       return Result.succeed(hrefViolationOf(allowList));
     }
     return Result.failVoid;
@@ -168,36 +194,32 @@ const markViolation =
 
 const firstMarkViolation = (
   allowList: AllowList,
-  node: NodeJSON,
+  node: WalkEntry,
 ): Option.Option<DocumentViolation> => {
-  const marks = node.marks;
-  if (!Arr.isArray(marks)) return Option.none();
-  return Arr.head(Arr.filterMap(marks, markViolation(allowList)));
+  return Arr.head(Arr.filterMap(entriesOf(node, 'marks'), markViolation(allowList)));
 };
 
 const firstViolation = (
   allowList: AllowList,
-  nodes: ReadonlyArray<NodeJSON>,
+  nodes: ReadonlyArray<WalkEntry>,
 ): Option.Option<DocumentViolation> => Arr.head(Arr.filterMap(nodes, nodeViolation(allowList)));
 
 const nodeViolation =
   (allowList: AllowList) =>
-  (node: NodeJSON): Result.Result<DocumentViolation, void> => {
+  (node: WalkEntry): Result.Result<DocumentViolation, void> => {
     const type = typeNameOf(node);
     if (!HashSet.has(allowList.nodes, type)) {
       return Result.succeed(nodeViolationOf(allowList, type));
     }
     const marks = firstMarkViolation(allowList, node);
     if (Option.isSome(marks)) return Result.succeed(marks.value);
-    const content = node.content;
-    if (!Arr.isArray(content)) return Result.failVoid;
-    const nested = firstViolation(allowList, content);
+    const nested = firstViolation(allowList, entriesOf(node, 'content'));
     return Option.isNone(nested) ? Result.failVoid : Result.succeed(nested.value);
   };
 
 /**
  * The first node or mark type outside `allowList`'s vocabulary — or the
- * first unsafe `link` `href` — in an already shape-valid document.
+ * first unsafe `link` `href` — in an already structurally valid document.
  *
  * Depth-first in document order, so the violation names the earliest
  * offender, and `Option.none()` when the whole tree is admissible. The
@@ -232,18 +254,14 @@ export const checkAllowList =
  * The same walk as a `Schema.check`-compatible filter, so an allow-list can
  * be composed onto a schema rather than applied beside it.
  *
- * This is what `DocumentShape.narrow` uses. The failure message is the
+ * This is what `DocumentEnvelope.narrow` uses. The failure message is the
  * violation's own `message`, so a decode error reads exactly like the
  * write-seam error for the same document.
  */
-export const allowListFilter = (allowList: AllowList): SchemaAST.Filter<ContentCarrier> =>
+export const allowListFilter = (allowList: AllowList): SchemaAST.Filter<WithContent> =>
   Schema.makeFilter(
-    (value: ContentCarrier) =>
-      // SAFETY: the walk reads an entry's `marks` / `content` only after
-      // `typeNameOf` has found its `type` in the vocabulary, which no `null`,
-      // stray string or type-less entry can pass, so a non-node entry is
-      // reported as a violation before anything else is read from it.
-      Option.match(allowListViolation(allowList, value as WithContent), {
+    (value: WithContent) =>
+      Option.match(allowListViolation(allowList, value), {
         onNone: () => true,
         onSome: (violation) => violation.message,
       }),

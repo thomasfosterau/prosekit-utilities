@@ -49,7 +49,7 @@ import {
   defineFlowchart,
   FLOWCHART_ATTRIBUTE_OVERRIDES,
 } from '@thomasfosterau/prosekit-flowchart/node';
-import { blockDocument } from './document-shapes.ts';
+import { blockDocument } from './document-envelopes.ts';
 
 export const blockDocumentSchema = defineDocumentSchema(blockDocument, {
   extension: () => defineBlockDocumentExtension(defineFlowchart()),

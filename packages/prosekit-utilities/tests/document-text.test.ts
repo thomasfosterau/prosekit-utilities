@@ -12,19 +12,10 @@
  */
 
 import * as Option from 'effect/Option';
-import type * as Schema from 'effect/Schema';
 import { describe, expect, it } from 'vite-plus/test';
 import { extractDocumentText, inlineDocumentText } from '../src/document-text.ts';
 import type { DocumentJSON } from '../src/json.ts';
-
-/**
- * A stored-row value the envelope type rules out — no content array, a
- * non-string `text`, `null` entries — typed as a document on purpose, so a
- * case can pin how tolerant the walk is of what a jsonb column can hold.
- */
-const malformed = (value: Schema.Json | DocumentJSON): DocumentJSON =>
-  // SAFETY: deliberately ill-typed input is the point of every caller.
-  value as DocumentJSON;
+import { malformed } from './malformed.ts';
 
 describe('extractDocumentText', () => {
   it('lifts over an optional document with Option.map', () => {
