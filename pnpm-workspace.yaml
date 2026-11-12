@@ -35,13 +35,13 @@ catalog:
   # `oxlint-tsgolint` with Effect-patched builds matched by gitHead, and
   # `vite.config.ts` lints with its `oxlint-presets`. Each release hard-errors
   # (UnsupportedTargetPackageVersionError) on any other component version, so
-  # it moves in lockstep with `@typescript/native` (0.63.0 supports 7.0.2) and
-  # with the `oxlint` / `oxlint-tsgolint` that `vite-plus` pins (0.63.0
-  # supports oxlint 1.88.0 – 1.90.0 and tsgolint 7.0.2004 / 7.0.2005;
-  # vite-plus 1.4.0 carries 1.89.0 / 7.0.2004). Read the `components` table
+  # it moves in lockstep with `@typescript/native` (0.68.0 supports 7.0.2) and
+  # with the `oxlint` / `oxlint-tsgolint` that `vite-plus` pins (0.68.0
+  # supports oxlint 1.91.0 – 1.93.0 and tsgolint 7.0.2005 / 7.0.2006;
+  # vite-plus 1.6.0 carries 1.93.0 / 7.0.2006). Read the `components` table
   # in node_modules/@effect/tsgo/dist/effect-tsgo.cjs before bumping any of
   # the three.
-  '@effect/tsgo': 0.63.0
+  '@effect/tsgo': 0.68.0
   # `it.effect` for tests that return an Effect, so no test calls
   # `Effect.runSync` / `runPromise`. Same release train as `effect` (pin it
   # equal); it peers `vitest` ^5, which vite-plus's pin satisfies.
@@ -82,8 +82,8 @@ catalog:
   # Vitest browser mode: the Playwright provider is its own package as of
   # v4 and pins `vitest` EXACTLY, so it must track the `vitest` entry below
   # (which itself must match vite-plus's exact pin — see that entry).
-  '@vitest/browser-playwright': 5.0.5
-  '@vitest/coverage-istanbul': 5.0.5
+  '@vitest/browser-playwright': 5.1.0
+  '@vitest/coverage-istanbul': 5.1.0
   # The REQUIRED peer of `@thomasfosterau/prosekit-flowchart` — and the
   # reason that package exists apart from the editor package: a component
   # whose behaviour needs a specific third-party engine lives in its own
@@ -153,9 +153,9 @@ catalog:
   # vite-plus pins `oxlint`, `oxfmt`, `oxlint-tsgolint` (the type-aware lint
   # backend `vp check` runs), `vitest` and the `@vitest/*` runtime packages
   # to exact versions, so `vitest`, `@vitest/browser-playwright` and
-  # `@vitest/coverage-istanbul` must all match vite-plus's own pin (1.4.0 ->
-  # 5.0.5). It also decides the `oxlint` (1.4.0 -> 1.89.0, tsgolint
-  # 7.0.2004) that `effect-tsgo patch --oxlint` must support: see the
+  # `@vitest/coverage-istanbul` must all match vite-plus's own pin (1.6.0 ->
+  # 5.1.0). It also decides the `oxlint` (1.6.0 -> 1.93.0, tsgolint
+  # 7.0.2006) that `effect-tsgo patch --oxlint` must support: see the
   # `@effect/tsgo` entry, which moves with this one and `@typescript/native`.
   # The `vitest@*: "catalog:"` override forces every resolution to the
   # catalog singleton, a mismatch breaks the browser provider's exact peer,
@@ -165,9 +165,9 @@ catalog:
   # ignored in .github/dependabot.yml, #60): on its vite-plus PR, set all
   # three to the new vite-plus's `dependencies.vitest` by hand, in that PR.
   # `vite` is the same release published under its aliased core package.
-  vite-plus: 1.4.0
-  vite: npm:@voidzero-dev/vite-plus-core@1.4.0
-  vitest: 5.0.5
+  vite-plus: 1.6.0
+  vite: npm:@voidzero-dev/vite-plus-core@1.6.0
+  vitest: 5.1.0
   # `render` + locators for Svelte components under Vitest browser mode.
   vitest-browser-svelte: ^3.1.0
 
