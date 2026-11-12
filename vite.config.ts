@@ -29,6 +29,23 @@ const EFFECT_FILES = [
   'packages/prosekit-flowchart/tests/node/**/*.ts',
 ];
 
+/**
+ * A preset's rules with every `warn` level raised to `error`, the options
+ * of a `[level, options]` entry kept. A rule this workspace cannot satisfy
+ * is switched off by name below, with its reason, never left at `warn`.
+ */
+const atError = (rules: Readonly<Record<string, unknown>> | undefined): Record<string, unknown> =>
+  Object.fromEntries(
+    Object.entries(rules ?? {}).map(([name, level]) => [
+      name,
+      level === 'warn'
+        ? 'error'
+        : Array.isArray(level) && level[0] === 'warn'
+          ? ['error', ...level.slice(1)]
+          : level,
+    ]),
+  );
+
 export default defineConfig({
   // Staged-file checks run by `vp staged` (pre-commit). Routed by type: oxfmt
   // cannot format `.svelte`, so Svelte goes through lint alone while the
@@ -142,8 +159,10 @@ export default defineConfig({
         files: EFFECT_FILES,
         plugins: recommended.plugins ?? [],
         rules: {
-          ...recommended.rules,
-          ...effect.configs.recommended.rules,
+          // Every preset rule at `error`: the presets ship many at `warn`, and
+          // this workspace keeps no rule below error (each is at zero sites).
+          ...atError(recommended.rules),
+          ...atError(effect.configs.recommended.rules),
           // Both cast rules are at zero sites; keep them at `error`.
           'effect/casting-awareness': 'error',
           'typescript/no-unsafe-type-assertion': 'error',
