@@ -65,6 +65,24 @@ export default defineConfig({
 
   run: {
     tasks: {
+      // The whole CI gate, in AGENTS.md § Verification's order (steps 1–8):
+      // CI's one command after install is `vp run ci`, so a local run and CI
+      // are the same thing. Each entry runs only if the one before passed
+      // (fail-fast): the first failure ends the run. Uncached: every gate
+      // underneath keeps its own cache. `pnpm audit` needs the network.
+      ci: {
+        command: [
+          'vp check',
+          'vp run check',
+          'vp run --filter ./packages/prosekit-utilities test:coverage',
+          "vp run --filter '!./packages/prosekit-utilities' test:unit",
+          'vp run -r build',
+          'vp run check:dist',
+          'vp run --filter ./packages/prosekit-svelte storybook:build',
+          'pnpm audit --audit-level high',
+        ],
+        cache: false,
+      },
       // The type-check gate, as one task: every package's `check` pipeline
       // (the root takes the three packages as dependencies so this edge
       // reaches them), then the root project itself — `tsconfig.json`'s

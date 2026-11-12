@@ -1,119 +1,87 @@
 name: CI
 
-# ONE job, ONE required check. The pipeline is a short, ordered list of the
-# same gates a human runs before pushing — there is no stage to deploy, no
-# credential to inject and no service to provision, so nothing here needs a
-# `needs:` graph.
+# One workflow, one command: after checkout and setup, every gate is
+# `vp run ci` (the `ci` task in vite.config.ts, AGENTS.md § Verification's
+# steps 1–8 in order), so a local run and CI are the same thing. It runs on
+# the current Node LTS line and the latest stable line, which `engines.node`
+# both covers. Each leg is its own check, `ci (node <leg>)`; a ruleset
+# requires every leg by name.
 #
-# The one step that is CI-only is the Playwright browser install: the Svelte
-# packages' `test:unit` drives real Chromium, which a fresh runner lacks. A
-# dev machine installs it once; an agent session borrows the image's older
-# build, which the SessionStart hook (.claude/hooks/session-start.sh,
-# section 4) bridges to the revision the pinned `playwright` expects (see
-# that entry in pnpm-workspace.yaml).
+# Two CI-only steps provision rather than gate, so they stay steps: the Vite+
+# task cache restore, and Chromium for the Svelte packages' browser suites
+# (`--with-deps` installs apt libraries, which a dev machine or an agent
+# session does not want; a session borrows the image's build through the
+# SessionStart hook's bridge).
 
 on:
   pull_request:
-    branches: [trunk]
     types: [opened, reopened, synchronize, ready_for_review]
   push:
     branches: [trunk]
   # A manual run, for the "chore: version packages" PR. changesets/action
   # pushes that branch with GITHUB_TOKEN, and GitHub starts no workflow for a
-  # GITHUB_TOKEN push, so the PR's head never gets this required check by
-  # itself. Run this workflow on `changeset-release/trunk` from the Actions
-  # tab. The check run lands on that branch's head commit under the same job
-  # name, which is what branch protection matches.
+  # GITHUB_TOKEN push, so the PR's head never gets these checks by itself.
+  # Run this workflow on `changeset-release/trunk` from the Actions tab.
   workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/trunk' }}
 
-# No permissions by default; the single job grants only read access.
+# No permissions by default; each job grants only read access.
 permissions: {}
 
 jobs:
   ci:
-    name: Check, test, build
+    name: ci (node ${{ matrix.node }})
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        # Vite+ aliases (`vp env use`): `lts` is the newest LTS line,
+        # `latest` the newest stable line; pre-releases are never selected.
+        node: [lts, latest]
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      # Vite+ (the catalog's `vite-plus` pin, resolved through
-      # pnpm-workspace.yaml), the Node that `engines.node` selects, the pnpm
-      # that `packageManager` pins, the pnpm store cache (keyed on
-      # pnpm-lock.yaml), and a frozen-lockfile `vp install`. Install scripts
-      # run: the root `prepare` patches the native `tsc` and vite-plus's
-      # `oxlint` with `@effect/tsgo`, which `vp check` and the core's `check`
-      # need. Dependency build scripts stay gated by `allowBuilds` in
+      # Vite+ (the catalog's `vite-plus` pin), the matrix's Node, the pnpm
+      # that `packageManager` pins, the pnpm store cache and a frozen-lockfile
+      # `vp install`. Install scripts run: the root `prepare` patches the
+      # native `tsc` and vite-plus's `oxlint` with `@effect/tsgo`, which the
+      # gates need. Dependency build scripts stay gated by `allowBuilds` in
       # pnpm-workspace.yaml. An exact tag, not a SHA, by the owner's decision
       # (.github/zizmor.yml says why).
       - name: Setup Vite+
         uses: voidzero-dev/setup-vp@v1.22.0
         with:
+          node-version: ${{ matrix.node }}
           cache: true
           run-install: |
             - args: ['--frozen-lockfile']
 
-      # The Vite+ task cache: a step whose inputs are unchanged since the last
-      # run on this runner OS (the core's `build` that every Svelte task
-      # depends on, say) replays instead of rerunning. Keyed per commit with a
-      # prefix fallback, so a PR restores the newest earlier cache.
+      - name: Node version
+        run: node --version
+
+      # The Vite+ task cache: a gate whose inputs are unchanged since the
+      # last run on this runner OS and Node replays instead of rerunning.
       - name: Restore the Vite+ task cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: node_modules/.vite/task-cache
-          key: vp-task-v1-${{ runner.os }}-${{ github.sha }}
+          key: vp-task-v2-${{ runner.os }}-node-${{ matrix.node }}-${{ github.sha }}
           restore-keys: |
-            vp-task-v1-${{ runner.os }}-
+            vp-task-v2-${{ runner.os }}-node-${{ matrix.node }}-
 
-      # Chromium + its apt system libraries, at exactly the revision the pinned
-      # `playwright` expects. CI-only: a dev machine runs `playwright install`
-      # once, and an agent session points PLAYWRIGHT_BROWSERS_PATH at the
-      # SessionStart hook's bridge to the image's older build (section 4).
+      # Chromium + its apt system libraries, at exactly the revision the
+      # pinned `playwright` expects.
       - name: Install Chromium for the browser suites
         run: pnpm exec playwright install --with-deps chromium
 
-      # Lint is type-aware (oxlint-tsgolint), and runs before any build: the
-      # Svelte packages' tsconfig.json maps the siblings to their `src/`.
-      - name: Format and lint
-        run: vp check
-
-      - name: Type check
-        run: vp run check
-
-      # The core's node suite runs ONCE, under istanbul coverage, so the
-      # thresholds in packages/prosekit-utilities/vite.config.ts (statements
-      # 90 / branches 85 / functions 90 / lines 90) fail the job when they
-      # are missed. The Svelte packages' browser suites keep plain
-      # `test:unit`; the `!` filter selects every package but the core.
-      - name: Unit tests with coverage thresholds (the core, node)
-        run: vp run --filter ./packages/prosekit-utilities test:coverage
-
-      - name: Unit tests (the Svelte packages, browser)
-        run: vp run --filter '!./packages/prosekit-utilities' test:unit
-
-      - name: Build the libraries
-        run: vp run -r build
-
-      # Reads the dist/ the step above wrote: the core's `.`, `./derive` and
-      # `./drizzle` must reach no ProseKit, and the flowchart's `./node` no
-      # Svelte or xyflow, and every emitted module must be side-effect-free
-      # (scripts/check-dist-boundaries.ts). Its `build` dependencies are cache
-      # hits here.
-      - name: Entry-point boundaries and side effects (built dist/)
-        run: vp run check:dist
-
-      - name: Build Storybook
-        run: vp run --filter ./packages/prosekit-svelte storybook:build
-
-      # Known high/critical advisories in the resolved dependency tree.
-      - name: Audit
-        run: pnpm audit --audit-level high
+      - name: CI
+        run: vp run ci
