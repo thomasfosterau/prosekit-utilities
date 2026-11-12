@@ -169,17 +169,11 @@ export default defineConfig({
           // are `readonly x?: T` (no `| undefined`) and optional parameters
           // `x?: T` (AGENTS.md § Conventions). Zero sites.
           'effect/prefer-option-over-null': 'error',
-          // `NodeJSON` / `MarkJSON` and the derive options mirror
-          // ProseMirror's JSON model, whose `attrs` is an open record of
-          // `unknown`. That is deliberate: a caller must narrow a value
-          // before using it, which is what keeps an `href` from skipping
-          // `isSafeHref`.
-          'effect/no-unsafe-dictionary-type': 'warn',
-          // `unknown` is the honest type at a decode boundary: the public
-          // `DocumentGrammarGuard` and `DocumentSchema.decode` exist to take
-          // unparsed input, and `schemaFromDefault` reads ProseMirror's
-          // `any`-typed `AttributeSpec.default`.
-          'effect/no-unknown-parameters': 'warn',
+          // `NodeJSON` / `MarkJSON` attrs are `Schema.Json`-valued; guards are
+          // `Predicate` / `Refinement` over `unknown`, and decode boundaries
+          // take `Schema.Json`. Both at zero sites.
+          'effect/no-unsafe-dictionary-type': 'error',
+          'effect/no-unknown-parameters': 'error',
           // The Effect code's assertions are already gated twice, by
           // `effect/casting-awareness` (a warning on each `as`) and by
           // `effect/require-safety-comment-for-type-assertion` (a `SAFETY:`

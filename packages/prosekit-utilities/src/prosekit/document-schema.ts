@@ -41,6 +41,7 @@
 import * as Arr from 'effect/Array';
 import * as Effect from 'effect/Effect';
 import * as Option from 'effect/Option';
+import type * as P from 'effect/Predicate';
 import * as Result from 'effect/Result';
 import * as Schema from 'effect/Schema';
 import type { Extension } from 'prosekit/core';
@@ -108,9 +109,9 @@ export interface DocumentSchema<Name extends string> {
   /** The derived wire schema: the envelope, with `shape.name` in place of ProseMirror's `doc`. */
   readonly Document: Schema.Codec<DocumentJSON<Name>>;
   /** A whole-document type guard over {@link Document}, with a defect net. */
-  readonly is: (value: unknown) => value is DocumentJSON<Name>;
+  readonly is: P.Refinement<unknown, DocumentJSON<Name>>;
   /** {@link Document}'s decode in an `Effect`, failing with a {@link DocumentDecodeError}. */
-  readonly decode: (value: unknown) => Effect.Effect<DocumentJSON<Name>, DocumentDecodeError>;
+  readonly decode: (value: Schema.Json) => Effect.Effect<DocumentJSON<Name>, DocumentDecodeError>;
   /** Installs {@link is} as {@link shape}'s grammar guard, for the life of the isolate. */
   readonly install: () => void;
 }

@@ -85,8 +85,9 @@ export function parseValidateGrammar(validate: string): {
   });
 }
 
-/** Best-effort schema for an attribute value inferred from its default. */
-function schemaFromDefault(value: unknown): Schema.Top {
+/** Best-effort schema for an attribute value inferred from its spec's default. */
+function schemaFromDefault(spec: AttributeSpec): Schema.Top {
+  const value = spec.default;
   if (P.isString(value)) return Schema.String;
   if (P.isNumber(value)) return Schema.Finite;
   if (P.isBoolean(value)) return Schema.Boolean;
@@ -126,7 +127,7 @@ export function deriveAttribute(
 
   // A function validator is opaque; fall back to the default's shape.
   return {
-    schema: hasDefault ? schemaFromDefault(spec.default) : Schema.Unknown,
+    schema: hasDefault ? schemaFromDefault(spec) : Schema.Unknown,
     optional: hasDefault,
   };
 }

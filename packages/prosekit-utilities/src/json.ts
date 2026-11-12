@@ -15,16 +15,18 @@
  * @module
  */
 
+import type * as Schema from 'effect/Schema';
+
 /**
  * One ProseMirror mark in its JSON form — a type name and its attributes.
  *
- * `attrs` is `unknown`-valued rather than `any`-valued: a serialiser that
+ * `attrs` is JSON-valued (`Schema.Json`) rather than `any`-valued: a serialiser that
  * reads `mark.attrs?.href` has to narrow it, which is what keeps the
  * `isSafeHref` check from being accidentally skipped.
  */
 export interface MarkJSON {
   readonly type: string;
-  readonly attrs?: Record<string, unknown>;
+  readonly attrs?: { readonly [name: string]: Schema.Json };
 }
 
 /**
@@ -36,7 +38,7 @@ export interface MarkJSON {
  */
 export interface NodeJSON {
   readonly type: string;
-  readonly attrs?: Record<string, unknown>;
+  readonly attrs?: { readonly [name: string]: Schema.Json };
   readonly content?: ReadonlyArray<NodeJSON>;
   readonly marks?: ReadonlyArray<MarkJSON>;
   readonly text?: string;

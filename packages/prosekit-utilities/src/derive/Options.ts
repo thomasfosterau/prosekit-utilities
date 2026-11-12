@@ -110,13 +110,13 @@ export interface DeriveDocumentOptions extends DeriveOptions {
 /** A derived ProseMirror mark, as its JSON shape. */
 export interface DerivedMarkJSON {
   readonly type: string;
-  readonly attrs?: Record<string, unknown>;
+  readonly attrs?: { readonly [name: string]: Schema.Json };
 }
 
 /** A derived ProseMirror node, as its recursive JSON shape. */
 export interface DerivedNodeJSON {
   readonly type: string;
-  readonly attrs?: Record<string, unknown>;
+  readonly attrs?: { readonly [name: string]: Schema.Json };
   readonly content?: ReadonlyArray<DerivedNodeJSON>;
   readonly marks?: ReadonlyArray<DerivedMarkJSON>;
   readonly text?: string;
