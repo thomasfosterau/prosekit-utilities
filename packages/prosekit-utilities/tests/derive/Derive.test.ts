@@ -147,6 +147,11 @@ describe('deriveDocumentSchema', () => {
   });
 });
 
+const figure = (content: ReadonlyArray<Schema.Json>) => ({
+  type: 'doc',
+  content: [{ type: 'figure', content }],
+});
+
 describe('deriveDocumentSchema: a fixed-sequence content expression (`image figcaption`)', () => {
   // Intended behaviour, pinned here: the derivation models a content
   // expression as "an array of a child union", so `image figcaption` derives as
@@ -158,10 +163,6 @@ describe('deriveDocumentSchema: a fixed-sequence content expression (`image figc
   const Document = deriveDocumentSchema(figureTestSchema);
   const image = { type: 'image', attrs: { src: null } };
   const caption = { type: 'figcaption', content: [{ type: 'text', text: 'A caption' }] };
-  const figure = (content: ReadonlyArray<Schema.Json>) => ({
-    type: 'doc',
-    content: [{ type: 'figure', content }],
-  });
 
   it('accepts the declared sequence', () => {
     expect(decodes(Document, figure([image, caption]))).toBe(true);

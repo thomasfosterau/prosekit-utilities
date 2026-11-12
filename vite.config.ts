@@ -215,16 +215,6 @@ export default defineConfig({
           'typescript/no-unsafe-type-assertion': 'off',
         },
       },
-      // Every package's tests.
-      {
-        files: ['packages/*/tests/**/*.ts'],
-        rules: {
-          // A fixture builder sits inside the `describe` that uses it, next
-          // to the cases it serves; hoisting each to module scope only moves
-          // it away from them.
-          'unicorn/consistent-function-scoping': 'off',
-        },
-      },
     ],
     // `typeAware` runs the type-aware rules through oxlint-tsgolint.
     // `typeCheck` stays OFF, measured: tsgolint has no Svelte language

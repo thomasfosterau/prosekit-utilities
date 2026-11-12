@@ -379,13 +379,13 @@ describe('document: leaf blocks', () => {
 
 // ── Tables ────────────────────────────────────────────────────────────
 
-describe('document: tables', () => {
-  const cell = (value: string, header = false): NodeJSON => ({
-    type: header ? 'tableHeaderCell' : 'tableCell',
-    attrs: {},
-    content: [para(text(value))],
-  });
+const cell = (value: string, header = false): NodeJSON => ({
+  type: header ? 'tableHeaderCell' : 'tableCell',
+  attrs: {},
+  content: [para(text(value))],
+});
 
+describe('document: tables', () => {
   it('renders a GitHub-flavoured pipe table with a header separator', () => {
     expect(
       document(
@@ -486,13 +486,13 @@ describe('inline', () => {
 
 // ── mention (opt-in) ──────────────────────────────────────────────────
 
-describe('mentionMarkdown', () => {
-  // `label` is left loose on purpose: the cases below pin a missing and a
-  // non-string label as well as the stored string.
-  const mention = (
-    attrs: { readonly id: string } & Partial<{ readonly label: string | number }>,
-  ): NodeJSON => ({ type: 'mention', attrs });
+// `label` is left loose on purpose: the cases below pin a missing and a
+// non-string label as well as the stored string.
+const mention = (
+  attrs: { readonly id: string } & Partial<{ readonly label: string | number }>,
+): NodeJSON => ({ type: 'mention', attrs });
 
+describe('mentionMarkdown', () => {
   it('renders a mention as its @label', () => {
     expect(extended.document(block(para(text('hi '), mention({ id: 'u1', label: 'rosa' }))))).toBe(
       'hi @rosa',
@@ -515,14 +515,14 @@ describe('mentionMarkdown', () => {
 
 // ── figure (opt-in) ───────────────────────────────────────────────────
 
-describe('figureMarkdown', () => {
-  const figure = (...content: ReadonlyArray<NodeJSON>): NodeJSON => ({ type: 'figure', content });
-  const image = (src: string): NodeJSON => ({ type: 'image', attrs: { src } });
-  const figcaption = (...content: ReadonlyArray<NodeJSON>): NodeJSON => ({
-    type: 'figcaption',
-    content,
-  });
+const figure = (...content: ReadonlyArray<NodeJSON>): NodeJSON => ({ type: 'figure', content });
+const image = (src: string): NodeJSON => ({ type: 'image', attrs: { src } });
+const figcaption = (...content: ReadonlyArray<NodeJSON>): NodeJSON => ({
+  type: 'figcaption',
+  content,
+});
 
+describe('figureMarkdown', () => {
   it('renders the image line then the caption as an italic paragraph', () => {
     expect(
       extended.document(
