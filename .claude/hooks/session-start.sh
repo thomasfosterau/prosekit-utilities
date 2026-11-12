@@ -241,7 +241,7 @@ if [ -d "$PROJECT_DIR/node_modules" ]; then
 fi
 
 # ── 5. Playwright browser bridge ─────────────────────────────────────────────
-# The catalog pins `playwright` 1.60.0, which looks for Chromium revision 1223
+# The catalog pins `playwright` 1.65.0, which looks for Chromium revision 1254
 # (PW_WANT_REV); the image ships some other revision under /opt/pw-browsers
 # (1194 when this was written, 1243 since). Playwright finds a browser purely
 # by path — <PLAYWRIGHT_BROWSERS_PATH>/<name>-<revision>/<the per-platform
@@ -266,7 +266,7 @@ fi
 # hook can export into its caller. Without it (a devcontainer invoking this
 # file directly), the export line is logged for the caller to apply.
 PW_IMAGE_DIR="/opt/pw-browsers"
-PW_WANT_REV="1223"
+PW_WANT_REV="1254"
 PW_BRIDGE_DIR="${HOME:-/root}/.cache/prosekit-pw-browsers"
 # The newest image revision with both builds, and its layout.
 PW_HAVE_REV=""
