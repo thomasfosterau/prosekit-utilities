@@ -26,7 +26,7 @@ Managed by Vite+ (`vp config`, run by `prepare`). **pre-commit** runs `vp staged
 1. The gates in [AGENTS.md § Verification](AGENTS.md#verification), each with its pass/fail.
 2. A changeset (`pnpm changeset`) where [AGENTS.md](AGENTS.md#branches-and-pull-requests) requires one.
 3. `git fetch origin trunk && git rebase origin/trunk`.
-4. Docs: the package `README.md` for any exported change; the package `AGENTS.md` for a new term or invariant.
+4. Docs: the export's doc comment, and the guide in `docs/` when behaviour or usage changes; the package `README.md` only for a new entry point or peer; the package `AGENTS.md` for a new term or invariant.
 
 ## Running individual checks
 

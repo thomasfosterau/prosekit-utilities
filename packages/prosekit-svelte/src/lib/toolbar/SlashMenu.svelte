@@ -19,6 +19,8 @@
   list and its `<li>` wrappers carry `role="none"` so the presentation layer
   never comes between `role="menu"` and its items in the accessibility tree.
 
+  An `id` passed in becomes the trigger's `aria-controls`.
+
   `BlockToolbar` renders this with its own `Toolbar.Button` as the trigger,
   so the insert button is a toolbar item like any other. Exported for a
   custom toolbar that wants the same menu.

@@ -62,6 +62,18 @@ export function deriveNodeSchema(
  * Pass `topTypeName` to rename the top node's `type` literal — for an
  * application that persists the top node under a different name than
  * ProseMirror's internal `doc` (e.g. `blockDocument`).
+ *
+ * What the derived schema models, and what it does not:
+ *
+ * - Marks live on inline nodes. The optional `marks` field is attached to text
+ *   and inline leaves and admits the union of marks any textblock in the
+ *   schema allows.
+ * - Attribute key optionality follows ProseMirror: an attribute with a
+ *   `default` (`null` included) is an optional key, one without is required.
+ * - Unknown keys are ignored, not rejected, matching `Schema.Struct` and
+ *   ProseMirror's own `nodeFromJSON`; they are stripped on decode.
+ * - Content is a set, not a sequence: an array of the union of admissible child
+ *   types, not the exact ordered content expression.
  */
 export function deriveDocumentSchema(
   schema: PmSchema,

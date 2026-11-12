@@ -28,6 +28,8 @@ import { generateFlowchartSvg } from './svg.ts';
  * server-rendered SVG snapshot derived from the placeholder's `data-payload`
  * JSON attribute. The `data-payload` attribute stays on the element so the
  * editor can still round-trip the diagram via {@link parseFlowchartData}.
+ * Returns `html` unchanged, without touching the DOM, when the string contains
+ * no `data-flowchart` at all.
  *
  * `document` is the caller's DOM implementation (the browser's global, or a
  * server-side one such as linkedom) — this module never constructs one
