@@ -187,6 +187,25 @@ export default defineConfig({
           'effect/effect-run-in-body': 'off',
         },
       },
+      // The one place a type assertion is unavoidable: a schema built at
+      // runtime from configuration has no static type to decode into, so
+      // its `Schema.Top` is asserted to the codec type it was built to be,
+      // once, each beside a `SAFETY:` comment. These are the dynamic
+      // `Schema.Struct`s the Registry derives per node and mark, the derived
+      // and structural document schemas pinned to `DocumentJSON<Name>`, and
+      // the test helper that decodes those erased schemas.
+      {
+        files: [
+          'packages/prosekit-utilities/src/derive/Registry.ts',
+          'packages/prosekit-utilities/src/prosekit/document-schema.ts',
+          'packages/prosekit-utilities/src/document-shape.ts',
+          'packages/prosekit-utilities/tests/derive/Attribute.test.ts',
+        ],
+        rules: {
+          'effect/casting-awareness': 'off',
+          'typescript/no-unsafe-type-assertion': 'off',
+        },
+      },
       // Every package's tests.
       {
         files: ['packages/*/tests/**/*.ts'],
