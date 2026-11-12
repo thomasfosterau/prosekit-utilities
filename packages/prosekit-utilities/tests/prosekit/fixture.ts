@@ -11,13 +11,13 @@
  * block grammar without `citation`, whose marks match the inline grammar's.
  *
  * Built by factories rather than exported as module constants because
- * `install()` is a per-isolate, irreversible upgrade of a shape: a suite that
- * installs needs shapes nobody else is watching.
+ * `install()` is a per-isolate, irreversible upgrade of a envelope: a suite that
+ * installs needs envelopes nobody else is watching.
  */
 
 import { assert } from 'vite-plus/test';
 import * as P from 'effect/Predicate';
-import { defineDocumentShape, type DocumentShape } from '../../src/document-shape.ts';
+import { defineDocumentEnvelope, type DocumentEnvelope } from '../../src/document-envelope.ts';
 import { createRegistryCache, type RegistryCache } from '../../src/derive/index.ts';
 import {
   MENTION_ATTRIBUTE_OVERRIDES,
@@ -35,8 +35,8 @@ import {
 export interface DocumentFixture {
   readonly blockCache: RegistryCache;
   readonly inlineCache: RegistryCache;
-  readonly blockShape: DocumentShape<'blockDocument'>;
-  readonly inlineShape: DocumentShape<'inlineDocument'>;
+  readonly blockEnvelope: DocumentEnvelope<'blockDocument'>;
+  readonly inlineEnvelope: DocumentEnvelope<'inlineDocument'>;
   readonly block: DocumentSchema<'blockDocument'>;
   readonly inline: DocumentSchema<'inlineDocument'>;
 }
@@ -46,15 +46,15 @@ const createPair = (
   blockCache: RegistryCache,
   inlineCache: RegistryCache,
 ): DocumentFixture => {
-  const blockShape = defineDocumentShape({ name: 'blockDocument' });
-  const inlineShape = defineDocumentShape({ name: 'inlineDocument' });
+  const blockEnvelope = defineDocumentEnvelope({ name: 'blockDocument' });
+  const inlineEnvelope = defineDocumentEnvelope({ name: 'inlineDocument' });
 
   return {
     blockCache,
     inlineCache,
-    blockShape,
-    inlineShape,
-    block: defineDocumentSchema(blockShape, {
+    blockEnvelope,
+    inlineEnvelope,
+    block: defineDocumentSchema(blockEnvelope, {
       extension: () =>
         defineBlockDocumentExtension(
           defineMention(),
@@ -68,7 +68,7 @@ const createPair = (
       ),
       registryCache: blockCache,
     }),
-    inline: defineDocumentSchema(inlineShape, {
+    inline: defineDocumentSchema(inlineEnvelope, {
       extension: () => defineInlineDocumentExtension(),
       registryCache: inlineCache,
     }),

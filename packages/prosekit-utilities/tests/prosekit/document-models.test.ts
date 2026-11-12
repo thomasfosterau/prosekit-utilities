@@ -450,7 +450,7 @@ describe('document schemas: JSON Schema generation (generative-contract use case
   it('produces a JSON Schema document for the block schema without throwing', () => {
     // Smoke test for the generative-contract claim: recursive `Schema.suspend`
     // graphs need `$ref` / `$defs` support from `toJsonSchemaDocument`. Not a
-    // full snapshot — the shape is exercised by decode above.
+    // full snapshot — the structure is exercised by decode above.
     expect(Schema.toJsonSchemaDocument(block.Document)).toBeTruthy();
   });
 });

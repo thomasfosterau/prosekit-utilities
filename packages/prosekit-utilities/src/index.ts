@@ -2,7 +2,7 @@
  * `@thomasfosterau/prosekit-utilities` — the ProseKit-free surface.
  *
  * Nothing imported from this entry pulls ProseKit or ProseMirror into a
- * bundle: the document shapes, the allow-list checks, text and reference extraction, the
+ * bundle: the document envelopes, the allow-list checks, text and reference extraction, the
  * Markdown serialiser and the envelope helpers depend on `effect` alone.
  *
  * @module
@@ -17,10 +17,10 @@ export {
   type AllowList,
 } from './allow-list.ts';
 export {
-  defineDocumentShape,
+  defineDocumentEnvelope,
   type DocumentGrammarGuard,
-  type DocumentShape,
-} from './document-shape.ts';
+  type DocumentEnvelope,
+} from './document-envelope.ts';
 export { extractCitations, extractMentions, type DocumentMention } from './document-references.ts';
 export { extractDocumentText, inlineDocumentText } from './document-text.ts';
 export { fromEditorDocument, toEditorDocument } from './envelope.ts';

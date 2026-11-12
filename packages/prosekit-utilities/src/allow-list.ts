@@ -16,7 +16,7 @@
  * They are also cheap to apply as a tree-walk and expensive to apply as a
  * schema: the derived schema is `Schema.suspend`-wrapped so the ProseMirror
  * compile stays lazy, and `Schema.check` cannot be appended to a `Suspend`.
- * {@link allowListFilter} is composable onto a `DocumentShape`'s schema
+ * {@link allowListFilter} is composable onto a `DocumentEnvelope`'s schema
  * (which is not suspended) for that reason; {@link checkAllowList} is the
  * Effect-shaped seam for everything else.
  *
@@ -99,7 +99,7 @@ export class DocumentViolation
 
 /**
  * A document as the walk needs to see it: anything whose `content` is an
- * array, whatever the element type. A document shape's `content` is
+ * array, whatever the element type. A document envelope's `content` is
  * `ReadonlyArray<Json>` at the schema level — a `null` entry gets past the
  * structural check — so the walk below never assumes an entry is an object.
  */
@@ -219,7 +219,7 @@ const nodeViolation =
 
 /**
  * The first node or mark type outside `allowList`'s vocabulary — or the
- * first unsafe `link` `href` — in an already shape-valid document.
+ * first unsafe `link` `href` — in an already structurally valid document.
  *
  * Depth-first in document order, so the violation names the earliest
  * offender, and `Option.none()` when the whole tree is admissible. The
@@ -254,7 +254,7 @@ export const checkAllowList =
  * The same walk as a `Schema.check`-compatible filter, so an allow-list can
  * be composed onto a schema rather than applied beside it.
  *
- * This is what `DocumentShape.narrow` uses. The failure message is the
+ * This is what `DocumentEnvelope.narrow` uses. The failure message is the
  * violation's own `message`, so a decode error reads exactly like the
  * write-seam error for the same document.
  */

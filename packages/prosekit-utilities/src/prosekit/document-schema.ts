@@ -29,10 +29,10 @@
  *
  * ## The two halves
  *
- * A `DocumentShape` (the root entry) is the browser-cheap half: it names the
+ * A `DocumentEnvelope` (the root entry) is the browser-cheap half: it names the
  * surface and checks the envelope structurally, with no ProseKit import.
- * `defineDocumentSchema(shape, …)` is the server half, and `install()` is what
- * joins them — from then on the shape rejects exactly what the derived schema
+ * `defineDocumentSchema(envelope, …)` is the server half, and `install()` is what
+ * joins them — from then on the envelope rejects exactly what the derived schema
  * rejects, for the life of the isolate.
  *
  * @module
@@ -52,7 +52,7 @@ import {
   Registry,
   type RegistryCache,
 } from '../derive/index.ts';
-import type { DocumentShape } from '../document-shape.ts';
+import type { DocumentEnvelope } from '../document-envelope.ts';
 import type { DocumentJSON } from '../json.ts';
 import { STANDARD_ATTRIBUTE_OVERRIDES, type AttributeOverrides } from './attribute-overrides.ts';
 import { lazySchema } from './lazy-schema.ts';
@@ -62,7 +62,7 @@ import { lazySchema } from './lazy-schema.ts';
  * `SchemaError` — for a caller that wants the failure in an `Effect` channel
  * it can catch by tag.
  *
- * `document` is the shape's name, so one handler can tell a rejected title
+ * `document` is the envelope's name, so one handler can tell a rejected title
  * from a rejected body. `issue` is the underlying `SchemaError` carried
  * through `Schema.Defect()`, which is JSON-encodable, so the error survives a
  * wire hop to a client or a log sink.
@@ -100,19 +100,19 @@ export interface DocumentSchemaOptions {
 
 /** One document surface's ProseKit half: the grammar, the wire schema and the guard. */
 export interface DocumentSchema<Name extends string> {
-  /** The shape this schema was declared against, and which {@link install} upgrades. */
-  readonly shape: DocumentShape<Name>;
+  /** The envelope this schema was declared against, and which {@link install} upgrades. */
+  readonly envelope: DocumentEnvelope<Name>;
   /** The grammar factory, as passed in. */
   readonly extension: () => Extension;
   /** The compiled ProseMirror schema, built on first use and cached (see `lazySchema`). */
   readonly schema: () => PmSchema;
-  /** The derived wire schema: the envelope, with `shape.name` in place of ProseMirror's `doc`. */
+  /** The derived wire schema: the envelope, with `envelope.name` in place of ProseMirror's `doc`. */
   readonly Document: Schema.Codec<DocumentJSON<Name>>;
   /** A whole-document type guard over {@link Document}, with a defect net. */
   readonly is: P.Refinement<unknown, DocumentJSON<Name>>;
   /** {@link Document}'s decode in an `Effect`, failing with a {@link DocumentDecodeError}. */
   readonly decode: (value: Schema.Json) => Effect.Effect<DocumentJSON<Name>, DocumentDecodeError>;
-  /** Installs {@link is} as {@link shape}'s grammar guard, for the life of the isolate. */
+  /** Installs {@link is} as {@link envelope}'s grammar guard, for the life of the isolate. */
   readonly install: () => void;
 }
 
@@ -120,7 +120,7 @@ export interface DocumentSchema<Name extends string> {
  * Declares the ProseKit half of a document surface.
  *
  * ```ts
- * const blockDocument = defineDocumentShape({ name: 'blockDocument' });   // root entry
+ * const blockDocument = defineDocumentEnvelope({ name: 'blockDocument' });   // root entry
  * const cache = createRegistryCache();                                    // ./derive
  *
  * export const blockDocumentSchema = defineDocumentSchema(blockDocument, {
@@ -173,7 +173,7 @@ export interface DocumentSchema<Name extends string> {
  * separate caches (or none: the default is a private cache).
  */
 export function defineDocumentSchema<Name extends string>(
-  shape: DocumentShape<Name>,
+  envelope: DocumentEnvelope<Name>,
   options: DocumentSchemaOptions,
 ): DocumentSchema<Name> {
   const schema = lazySchema(options.extension);
@@ -197,12 +197,12 @@ export function defineDocumentSchema<Name extends string>(
     const registry = new Registry(compiled, { attributes: overlay }, cacheFor());
     // The top node is renamed here and only here: ProseMirror's top node is
     // always `doc`, and the envelope's `type` is the surface's own name.
-    return registry.nodeAs(compiled.topNodeType, shape.name);
+    return registry.nodeAs(compiled.topNodeType, envelope.name);
   });
   // SAFETY: the derived schema's inferred type is a wider structural type
   // than `DocumentJSON<Name>` (its nodes are `DerivedNodeJSON`, and its top
   // `type` is `string`, not the literal). This is the single documented seam
-  // where it is pinned to the declared shape — the same convention the
+  // where it is pinned to the declared envelope — the same convention the
   // `Registry` itself uses internally.
   const Document = derived as Schema.Codec<DocumentJSON<Name>>;
 
@@ -210,7 +210,7 @@ export function defineDocumentSchema<Name extends string>(
   const decodeUnknown = Schema.decodeUnknownEffect(Document);
 
   return {
-    shape,
+    envelope,
     extension: options.extension,
     schema,
     Document,
@@ -230,16 +230,16 @@ export function defineDocumentSchema<Name extends string>(
     decode: (value) =>
       Effect.mapError(
         decodeUnknown(value),
-        (issue) => new DocumentDecodeError({ document: shape.name, issue }),
+        (issue) => new DocumentDecodeError({ document: envelope.name, issue }),
       ),
     install: () => {
-      shape.install((value) => guard(value));
+      envelope.install((value) => guard(value));
     },
   };
 }
 
 /**
- * Installs every schema's grammar guard onto its shape — the persistence
+ * Installs every schema's grammar guard onto its envelope — the persistence
  * layer's one call.
  *
  * ```ts
@@ -249,7 +249,7 @@ export function defineDocumentSchema<Name extends string>(
  * Put it at module scope in the module a server runtime loads before handling
  * a request and no browser bundle can reach (the one that declares the
  * document columns). Installing is cheap — it stores a function reference and
- * forces nothing — and every shape stays permissive until it happens, so a
+ * forces nothing — and every envelope stays permissive until it happens, so a
  * runtime that never installs under-checks rather than wrongly rejects.
  */
 export const installDocumentGrammars = (

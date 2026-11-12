@@ -1,6 +1,6 @@
 # @thomasfosterau/prosekit-utilities
 
-A ProseKit document grammar as data: browser-cheap document shapes and node/mark allow-lists, an [Effect Schema](https://effect.website) derived at runtime from a compiled ProseMirror schema, HTML and Markdown serialisation, and Drizzle `jsonb` document columns. Four entry points, split by what they cost to import: `.` and `./drizzle` never touch ProseKit, `./derive` only its types, and `./prosekit` is the one entry that pulls in the editor runtime — so a browser-reachable model layer can name a document type without shipping the editor to every page. Everything but the Svelte packages in this workspace is Effect-first: domain failures are `Schema.TaggedError` values, `Option`/`Result` stand in for `null`/exceptions, and a function that cannot fail stays a plain function.
+A ProseKit document grammar as data: browser-cheap document envelopes and node/mark allow-lists, an [Effect Schema](https://effect.website) derived at runtime from a compiled ProseMirror schema, HTML and Markdown serialisation, and Drizzle `jsonb` document columns. Four entry points, split by what they cost to import: `.` and `./drizzle` never touch ProseKit, `./derive` only its types, and `./prosekit` is the one entry that pulls in the editor runtime — so a browser-reachable model layer can name a document type without shipping the editor to every page. Everything but the Svelte packages in this workspace is Effect-first: domain failures are `Schema.TaggedError` values, `Option`/`Result` stand in for `null`/exceptions, and a function that cannot fail stays a plain function.
 
 ## Installation
 
@@ -22,7 +22,7 @@ A consumer that only ever imports the root entry (a browser-reachable model laye
 
 | Entry | Holds | Imports ProseKit at runtime |
 | --- | --- | --- |
-| `.` | Document shapes, allow-lists, safe URLs, plain-text and reference extraction, the envelope remap, the Markdown serialiser | **Never** |
+| `.` | Document envelopes, allow-lists, safe URLs, plain-text and reference extraction, the envelope remap, the Markdown serialiser | **Never** |
 | `./derive` | The derivation engine: an Effect Schema read back from a compiled ProseMirror schema | Never (`@prosekit/pm` types only) |
 | `./prosekit` | Node and mark definitions, the extension presets, `lazySchema`, `defineDocumentSchema`, `installDocumentGrammars`, `createHtmlRenderer` | **Yes** — `prosekit/core`, `prosekit/extensions/*` |
 | `./drizzle` | `jsonb` document columns and the SQL twin of text extraction | Never |
@@ -32,10 +32,10 @@ A consumer that only ever imports the root entry (a browser-reachable model laye
 A document surface is declared in layers, each one importing only as much as it needs. The example below threads all four entry points through one `blockDocument` surface that composes an opt-in `mention` node, and a narrower `COMMENT` allow-list applied where comments are written.
 
 ```ts
-// document-shapes.ts — browser-reachable, no ProseKit
-import { defineDocumentShape } from '@thomasfosterau/prosekit-utilities';
+// document-envelopes.ts — browser-reachable, no ProseKit
+import { defineDocumentEnvelope } from '@thomasfosterau/prosekit-utilities';
 
-export const blockDocument = defineDocumentShape({ name: 'blockDocument' });
+export const blockDocument = defineDocumentEnvelope({ name: 'blockDocument' });
 ```
 
 ```ts
@@ -49,7 +49,7 @@ import {
   mergeAttributeOverrides,
   STANDARD_ATTRIBUTE_OVERRIDES,
 } from '@thomasfosterau/prosekit-utilities/prosekit';
-import { blockDocument } from './document-shapes.ts';
+import { blockDocument } from './document-envelopes.ts';
 
 // Shared so a second document schema built from an overlapping extension
 // derives the marks and `text` node once instead of once per schema, while
@@ -135,25 +135,25 @@ const cited = extractCitations(body); // the `citation` marks' workIds, each onc
 # `.` — the ProseKit-free surface
 
 ```ts
-import { defineDocumentShape, defineAllowList } from '@thomasfosterau/prosekit-utilities';
+import { defineDocumentEnvelope, defineAllowList } from '@thomasfosterau/prosekit-utilities';
 ```
 
-Document shapes, allow-lists, safe URLs, plain-text and reference extraction, the envelope remap and the Markdown serialiser — `effect` is the only dependency, and nothing here imports `prosekit` or `@prosekit/pm`, not even a type.
+Document envelopes, allow-lists, safe URLs, plain-text and reference extraction, the envelope remap and the Markdown serialiser — `effect` is the only dependency, and nothing here imports `prosekit` or `@prosekit/pm`, not even a type.
 
 | Export | Signature | Notes |
 | --- | --- | --- |
 | `NodeJSON` | `type NodeJSON = { readonly type: string; readonly attrs?: { readonly [name: string]: Schema.Json }; readonly content?: ReadonlyArray<NodeJSON>; readonly marks?: ReadonlyArray<MarkJSON>; readonly text?: string }` | A structural twin of `prosekit/core`'s `NodeJSON`, restated so this entry needs no ProseKit type import. |
 | `MarkJSON` | `type MarkJSON = { readonly type: string; readonly attrs?: { readonly [name: string]: Schema.Json } }` |  |
 | `DocumentJSON<Name>` | `{ readonly type: Name; readonly content: ReadonlyArray<NodeJSON> }` | The persisted envelope. `Name` defaults to `string`. |
-| `DocumentGrammarGuard` | `Predicate.Predicate<unknown>` (`(value: unknown) => boolean`) | What `./prosekit`'s `DocumentSchema.is` provides, and what `DocumentShape.install` accepts. |
-| `defineDocumentShape` | `<Name extends string>(options: { readonly name: Name; readonly label?: string }) => DocumentShape<Name>` | One closure per shape, so two shapes never share an install. `label` defaults to the name split into words (`blockDocument` → `block document`). |
-| `DocumentShape<Name>` | `{ readonly name: Name; readonly label: string; readonly Schema: Schema.Codec<DocumentJSON<Name>>; readonly is: (v: unknown) => v is DocumentJSON<Name>; readonly install: (guard: DocumentGrammarGuard) => void; readonly isInstalled: () => boolean; readonly empty: () => DocumentJSON<Name>; readonly narrow: (allowList: AllowList) => Schema.Codec<DocumentJSON<Name>> }` | `Schema` checks the envelope's `type` and that `content` is an array of JSON — deliberately shallow, upgraded by `install` to the full grammar for the isolate's life. `is` keeps a try/catch defect net. |
+| `DocumentGrammarGuard` | `Predicate.Predicate<unknown>` (`(value: unknown) => boolean`) | What `./prosekit`'s `DocumentSchema.is` provides, and what `DocumentEnvelope.install` accepts. |
+| `defineDocumentEnvelope` | `<Name extends string>(options: { readonly name: Name; readonly label?: string }) => DocumentEnvelope<Name>` | One closure per envelope, so two envelopes never share an install. `label` defaults to the name split into words (`blockDocument` → `block document`). |
+| `DocumentEnvelope<Name>` | `{ readonly name: Name; readonly label: string; readonly Schema: Schema.Codec<DocumentJSON<Name>>; readonly is: (v: unknown) => v is DocumentJSON<Name>; readonly install: (guard: DocumentGrammarGuard) => void; readonly isInstalled: () => boolean; readonly empty: () => DocumentJSON<Name>; readonly narrow: (allowList: AllowList) => Schema.Codec<DocumentJSON<Name>> }` | `Schema` checks the envelope's `type` and that `content` is an array of JSON — deliberately shallow, upgraded by `install` to the full grammar for the isolate's life. `is` keeps a try/catch defect net. |
 | `AllowList` | `{ readonly label: string; readonly nodes: HashSet.HashSet<string>; readonly marks: HashSet.HashSet<string>; readonly checkLinkHref: boolean }` | One write surface's vocabulary. |
 | `defineAllowList` | `(options: { readonly label: string; readonly nodes: Iterable<string>; readonly marks: Iterable<string>; readonly checkLinkHref?: boolean }) => AllowList` | Any iterable of type names. `checkLinkHref` defaults to `true`. |
 | `DocumentViolation` | `class DocumentViolation extends Schema.TaggedError<DocumentViolation>()('DocumentViolation', { label: Schema.String, kind: Schema.Literals(['node', 'mark', 'href']), name: Schema.String, message: Schema.String }) {}` | The three violation forms as data. Yieldable in an `Effect.gen`. |
 | `allowListViolation` | `(allowList: AllowList, doc: { readonly content: ReadonlyArray<Schema.Json> }) => Option.Option<DocumentViolation>` | Depth-first, document order, first offender. The envelope's own `type` is not checked — only its `content`. |
 | `checkAllowList` | `(allowList: AllowList) => <D extends { readonly content: ReadonlyArray<Schema.Json> }>(doc: D) => Effect.Effect<D, DocumentViolation>` | The Effect-shaped write seam. Curried so an app names the check once and applies it per write. |
-| `allowListFilter` | `(allowList: AllowList) => SchemaAST.Filter<{ readonly content: ReadonlyArray<Schema.Json> }>` | The same walk as a `Schema.check`-compatible filter. What `DocumentShape.narrow` uses; exported so it composes onto any schema carrying `content`. |
+| `allowListFilter` | `(allowList: AllowList) => SchemaAST.Filter<{ readonly content: ReadonlyArray<Schema.Json> }>` | The same walk as a `Schema.check`-compatible filter. What `DocumentEnvelope.narrow` uses; exported so it composes onto any schema carrying `content`. |
 | `isSafeHref` | `(href: unknown, options?: { readonly schemes?: ReadonlyArray<string> }) => href is string` | Default schemes `http`, `https`, `mailto`; root-relative paths and fragment links always allowed. Parses with `URL` rather than a string prefix, so obfuscated schemes (`JaVaScRiPt:`, leading whitespace) are rejected. |
 | `DEFAULT_SAFE_SCHEMES` | `ReadonlyArray<string>` | `['http', 'https', 'mailto']`. |
 | `extractDocumentText` | `(doc: NodeJSON \| DocumentJSON, options?: { readonly separator?: string }) => string` | Default separator `' '`. Tolerant of a missing `content` and of non-object entries — a malformed row degrades to empty text rather than throwing. For a column that may be absent, `Option.fromNullishOr(row.body).pipe(Option.map(extractDocumentText))`. |
@@ -175,12 +175,12 @@ Document shapes, allow-lists, safe URLs, plain-text and reference extraction, th
 | `sidenoteMarkdown` | `InlineSerialiser` | The Pandoc inline footnote form, `^[…]`. A nested sidenote is flattened to its body first. |
 | `escapeMarkdown` | `(text: string) => string` | Backslash-escapes the CommonMark inline metacharacters. Exported for an app's own serialisers. |
 
-**Declaring and narrowing a shape.** A shape costs nothing to import — no ProseKit, no compiled ProseMirror schema — and is shared by the model layer, the persistence layer and the editor.
+**Declaring and narrowing an envelope.** An envelope costs nothing to import — no ProseKit, no compiled ProseMirror schema — and is shared by the model layer, the persistence layer and the editor.
 
 ```ts
-import { defineAllowList, defineDocumentShape } from '@thomasfosterau/prosekit-utilities';
+import { defineAllowList, defineDocumentEnvelope } from '@thomasfosterau/prosekit-utilities';
 
-export const blockDocument = defineDocumentShape({ name: 'blockDocument' });
+export const blockDocument = defineDocumentEnvelope({ name: 'blockDocument' });
 blockDocument.empty(); // { type: 'blockDocument', content: [] }
 
 export const COMMENT = defineAllowList({
@@ -189,7 +189,7 @@ export const COMMENT = defineAllowList({
   marks: ['bold', 'italic', 'strike', 'code', 'link'],
 });
 
-// Decode-time rejection: the allow-list composed onto the shape's codec.
+// Decode-time rejection: the allow-list composed onto the envelope's codec.
 const CommentBody = blockDocument.narrow(COMMENT);
 Schema.decodeUnknownSync(CommentBody)(untrusted);
 // → 'node type "heading" is not permitted in a comment'
@@ -228,7 +228,7 @@ toMarkdown.document(post.body); // multi-line Markdown
 toMarkdown.inline(post.title); // one line
 ```
 
-**The envelope remap.** A persisted document's root `type` is the surface's own name; a compiled ProseMirror schema's top node is always `doc`. Feeding the stored shape straight into an editor throws `RangeError: Unknown node type: blockDocument`.
+**The envelope remap.** A persisted document's root `type` is the surface's own name; a compiled ProseMirror schema's top node is always `doc`. Feeding the stored envelope straight into an editor throws `RangeError: Unknown node type: blockDocument`.
 
 ```ts
 import { fromEditorDocument, toEditorDocument } from '@thomasfosterau/prosekit-utilities';
@@ -374,9 +374,9 @@ The only entry that imports `prosekit` at the value level, so a browser-reachabl
 | `STANDARD_ATTRIBUTE_OVERRIDES` | `AttributeOverrides` | `heading.level`, `list.kind`/`order`, `image.src`/`width`/`height`, `codeBlock.language`, `tableCell`/`tableHeaderCell.colwidth`. Attributes a live editor always serialises (`heading.level`, `list.kind`, `image.src`/`width`/`height`, `codeBlock.language`) are wrapped in `required(…)`; `colwidth` is not, because an unresized cell genuinely has none. |
 | `MENTION_ATTRIBUTE_OVERRIDES` | `AttributeOverrides` | `mention: { id: required(Schema.String), label: required(Schema.String) }` — merge in when the grammar includes `defineMention()`. |
 | `mergeAttributeOverrides` | `(...overrides: ReadonlyArray<AttributeOverrides>) => AttributeOverrides` | Shallow per node, then per attribute; later wins. Non-mutating. |
-| `defineDocumentSchema` | `<Name extends string>(shape: DocumentShape<Name>, options: DocumentSchemaOptions) => DocumentSchema<Name>` | The centrepiece: `Schema.suspend` + `Registry.nodeAs(topNodeType, shape.name)`. Nothing compiles or derives at declaration time. |
+| `defineDocumentSchema` | `<Name extends string>(envelope: DocumentEnvelope<Name>, options: DocumentSchemaOptions) => DocumentSchema<Name>` | The centrepiece: `Schema.suspend` + `Registry.nodeAs(topNodeType, envelope.name)`. Nothing compiles or derives at declaration time. |
 | `DocumentSchemaOptions` | `{ readonly extension: () => Extension; readonly attributes?: AttributeOverrides; readonly registryCache?: RegistryCache }` | `attributes` defaults to `STANDARD_ATTRIBUTE_OVERRIDES`; `registryCache` defaults to a cache private to this schema; share one only between grammars with matching mark sets. |
-| `DocumentSchema<Name>` | `{ readonly shape: DocumentShape<Name>; readonly extension: () => Extension; readonly schema: () => PmSchema; readonly Document: Schema.Codec<DocumentJSON<Name>>; readonly is: (v: unknown) => v is DocumentJSON<Name>; readonly decode: (v: Schema.Json) => Effect.Effect<DocumentJSON<Name>, DocumentDecodeError>; readonly install: () => void }` | `is` keeps a try/catch defect net; `install()` is `shape.install(is)`. Satisfies `./drizzle`'s `HasDocumentSchema<A>` structurally. |
+| `DocumentSchema<Name>` | `{ readonly envelope: DocumentEnvelope<Name>; readonly extension: () => Extension; readonly schema: () => PmSchema; readonly Document: Schema.Codec<DocumentJSON<Name>>; readonly is: (v: unknown) => v is DocumentJSON<Name>; readonly decode: (v: Schema.Json) => Effect.Effect<DocumentJSON<Name>, DocumentDecodeError>; readonly install: () => void }` | `is` keeps a try/catch defect net; `install()` is `shape.install(is)`. Satisfies `./drizzle`'s `HasDocumentSchema<A>` structurally. |
 | `installDocumentGrammars` | `(...schemas: ReadonlyArray<DocumentSchema<string>>) => void` | The persistence module's one call. Forces no derivation — installing just stores a function reference. |
 | `DocumentDecodeError` | `class DocumentDecodeError extends Schema.TaggedError<DocumentDecodeError>()('DocumentDecodeError', { document: Schema.String, issue: Schema.Defect() }) {}` | Wraps the underlying `SchemaError` for a caller that wants a tagged channel; `Document` itself stays a plain codec. |
 
@@ -390,7 +390,7 @@ The only entry that imports `prosekit` at the value level, so a browser-reachabl
 | `HtmlRenderer` | `{ readonly render: (doc: NodeJSON \| DocumentJSON) => Effect.Effect<string, HtmlRenderError>; readonly renderPromise: (doc: NodeJSON \| DocumentJSON) => Promise<string> }` | Two shapes over one implementation; `renderPromise` rejects with the tagged error itself. |
 | `HtmlRenderError` | `class HtmlRenderError extends Schema.TaggedError<HtmlRenderError>()('HtmlRenderError', { reason: Schema.Literals(['dom-unavailable', 'serialise']), cause: Schema.Defect() }) {}` | `dom-unavailable` when no `Document` could be obtained; `serialise` when the document or the `postProcess` hook could not produce HTML. |
 
-**Composing an extension and linking it to a shape** — see [Declaring a document surface](#declaring-a-document-surface) above for the full worked example. **Rendering HTML**, with a placeholder-filling hook:
+**Composing an extension and linking it to an envelope** — see [Declaring a document surface](#declaring-a-document-surface) above for the full worked example. **Rendering HTML**, with a placeholder-filling hook:
 
 ```ts
 import { createHtmlRenderer } from '@thomasfosterau/prosekit-utilities/prosekit';

@@ -3,7 +3,7 @@
  *
  * A persisted document's root `type` is the application's own name for the
  * surface (`blockDocument`, `inlineDocument`, …); a compiled ProseMirror
- * schema's top node is always `doc`. Feeding the stored shape straight into
+ * schema's top node is always `doc`. Feeding the stored envelope straight into
  * an editor throws `RangeError: Unknown node type: blockDocument` and takes
  * the hosting page down with it, so every boundary between the two — the
  * editor component, the HTML renderer — remaps in both directions.
@@ -23,7 +23,7 @@ import type { DocumentJSON, NodeJSON } from './json.ts';
  *
  * Anything that is not already `doc` is treated as an envelope name — the
  * remap does not need to know which one, which is what lets one component
- * serve every shape an application declares.
+ * serve every envelope an application declares.
  */
 export const toEditorDocument = <N extends string>(doc: DocumentJSON<N> | NodeJSON): NodeJSON => ({
   ...doc,
@@ -35,7 +35,7 @@ export const toEditorDocument = <N extends string>(doc: DocumentJSON<N> | NodeJS
  * ready to persist.
  *
  * Curried on the name so a component can bind it once
- * (`const toStored = fromEditorDocument(shape.name)`). A document with no
+ * (`const toStored = fromEditorDocument(envelope.name)`). A document with no
  * `content` at all becomes an empty one rather than an envelope missing its
  * required field.
  */

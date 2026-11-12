@@ -23,7 +23,7 @@
 
 import { describe, expect, it } from 'vite-plus/test';
 import * as Schema from 'effect/Schema';
-import { defineDocumentShape } from '../../src/document-shape.ts';
+import { defineDocumentEnvelope } from '../../src/document-envelope.ts';
 import { defineDocumentSchema } from '../../src/prosekit/document-schema.ts';
 import { defineBlockDocumentExtension } from '../../src/prosekit/presets.ts';
 import { createDocumentFixture, createSharedCacheFixture } from './fixture.ts';
@@ -126,8 +126,8 @@ describe('an opt-in mark in one grammar only (`citation`, block grammar)', () =>
 
 describe('no caller-supplied cache', () => {
   it('derives against a cache private to the schema', () => {
-    const shape = defineDocumentShape({ name: 'blockDocument' });
-    const schema = defineDocumentSchema(shape, {
+    const envelope = defineDocumentEnvelope({ name: 'blockDocument' });
+    const schema = defineDocumentSchema(envelope, {
       extension: () => defineBlockDocumentExtension(),
     });
     expect(Schema.decodeUnknownSync(schema.Document)(BLOCK_DOC)).toEqual(BLOCK_DOC);

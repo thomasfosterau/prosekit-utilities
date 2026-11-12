@@ -175,7 +175,7 @@ export interface HtmlRenderer {
  * Every render sanitises first ({@link sanitiseDocument}), then rewrites the
  * envelope's `type` back to `doc` — the surface name is a persistence rename,
  * and a compiled schema's top node is always `doc`, so feeding the stored
- * shape straight in throws `RangeError: Unknown node type`.
+ * envelope straight in throws `RangeError: Unknown node type`.
  */
 export function createHtmlRenderer(options: HtmlRendererOptions): HtmlRenderer {
   const documentOf = options.document ?? resolveDefaultDocument;

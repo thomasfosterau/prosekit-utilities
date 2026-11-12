@@ -46,7 +46,7 @@ import {
 } from './nodes.ts';
 
 /**
- * The interaction tail every editor wants and no document shape depends on:
+ * The interaction tail every editor wants and no document envelope depends on:
  * the base keymap, the base commands, undo/redo history, the gap cursor, the
  * virtual selection and mod-click prevention.
  *

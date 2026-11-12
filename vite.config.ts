@@ -150,13 +150,8 @@ export default defineConfig({
           // The workspace uses the rule's canonical aliases (`Arr`, `P`, `R`,
           // `Str`, …), not full names.
           'effect/prefer-namespace-imports': 'error',
-          // "Shape" IS this package's domain term, not a description of
-          // structure: a `DocumentShape` is the browser-cheap structural half
-          // of a document schema (packages/prosekit-utilities/CLAUDE.md §
-          // Terms), and `DocumentShape` / `defineDocumentShape` /
-          // `DocumentShape.narrow` are published API that consumers' apps
-          // name. Renaming them is a major break for no behavioural gain.
-          'effect/no-shape-in-symbol-names': 'off',
+          // No "Shape" in symbol names: the document type is `DocumentEnvelope`.
+          'effect/no-shape-in-symbol-names': 'error',
 
           // ---- Rules this workspace's conventions cut across --------------
           // As in effect-web: each stays visible as a warning, so a NEW site
@@ -198,7 +193,7 @@ export default defineConfig({
         files: [
           'packages/prosekit-utilities/src/derive/Registry.ts',
           'packages/prosekit-utilities/src/prosekit/document-schema.ts',
-          'packages/prosekit-utilities/src/document-shape.ts',
+          'packages/prosekit-utilities/src/document-envelope.ts',
           'packages/prosekit-utilities/tests/derive/Attribute.test.ts',
         ],
         rules: {
