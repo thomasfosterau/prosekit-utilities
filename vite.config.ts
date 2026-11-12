@@ -229,10 +229,6 @@ export default defineConfig({
       {
         files: ['packages/*/tests/**/*.ts'],
         rules: {
-          // The browser suites drive the editor one keystroke or click at a
-          // time, and each must land before the next: run in parallel they
-          // would race the same focused element.
-          'eslint/no-await-in-loop': 'off',
           // A fixture builder sits inside the `describe` that uses it, next
           // to the cases it serves; hoisting each to module scope only moves
           // it away from them.
