@@ -1,5 +1,11 @@
 # @thomasfosterau/prosekit-utilities
 
+## 0.2.1
+
+### Patch Changes
+
+- 9ae9e90: Trim doc comments to what the signatures don't already say.
+
 ## 0.2.0
 
 ### Minor Changes
