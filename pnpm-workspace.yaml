@@ -35,7 +35,7 @@ catalog:
   drizzle-orm: 1.0.0-rc.5
   # A peer of every package that uses it, never a dependency.
   effect: 4.1.4
-  fallow: 3.42.0
+  fallow: 3.43.2
   happy-dom: ^21.0.4
   # The server-side DOM the HTML renderer imports when there is no
   # `document`; happy-dom needs `node:*` modules workerd lacks.
