@@ -1,10 +1,10 @@
 # packages/prosekit-svelte — the editor components
 
-`@thomasfosterau/prosekit-svelte`: the Svelte 5 rich-text editor on ProseKit — `Editor`, `BlockEditor`, `InlineEditor`, the declarative `BlockToolbar` with its insert menu, and the link / image dialogs — built on bits-ui. Everything in `src/lib/` ends up in `dist/` and on npm through `svelte-package`: `svelte-kit sync` generates the ambient types, `svelte-package` copies `src/lib/` compiling nothing, and the consumer's build compiles the `.svelte` files. The Svelte authoring rules (runes and snippets only, `class` merging, literal daisyUI lookup tables, bits-ui for interaction, every string a prop, no Effect) live in [`.claude/rules/svelte.md`](../../.claude/rules/svelte.md); this file carries what is specific to the package.
+`@thomasfosterau/prosekit-svelte`: the Svelte 5 rich-text editor on ProseKit — `Editor`, `BlockEditor`, `InlineEditor`, the declarative `BlockToolbar` with its insert menu, and the link / image dialogs — built on bits-ui. Everything in `src/lib/` ends up in `dist/` and on npm through `svelte-package`: `svelte-kit sync` generates the ambient types, `svelte-package` copies `src/lib/` compiling nothing, and the consumer's build compiles the `.svelte` files. The Svelte authoring rules (runes and snippets only, `class` merging, literal daisyUI lookup tables, bits-ui for interaction, every string a prop, no Effect) are in [CONTRIBUTING § Svelte packages](../../docs/CONTRIBUTING.md#svelte-packages); this file carries what is specific to the package.
 
 ## Boundary
 
-- **Import siblings only through their published entry points**: this package reaches `@thomasfosterau/prosekit-utilities` through its built `dist/`. It never imports `effect`, `$app/*` or `$env/*`; the authoring rules are in [`.claude/rules/svelte.md`](../../.claude/rules/svelte.md).
+- **Import siblings only through their published entry points**: this package reaches `@thomasfosterau/prosekit-utilities` through its built `dist/`. It never imports `effect`, `$app/*` or `$env/*`.
 
 ## Invariants
 
