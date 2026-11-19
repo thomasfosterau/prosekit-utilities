@@ -30,7 +30,7 @@ catalog:
   '@vitest/coverage-istanbul': 5.1.0
   '@xyflow/svelte': ^2.0.2
   bits-ui: ^2.21.0
-  daisyui: ^5.7.50
+  daisyui: ^5.8.1
   # Peer of `./drizzle` only.
   drizzle-orm: 1.0.0-rc.5
   # A peer of every package that uses it, never a dependency.
