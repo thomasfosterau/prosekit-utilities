@@ -55,8 +55,8 @@ catalogs:
       specifier: 5.1.0
       version: 5.1.0
     '@xyflow/svelte':
-      specifier: ^1.7.1
-      version: 1.7.1
+      specifier: ^2.0.2
+      version: 2.0.2
     bits-ui:
       specifier: ^2.21.0
       version: 2.21.0
@@ -201,7 +201,7 @@ importers:
         version: 5.1.0(@voidzero-dev/vite-plus-core@1.6.0(@types/node@26.6.6)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))(playwright@1.65.0)(vitest@5.1.0)
       '@xyflow/svelte':
         specifier: 'catalog:'
-        version: 1.7.1(svelte@5.57.3)
+        version: 2.0.2(svelte@5.57.3)
       effect:
         specifier: 4.1.4
         version: 4.1.4
@@ -2168,13 +2168,15 @@ packages:
   '@webcontainer/env@1.1.1':
     resolution: {integrity: sha512-6aN99yL695Hi9SuIk1oC88l9o0gmxL1nGWWQ/kNy81HigJ0FoaoTXpytCj6ItzgyCEwA9kF1wixsTuv5cjsgng==}
 
-  '@xyflow/svelte@1.7.1':
-    resolution: {integrity: sha512-dKyAJ8Thwu/zqjOtRDoGN1j1LGtK94B7vWQ7OgIiyQ06OscRXuSBJeH2xbVS5Sv52rq1uHBMUmkGDZH5mTlVOA==}
+  '@xyflow/svelte@2.0.2':
+    resolution: {integrity: sha512-QJZ5ZzMBqJWO8bQOrp1G09r0qFxsL9ueBQLPbtXAupx3guMrjAPfK32EEAkqyBsp0OUptKn7FIMNq5ky8Nr6zQ==}
+    engines: {node: '>=20'}
     peerDependencies:
       svelte: ^5.57.3
 
-  '@xyflow/system@0.0.84':
-    resolution: {integrity: sha512-96zfGFjH3oZ3T0MRdH4gJ0SlXuCIxbBuHVevZ4xry5UTxqjzjt010+LRdholgepq7jhrcaz1JNtzrETscwnkEA==}
+  '@xyflow/system@1.0.0':
+    resolution: {integrity: sha512-mOeG0ZIkEUY5V5XQS+LE3QKlJqL7gu5ukqxAniuDDpfxtkA4uagOmBiWKh3w59wZ5nBC7ojBcNrBukM3hUJBKg==}
+    engines: {node: '>=20'}
 
   '@yuku-core/binding-android-arm64@0.19.0':
     resolution: {integrity: sha512-wdL2XmTiZixAOaHk9Z0JJZ8u9Qm8d333Zjpc6gaxXFX+UR5BlsfxZ7a2+2Rm71pamppsPYGUGFq2oVLbh6DISw==}
@@ -5253,13 +5255,13 @@ snapshots:
 
   '@webcontainer/env@1.1.1': {}
 
-  '@xyflow/svelte@1.7.1(svelte@5.57.3)':
+  '@xyflow/svelte@2.0.2(svelte@5.57.3)':
     dependencies:
       '@svelte-put/shortcut': 4.2.0(svelte@5.57.3)
-      '@xyflow/system': 0.0.84
+      '@xyflow/system': 1.0.0
       svelte: 5.57.3
 
-  '@xyflow/system@0.0.84':
+  '@xyflow/system@1.0.0':
     dependencies:
       '@types/d3-drag': 3.0.7
       '@types/d3-interpolate': 3.0.4
