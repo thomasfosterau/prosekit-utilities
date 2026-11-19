@@ -1,20 +1,6 @@
 /**
- * The flowchart's toolbar and insert-menu entries.
- *
- * `@thomasfosterau/prosekit-svelte`'s `BlockToolbar` renders a list of values
- * rather than a hard-coded row, so a block that lives in its own package can
- * add itself to a toolbar without either package importing the other's UI.
- * These two factories are that entry: an application appends
- * `flowchartToolbarItem()` to its `items` and `flowchartSlashCommand()` to its
- * `slashCommands`, and gets the same button and menu row the source
- * application had.
- *
- * Both insert the starter diagram the source application used — one node
- * labelled "Start" at (120, 80) — rather than an empty payload, because an
- * empty canvas gives an author nothing to double-click and no anchor to drag a
- * connection from.
- *
- * @module @thomasfosterau/prosekit-flowchart/toolbar
+ * The flowchart's toolbar and insert-menu entries, to append to the editor's
+ * default sets.
  */
 
 import type { SlashCommand, ToolbarItem, ToolbarRunContext } from '@thomasfosterau/prosekit-svelte';

@@ -1,68 +1,28 @@
-# Dependabot reads the pnpm catalog in pnpm-workspace.yaml, which is where
-# every external version lives (package.json files carry only `catalog:`), so
-# a bump here is a bump for the whole workspace at once.
-#
-# Groups exist only for sets whose members must move at the same time:
-# released together from one monorepo with exact cross-pins, or tied by a
-# hard compatibility table, so one bumped alone breaks the install or the
-# build. Everything else (`fallow`, `bits-ui`, `@changesets/*`, `@xyflow/*`,
-# `daisyui`, …) updates in its own PR; there is no catch-all. Dependabot
-# puts a dependency in the FIRST group that matches it, and
-# `exclude-patterns` keeps a package out of a group it would otherwise also
-# match. Every group takes every update type, majors included, so its
-# members never land in separate PRs.
-#
-# Moves Dependabot cannot make, done by hand on the matching PR's branch
-# (AGENTS.md § Common pitfalls lists them too):
-# - the npm-alias catalog entries: `vite` (npm:@voidzero-dev/vite-plus-core,
-#   always the `vite-plus` version; `pnpm dlx --package=vite-plus@<v> vp
-#   migrate --no-interactive` re-pins it, then drop the
-#   `minimumReleaseAgeExclude` entries it adds), `typescript`
-#   (npm:@typescript/typescript6) and `@typescript/native` (npm:typescript);
-# - `vitest` / `@vitest/*`, `typescript`, `@typescript/native` and
-#   `@effect/tsgo`, ignored below and set on the toolchain PR to what the new
-#   `vite-plus` pins and `@effect/tsgo` supports;
-# - `playwright`, with the SessionStart hook's PW_WANT_REV;
-# - the `overrides:` literals (`prosemirror-model`, `prosemirror-view`), only
-#   by the owner's decision.
+# Lockstep sets are grouped; the by-hand follow-ups are in docs/CONTRIBUTING.md.
 version: 2
 updates:
   - package-ecosystem: npm
     directory: '/'
     schedule:
-      interval: weekly
+      interval: daily
     open-pull-requests-limit: 10
+    assignees: [thomasfosterau]
+    labels: [dependencies]
     commit-message:
       prefix: chore
-    assignees: ['thomasfosterau']
-    # pnpm holds a newly published version for 8 hours at install
-    # (`minimumReleaseAge: 480` in pnpm-workspace.yaml). `cooldown` takes
-    # whole days only, so 1 day is the smallest setting, and it is longer
-    # than pnpm's wait: Dependabot never proposes a version pnpm would still
-    # refuse. First-party releases are exempt on both sides
-    # (`minimumReleaseAgeExclude`), so this workspace can pick up a
-    # sibling-library release the day it lands.
     cooldown:
       default-days: 1
       exclude:
         - '@thomasfosterau/*'
     groups:
-      # vite-plus pins the `vitest` / `@vitest/*` (and the transitive oxlint,
-      # oxfmt, oxlint-tsgolint) it carries exactly, and `@effect/tsgo`'s
-      # `prepare` patch hard-errors on any `tsc` or `oxlint` it was not built
-      # for. vitest, `@vitest/*` and tsgo are ignored below and follow
-      # vite-plus by hand in this group's PR. `@vitest/browser-playwright` is
-      # here because vitest pins it exactly. See the catalog comments on
-      # `vite-plus`, `@effect/tsgo` and `@typescript/native`.
       toolchain:
         applies-to: version-updates
         patterns:
           - vite-plus
+          - '@voidzero-dev/*'
           - vitest
           - '@vitest/*'
           - '@effect/tsgo'
-        update-types: [major, minor, patch]
-      # One release train: `effect` and `@effect/*` publish on one version.
       effect:
         applies-to: version-updates
         patterns:
@@ -70,19 +30,12 @@ updates:
           - '@effect/*'
         exclude-patterns:
           - '@effect/tsgo'
-        update-types: [major, minor, patch]
-      # The Svelte compiler, SvelteKit (`svelte-kit sync` + `svelte-package`),
-      # the Vite plugin and svelte-check all pin against one another.
       svelte:
         applies-to: version-updates
         patterns:
           - svelte
           - '@sveltejs/*'
           - svelte-check
-        update-types: [major, minor, patch]
-      # One monorepo: `@storybook/sveltekit` pins its framework packages and
-      # the addons peer `storybook` at their own version.
-      # `@storybook/addon-svelte-csf` is versioned separately.
       storybook:
         applies-to: version-updates
         patterns:
@@ -90,106 +43,35 @@ updates:
           - '@storybook/*'
         exclude-patterns:
           - '@storybook/addon-svelte-csf'
-        update-types: [major, minor, patch]
-      # `prosekit` pins every `@prosekit/*` package (`@prosekit/pm` included)
-      # exactly. The ProseMirror modules are pinned under `overrides:` and
-      # ignored below.
       prosekit:
         applies-to: version-updates
         patterns:
           - prosekit
           - '@prosekit/*'
-        update-types: [major, minor, patch]
-      # `@tailwindcss/vite` pins `tailwindcss` exactly.
       tailwind:
         applies-to: version-updates
         patterns:
           - tailwindcss
           - '@tailwindcss/*'
-        update-types: [major, minor, patch]
-    # Pins a person moves by hand. Each ignore is scoped to the version
-    # update types rather than a bare ignore, so a security advisory against
-    # any of them still gets a Dependabot PR. The by-hand steps are in
-    # AGENTS.md § Common pitfalls.
-    ignore:
-      # Pinned EXACTLY under `overrides:` in pnpm-workspace.yaml: the
-      # derivation in `./derive` walks ProseMirror's compiled schema, and a
-      # stored document is only guaranteed to decode identically while that
-      # model is the same (packages/prosekit-utilities/AGENTS.md §
-      # Invariants — a bump is a major changeset, decided by a person).
-      - dependency-name: prosemirror-model
-        update-types:
-          - 'version-update:semver-major'
-          - 'version-update:semver-minor'
-          - 'version-update:semver-patch'
-      - dependency-name: prosemirror-view
-        update-types:
-          - 'version-update:semver-major'
-          - 'version-update:semver-minor'
-          - 'version-update:semver-patch'
-      # Pinned EXACTLY: agent sessions reach its Chromium revision through
-      # the SessionStart hook's symlink bridge to the image's older build, so
-      # a bump moves the hook's PW_WANT_REV with it.
-      - dependency-name: playwright
-        update-types:
-          - 'version-update:semver-major'
-          - 'version-update:semver-minor'
-          - 'version-update:semver-patch'
-      # A group only moves what has a newer release, so a vitest release that
-      # no vite-plus pins yet — or a TypeScript / tsgo release the other two
-      # do not support yet — would arrive in the toolchain group alone and
-      # leave the tree split (#60). They follow vite-plus by hand instead:
-      # on the toolchain PR that bumps vite-plus, set the vitest set to the
-      # new vite-plus's `dependencies.vitest` and `@effect/tsgo` /
-      # `@typescript/native` / `typescript` to a supported pairing (the
-      # catalog comments say how), in that same PR.
-      - dependency-name: vitest
-        update-types:
-          - 'version-update:semver-major'
-          - 'version-update:semver-minor'
-          - 'version-update:semver-patch'
-      - dependency-name: '@vitest/*'
-        update-types:
-          - 'version-update:semver-major'
-          - 'version-update:semver-minor'
-          - 'version-update:semver-patch'
-      - dependency-name: typescript
-        update-types:
-          - 'version-update:semver-major'
-          - 'version-update:semver-minor'
-          - 'version-update:semver-patch'
-      - dependency-name: '@typescript/native'
-        update-types:
-          - 'version-update:semver-major'
-          - 'version-update:semver-minor'
-          - 'version-update:semver-patch'
-      - dependency-name: '@effect/tsgo'
-        update-types:
-          - 'version-update:semver-major'
-          - 'version-update:semver-minor'
-          - 'version-update:semver-patch'
 
-  # The actions in .github/workflows: SHA pins (Dependabot updates the SHA
-  # and the trailing `# vX.Y.Z` comment together) and the exact-tag
-  # `voidzero-dev/setup-vp@vX.Y.Z` (Dependabot bumps the tag).
   - package-ecosystem: github-actions
-    directories:
-      - '/'
+    directory: '/'
     schedule:
-      interval: weekly
+      interval: daily
+    assignees: [thomasfosterau]
+    labels: [dependencies]
     commit-message:
       prefix: chore
-    assignees: ['thomasfosterau']
     cooldown:
       default-days: 1
-    # No groups: each action updates in its own PR.
-  # The .devcontainer/ features (the image tag moves with vite-plus by hand).
+
   - package-ecosystem: devcontainers
     directory: '/'
     schedule:
-      interval: weekly
+      interval: daily
+    assignees: [thomasfosterau]
+    labels: [dependencies]
     commit-message:
       prefix: chore
-    assignees: ['thomasfosterau']
     cooldown:
       default-days: 1

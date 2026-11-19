@@ -1,41 +1,7 @@
 /**
- * The document wire schema, derived from the editor's own ProseMirror schema.
- *
- * ## What a document schema is for
- *
- * One `DocumentSchema` is a single Effect Schema doing both jobs a document
- * contract has to do:
- *
- * - The persistence and `{@html}`-render **trust boundary**. A jsonb document
- *   column (`@thomasfosterau/prosekit-utilities/drizzle`) decodes and encodes
- *   through `Document` on every read and write, and that is the first half of
- *   the SEC-XSS-001 defence in the source applications — the HTML serialiser's
- *   attribute escaping and link allow-list (`./html.ts`) is the second.
- * - The **generative contract** for whole-document machine emission (agentic
- *   editing, a re-validation guard around a translation service), and the
- *   source for a JSON Schema via `Schema.toJsonSchemaDocument`.
- *
- * ## Where the grammar comes from
- *
- * Node and mark names, groups, the content model — including each node's
- * `+`/`*` non-emptiness and any by-name content restriction, such as the
- * sidenote's `(text | hardBreak)*` — and the admissible marks are read
- * straight off the compiled ProseMirror schema by the `Registry` in
- * `@thomasfosterau/prosekit-utilities/derive`, which walks the compiled
- * `ContentMatch` automaton. There is no hand-transcribed grammar to drift out
- * of sync with the live editor. Attribute value types, which ProseMirror
- * cannot expose, come from the attribute overlay — see
- * `./attribute-overrides.ts`.
- *
- * ## The two halves
- *
- * A `DocumentEnvelope` (the root entry) is the browser-cheap half: it names the
- * surface and checks the envelope structurally, with no ProseKit import.
- * `defineDocumentSchema(envelope, …)` is the server half, and `install()` is what
- * joins them — from then on the envelope rejects exactly what the derived schema
- * rejects, for the life of the isolate.
- *
- * @module
+ * The document wire schema, derived from the editor's own compiled ProseMirror
+ * schema so the editor, renderer and column codec never disagree. Compiling is
+ * deferred until first use.
  */
 
 import * as Arr from 'effect/Array';
@@ -141,7 +107,7 @@ export interface DocumentSchema<Name extends string> {
  * used and memoises it thereafter. So importing the module that declares a
  * document surface — as a model layer or a route module does — never pays for
  * a ProseMirror compile or for building the derived Effect Schema graph unless
- * a document is actually validated (PERF-CPU-001 in the source applications).
+ * a document is actually validated.
  *
  * ## Sharing derivation without coupling
  *

@@ -1,50 +1,21 @@
 /**
- * Vite config for `@thomasfosterau/prosekit-flowchart`: the browser unit
- * suite (the Svelte compiler + a real Chromium under Vitest browser mode) and
- * the `svelte-package` build that produces `dist/`.
- *
- * Modelled on packages/prosekit-svelte/vite.config.ts — same task names, same
- * cache fingerprint — with two differences that follow from this being a
- * downstream package:
- *
- * - `check`, `build` and `test:unit` take `{ task: 'build', from:
- *   'dependencies' }`. This package imports both siblings through their
- *   `exports`, which point at their BUILT `dist/`, so nothing here resolves
- *   until those builds have run.
- * - There are no Storybook tasks. This package's stories are rendered by the
- *   one Storybook in packages/prosekit-svelte, whose `stories` glob reaches
- *   across into `../../prosekit-flowchart/src/stories`.
+ * The flowchart's browser suite and `svelte-package` build. Its stories are
+ * rendered by packages/prosekit-svelte's Storybook, so there are no Storybook
+ * tasks here.
  */
 
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { playwright } from 'vite-plus/test/browser-playwright';
 import { defineConfig } from 'vite-plus';
 
+const chromium = process.env['PLAYWRIGHT_CHROMIUM_EXECUTABLE'];
+
 /**
- * Input fingerprint for this package's cached tasks: everything the task can
- * read, minus `node_modules`, plus the lockfile — so a dependency bump busts
- * the cache and a `touch` does not.
- *
- * `'!.'` drops the package root's directory listing, for the same reason as in
- * packages/prosekit-svelte: these tasks list the root, and the cache
- * fingerprints a listing by entry name, so any untracked directory appearing
- * there (a stray `storybook-static/` or coverage report) would otherwise miss
- * them. A negative glob filters tracked paths, not the entries inside a
- * listing, so it cannot do this. Every file a task does read (`package.json`,
- * `tsconfig.json`, `svelte.config.js`, this config, `src/`, `tests/`) is still
- * fingerprinted, and so are those directories' listings.
- *
- * The second workspace-relative exclusion drops each sibling package's
- * `node_modules/`. Resolving a bare import from a sibling's built `dist/`
- * probes that sibling's `node_modules/` first. Under `nodeLinker: hoisted` that
- * directory holds only pnpm's workspace symlinks (`@thomasfosterau/*`, whose
- * reads are fingerprinted at their real paths) and generated scratch (Vite's
- * `.vite` / `.vite-temp`, `svelte-kit sync`'s `$app` types), so its first
- * appearance would otherwise miss `svelte-package` once. The lockfile still
- * stands in for every dependency.
- *
- * `build` takes this list too: a task without `input` tracks everything it
- * touches, these exclusions included.
+ * Cache inputs: everything a task reads except `node_modules`, plus the
+ * lockfile. `'!.'` drops the package root's directory listing, so a generated
+ * directory (`coverage/`, `storybook-static/`) appearing there doesn't bust
+ * the cache; the sibling `node_modules/` holds only workspace symlinks and
+ * generated scratch.
  */
 const cacheInputs = [
   { auto: true },
@@ -83,13 +54,16 @@ export default defineConfig({
           output: [],
         },
       },
-      // Browser mode, so `test:unit` never needs `PLAYWRIGHT_BROWSERS_PATH`
-      // spelled out here: Playwright reads it from the environment.
       'test:unit': {
         command: 'vp test run tests',
         dependsOn: ['sync', { task: 'build', from: 'dependencies' }],
         cache: {
-          env: ['VITEST_MAX_WORKERS', 'NODE_OPTIONS', 'PLAYWRIGHT_BROWSERS_PATH'],
+          env: [
+            'VITEST_MAX_WORKERS',
+            'NODE_OPTIONS',
+            'PLAYWRIGHT_BROWSERS_PATH',
+            'PLAYWRIGHT_CHROMIUM_EXECUTABLE',
+          ],
           input: cacheInputs,
           output: [],
         },
@@ -99,11 +73,8 @@ export default defineConfig({
 
   plugins: [svelte()],
 
-  // Every runtime dependency the browser suite reaches, pre-bundled BEFORE the
-  // first test file loads — left to discovery, Vite optimises them on first
-  // import and reloads the page, failing every test in flight at that moment.
-  // `@xyflow/svelte` is on the list because the canvas is the heaviest module
-  // here and exactly the late discovery that triggers the reload.
+  // Pre-bundle every dependency the suite reaches: one discovered mid-run
+  // reloads the page and fails every test in flight.
   optimizeDeps: {
     include: [
       '@testing-library/jest-dom/vitest',
@@ -128,9 +99,7 @@ export default defineConfig({
       'vite-plus/test/browser',
       'vitest-browser-svelte',
     ],
-    // Reached only through the core's dynamic `import('linkedom')`, which a
-    // browser never takes (there is a global `document`); left out of the
-    // pre-bundle rather than bundling a server DOM into the suite.
+    // Only the server branch of the HTML renderer imports it.
     exclude: ['linkedom'],
   },
 
@@ -139,13 +108,17 @@ export default defineConfig({
     // Registers the jest-dom matchers.
     setupFiles: ['./tests/setup.ts'],
     testTimeout: 30_000,
-    // A REAL browser, not a DOM shim — the same reason as the editor
-    // package's suite: xyflow needs real layout, and focus order, keyboard
-    // handling and the accessibility tree are the contract.
+    // A real browser: xyflow needs layout, and focus and the accessibility
+    // tree are the contract.
     browser: {
       enabled: true,
       headless: true,
-      provider: playwright(),
+      // `PLAYWRIGHT_CHROMIUM_EXECUTABLE` points at a preinstalled Chromium
+      // (an agent session's /opt/pw-browsers/chromium); unset, Playwright
+      // uses its own download.
+      provider: playwright({
+        launchOptions: chromium === undefined ? {} : { executablePath: chromium },
+      }),
       instances: [{ browser: 'chromium' }],
       screenshotFailures: false,
     },

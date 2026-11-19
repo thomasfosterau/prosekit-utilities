@@ -1,28 +1,10 @@
 #!/usr/bin/env bash
-#
 # Publish every workspace package whose version is not yet on npm, then tag.
-#
-# Run by the Release workflow (changesets/action `publish-script`, via the
-# root `release` script) once the "Version Packages" PR has merged.
-#
-# Two tools, deliberately: `pnpm pack` is what rewrites the `workspace:*` and
-# `catalog:` specifiers to real ranges in the packed manifest, and `npm
-# publish` of the resulting tarball is what performs npm OIDC trusted
-# publishing (npm >= 11.5.1; the Release job pins one). No `--provenance`:
-# npm attaches it by itself once the repository and the package are both
-# public, and an explicit request from a private repository fails the
-# publish.
-#
-# Not `pnpm publish` (evaluated in #31): at the pinned pnpm 11.26.0 it packs
-# and then shells out to `npm publish --ignore-scripts <tarball>` itself, so
-# the OIDC exchange is still npm's and the npm pin below stays either way. It
-# would also publish each package as it packs it, losing the pack-everything-
-# first guarantee. Revisit only if a pnpm release publishes without npm.
-#
-# Idempotent: a package already published at its current version is skipped,
-# so a partial run can be re-run, and a version bootstrapped by hand does not
-# fail the automated run. Every tarball is packed before the first publish,
-# so a pack failure publishes nothing.
+# `pnpm pack` rewrites `workspace:*` / `catalog:` to real ranges; `npm publish`
+# of the tarball does the OIDC trusted publishing. Every tarball is packed
+# before the first publish, and a version already on npm is skipped, so a
+# partial run can be re-run. Never add `--provenance`: it fails from a private
+# repository.
 
 set -euo pipefail
 
@@ -42,10 +24,7 @@ for dir in "${dirs[@]}"; do
     continue
   fi
   echo "pack: $name@$version"
-  # `--config.ignore-scripts=true`: no `prepack` / `prepare` / `postpack` runs
-  # in the id-token job (none is defined today). `pnpm pack` has no
-  # `--ignore-scripts` flag (pnpm 11 rejects it as an unknown option), so the
-  # setting is passed as config; the tarball is byte-identical either way.
+  # `pnpm pack` has no `--ignore-scripts` flag; pass it as config.
   (cd "$dir" && pnpm pack --config.ignore-scripts=true --out package.tgz >/dev/null)
   pending+=("$dir")
 done

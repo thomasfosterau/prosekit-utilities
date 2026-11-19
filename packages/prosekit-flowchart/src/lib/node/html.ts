@@ -13,9 +13,6 @@
  * createHtmlRenderer({ postProcess: postProcessFlowcharts });
  * ```
  *
- * Ported verbatim from Website's `postProcessFlowcharts` in
- * `src/editor/html.ts`.
- *
  * @module @thomasfosterau/prosekit-flowchart/node/html
  */
 

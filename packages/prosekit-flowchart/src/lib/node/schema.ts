@@ -12,8 +12,6 @@
  * persistence, so its internal fields (selection, measured dimensions) never
  * round-trip.
  *
- * Ported verbatim from Website's `src/editor/flowchart/schema.ts`.
- *
  * @module @thomasfosterau/prosekit-flowchart/node/schema
  */
 

@@ -9,8 +9,8 @@
  * Security: {@link sanitiseDocument} runs first on every render, dropping
  * `link` marks and `image` nodes whose URL is not in the safe-URL allow-list.
  * Together with the derived wire schema's decode (`./document-schema.ts`) that
- * is the SEC-XSS-001 defence in the source applications: the schema decides
- * what a document may contain, this decides what a URL may be.
+ * is the XSS defence: the schema decides what a document may contain, this
+ * decides what a URL may be.
  *
  * @module
  */

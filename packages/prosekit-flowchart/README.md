@@ -38,4 +38,4 @@ export const extension = defineBlockDocumentExtension(defineFlowchart());
 ## Links
 
 - [Flowchart guide](https://github.com/thomasfosterau/prosekit-utilities/blob/trunk/docs/flowchart.md): wiring the block into an editor, the canvas and node view
-- [CHANGELOG](CHANGELOG.md), [CONTRIBUTING](https://github.com/thomasfosterau/prosekit-utilities/blob/trunk/CONTRIBUTING.md), [AGENTS.md](https://github.com/thomasfosterau/prosekit-utilities/blob/trunk/AGENTS.md), [PUBLISHING](https://github.com/thomasfosterau/prosekit-utilities/blob/trunk/PUBLISHING.md), [SECURITY](https://github.com/thomasfosterau/prosekit-utilities/blob/trunk/SECURITY.md)
+- [CHANGELOG](CHANGELOG.md), [CONTRIBUTING](https://github.com/thomasfosterau/prosekit-utilities/blob/trunk/docs/CONTRIBUTING.md), [AGENTS.md](https://github.com/thomasfosterau/prosekit-utilities/blob/trunk/AGENTS.md), [PUBLISHING](https://github.com/thomasfosterau/prosekit-utilities/blob/trunk/docs/PUBLISHING.md), [SECURITY](https://github.com/thomasfosterau/prosekit-utilities/blob/trunk/docs/SECURITY.md)

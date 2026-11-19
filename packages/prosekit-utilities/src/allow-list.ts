@@ -1,30 +1,8 @@
 /**
- * Node / mark allow-lists: the narrowing a write seam applies on top of a
- * document's grammar.
- *
- * ## Why an allow-list rather than another compiled schema
- *
- * A document's trust boundary (SEC-XSS-001) is the schema derived from the
- * compiled ProseMirror grammar — one block grammar and one inline grammar,
- * deliberately, so that the editor, the renderer and the column codec never
- * disagree about what a node is. Named surfaces differ only in which subset
- * of that vocabulary they admit: a public comment gets the minimal inline
- * set, an article section gets tables and figures. Those are policy
- * decisions, applied where the surface is known, not separate persistence
- * formats.
- *
- * They are also cheap to apply as a tree-walk and expensive to apply as a
- * schema: the derived schema is `Schema.suspend`-wrapped so the ProseMirror
- * compile stays lazy, and `Schema.check` cannot be appended to a `Suspend`.
- * {@link allowListFilter} is composable onto a `DocumentEnvelope`'s schema
- * (which is not suspended) for that reason; {@link checkAllowList} is the
- * Effect-shaped seam for everything else.
- *
- * Link `href`s are additionally checked against {@link isSafeHref} unless a
- * list opts out — an unsafe scheme is a violation at the write boundary, not
- * merely something the renderer drops later.
- *
- * @module
+ * Node and mark allow-lists: the narrowing a write surface applies on top of a
+ * document's grammar. A tree walk rather than another schema, because the
+ * derived schema is `Schema.suspend`-wrapped and takes no `Schema.check`. Link
+ * `href`s are also checked with `isSafeHref` unless a list opts out.
  */
 
 import * as Arr from 'effect/Array';

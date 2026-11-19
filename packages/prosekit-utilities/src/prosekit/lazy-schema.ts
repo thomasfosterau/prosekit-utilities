@@ -22,16 +22,8 @@ import type { Schema as PmSchema } from '@prosekit/pm/model';
  * scope would charge that cost to every bundle that so much as names a
  * document type; doing it per call charges it per use.
  *
- * **Why this matters more than it sounds (PERF-CPU-001 in the source
- * applications).** Before this cache existed there, schema validation called
- * `createEditor(...)` on every call — once per jsonb document column on every
- * database row read, and once per server-side document render. An O(1) cost
- * had become O(rows). Anything on a per-row or per-render path must go
- * through a thunk like this one, never `createEditor` directly.
- *
- * The cache is an `Option` rather than a nullable so a schema is never
- * recompiled because a falsy-looking value was cached, and the thunk is a
- * closure rather than a module-scope slot so two grammars never share one.
+ * Anything on a per-row or per-render path must go through a thunk like
+ * this one, never `createEditor` directly.
  */
 export function lazySchema(define: () => Extension): () => PmSchema {
   let compiled: Option.Option<PmSchema> = Option.none();

@@ -16,15 +16,12 @@
  * });
  * ```
  *
- * Ported verbatim from the `case "flowchart": return "_[flowchart
- * diagram]_";` branch of Website's `src/editor/markdown.ts`.
- *
  * @module @thomasfosterau/prosekit-flowchart/node/markdown
  */
 
 import type { BlockSerialiser } from '@thomasfosterau/prosekit-utilities';
 
-/** Website's own copy, and this factory's default `label`. */
+/** The default `label`. */
 const DEFAULT_LABEL = '_[flowchart diagram]_';
 
 /**

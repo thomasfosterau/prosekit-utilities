@@ -12,7 +12,7 @@
   // must too. Without it a node is not absolutely positioned and lays out BELOW
   // the `overflow: hidden` canvas, so Playwright scrolls the canvas to reach it
   // and Svelte Flow snaps the scroll back mid-`dblClick()`, sending the second
-  // click to the pane (prosekit-utilities#34).
+  // click to the pane.
   import '@xyflow/svelte/dist/style.css';
   import { SvelteFlow, type Edge, type Node, type NodeTypes } from '@xyflow/svelte';
   import { untrack } from 'svelte';

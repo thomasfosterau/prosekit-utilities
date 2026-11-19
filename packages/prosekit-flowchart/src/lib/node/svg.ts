@@ -1,22 +1,7 @@
 /**
- * Server-renderable SVG synthesis for flowchart blocks.
- *
- * Walks a {@link FlowchartData} payload and emits a self-contained SVG markup
- * string — no DOM measurement required, since node positions are already
- * persisted. This is the read-only fallback a consuming app's HTML renderer
- * injects (via `postProcessFlowcharts`, `./html.ts`) so readers see the
- * diagram without loading this package's canvas runtime.
- *
- * Output is not pixel-perfect with the interactive canvas (font metrics and
- * edge curves are approximated) but is structurally faithful and cheap to
- * generate in a Worker.
- *
- * Ported verbatim from Website's `src/editor/flowchart/svg.ts`, with the
- * three user-facing strings (the empty-state label, the diagram's
- * node-count summary, the untitled-node fallback) promoted to an optional
- * `labels` parameter — each still defaults to Website's own copy.
- *
- * @module @thomasfosterau/prosekit-flowchart/node/svg
+ * Server-renderable SVG for a flowchart payload: the read-only rendering a
+ * document shows without loading `@xyflow/svelte`. Every user label is
+ * escaped.
  */
 
 import * as Arr from 'effect/Array';

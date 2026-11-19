@@ -1,20 +1,11 @@
-# zizmor (GitHub Actions static analysis) configuration. Run it with
-# `uvx zizmor --offline .github`; every workflow should
-# report no findings beyond what is configured away here, each with its reason.
+# `uvx zizmor --offline .github`.
 rules:
   dependabot-cooldown:
     config:
-      # The owner's supply-chain policy: pnpm holds a new version for 8 hours
-      # (`minimumReleaseAge: 480` in pnpm-workspace.yaml) and Dependabot's
-      # cooldown, which counts whole days, waits 1 — longer than pnpm, so a
-      # Dependabot PR never proposes a version pnpm would refuse.
       days: 1
+  # Actions are pinned by exact tag, locked to commits by
+  # .github/workflows/actions.lock.
   unpinned-uses:
     config:
       policies:
-        # The owner's decision (#162): Vite+'s own setup action is taken at
-        # an exact release tag (`@vX.Y.Z`, never the frozen `@v1`), as its
-        # README recommends; every other action stays pinned to a full
-        # commit SHA.
-        'voidzero-dev/setup-vp': ref-pin
-        '*': hash-pin
+        '*': ref-pin

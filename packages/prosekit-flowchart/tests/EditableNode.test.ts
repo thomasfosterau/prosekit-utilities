@@ -1,21 +1,5 @@
 /**
- * Browser tests for `EditableNode` — the inline-editable Svelte Flow node.
- *
- * Driven inside the smallest possible `SvelteFlow` (`EditableNodeFixture`),
- * because the component is never rendered directly: Svelte Flow constructs it
- * from `nodeTypes` and `useSvelteFlow()` — the hook a commit writes through —
- * only resolves inside a flow. Real double-clicks and real key presses, so the
- * thing under test is the browser's own activation path rather than an event
- * a spec made up.
- *
- * What is pinned: both ways into edit mode (double-click, and Enter while the
- * node has focus), Enter committing, Escape discarding, a blank label
- * committing as the `untitledLabel` fallback, the field's accessible name,
- * that both strings arrive through the node's `data` (the only channel Svelte
- * Flow leaves open), and that a read-only node is inert and out of the tab
- * order.
- *
- * @module
+ * Browser tests for `EditableNode`, the inline-editable Svelte Flow node.
  */
 
 import { expect, test } from 'vite-plus/test';

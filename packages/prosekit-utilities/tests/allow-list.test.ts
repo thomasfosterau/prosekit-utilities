@@ -207,7 +207,6 @@ describe('allowListViolation: node allow-list', () => {
     expect(value._tag).toBe('DocumentViolation');
     expect(value.kind).toBe('node');
     expect(value.typeName).toBe('heading');
-    // No payload field shadows the error's own name (#127).
     expect(value.name).toBe('DocumentViolation');
     expect(value.label).toBe('a comment');
     expect(value.message).toBe('node type "heading" is not permitted in a comment');

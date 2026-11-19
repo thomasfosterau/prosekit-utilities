@@ -1,9 +1,11 @@
 {
-  "extends": "../../tsconfig.base.json",
+  // Kit's generated config (written by `svelte-kit sync`) wins where both set
+  // an option.
+  "extends": ["../../tsconfig.base.json", "$app/tsconfig"],
   "compilerOptions": {
-    // `vite/client` for the ambient module declarations that let a component
-    // import a stylesheet for its side effect; those are Vite's, not Node's.
-    "types": ["node", "vite/client"],
+    // Kit warns if `$app/types` is dropped; `vite/client` types side-effect
+    // stylesheet imports.
+    "types": ["$app/types", "node", "vite/client"],
     // For oxlint-tsgolint (type-aware `vp lint`, which reads each file's
     // nearest tsconfig.json) and editors: the sibling packages resolve to
     // their `src/`, so lint types them on a clean tree, before any `build`.

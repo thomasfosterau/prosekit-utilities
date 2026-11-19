@@ -1,104 +1,16 @@
 # AGENTS.md
 
-A publishable library workspace, not an application: `packages/*/dist` is the product, and it must stay wire-compatible with documents the owner's apps have already persisted. The toolchain is the family's standard (Vite+ on pnpm, the Effect lint presets, fallow), as in `thomasfosterau/effect-web` and `thomasfosterau/components`. There is no docgen: the API reference is the hand-written TSDoc on each export (what a consumer sees on hover), the guides are [`docs/*.md`](docs), and each package's `README.md` is only its landing page.
+Read [README.md](README.md) and [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) first; this file adds only what is specific to agents. Each package's `AGENTS.md` holds its boundary and invariants: read it before changing that package.
 
-| Package | Directory | Purpose / boundary |
-| --- | --- | --- |
-| `@thomasfosterau/prosekit-utilities` | [`packages/prosekit-utilities`](packages/prosekit-utilities) | The non-UI core, four entry points: `.` (ProseKit-free document shapes, allow-lists, text, Markdown), `./derive` (an Effect Schema derived from a compiled ProseMirror schema), `./prosekit` (nodes, marks, presets, the derived document schema, the HTML renderer), `./drizzle` (jsonb document columns). Node Vitest. |
-| `@thomasfosterau/prosekit-svelte` | [`packages/prosekit-svelte`](packages/prosekit-svelte) | The Svelte 5 editor components on bits-ui. Vitest browser mode; hosts the workspace's one Storybook. |
-| `@thomasfosterau/prosekit-flowchart` | [`packages/prosekit-flowchart`](packages/prosekit-flowchart) | The flowchart block: `./node` without Svelte or xyflow, the canvas at the root. `@xyflow/svelte` is its required peer. |
+## Process
 
-Each package's `AGENTS.md` holds its boundary and invariants (the derivation contract, the ProseKit-free root entry, the `./node` boundary); read it before editing that package.
+- You may open PRs in this repository. Out-of-scope work you notice: file an issue and move on.
+- Use the GitHub MCP tools or `gh`, whichever is available. GitHub writes go to `thomasfosterau/prosekit-utilities` only.
+- Run the gates in docs/CONTRIBUTING.md before pushing and say in the PR body which couldn't run.
 
-## Common pitfalls
+## Pitfalls
 
-- **Never edit a version in a `package.json`.** Every external version lives in [`pnpm-workspace.yaml`](pnpm-workspace.yaml) under `catalog:`; package.json files carry only `catalog:` or `workspace:*` (the literal peer ranges are the one deliberate exception — there is no `catalog:peers` here), and `catalogMode: strict` rejects anything else at install. After editing the catalog, run `pnpm install` and commit the regenerated `pnpm-lock.yaml` — a stale lockfile fails every CI job at once with `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH`. `vite-plus`, `@effect/tsgo` and `@typescript/native` move together (the tsgo patch in `prepare` hard-errors at install on an unsupported `tsc` or `oxlint`), and the `vitest` set follows vite-plus's pin; read their catalog comments first. Dependabot (`.github/dependabot.yml`) groups only the lockstep sets (`toolchain`, `effect`, `svelte`, `storybook`, `prosekit`, `tailwind`; everything else updates on its own), and holds back the ones a person moves by hand: on its toolchain PR that bumps `vite-plus`, set `vitest` / `@vitest/*` to the new vite-plus's `dependencies.vitest` and `@effect/tsgo` / `@typescript/native` / `typescript` to a supported pairing, in that PR. `vite` (the `npm:@voidzero-dev/vite-plus-core` alias) is set by hand to the `vite-plus` version in the same PR (`pnpm dlx --package=vite-plus@<v> vp migrate --no-interactive` does it; then drop the `minimumReleaseAgeExclude` entries it adds), and so are the `effect-tsgo`-supported `typescript` / `@typescript/native` aliases and the `.devcontainer/devcontainer.json` image tag (`ghcr.io/voidzero-dev/vite-plus:<v>`, which the Dev Container workflow checks against the catalog pin). `playwright` moves with the SessionStart hook's `PW_WANT_REV`, and `prosemirror-model` / `prosemirror-view` (pinned under `overrides:`, which Dependabot cannot bump) only by the owner's decision. `minimumReleaseAge` holds a new version for 480 minutes (8 hours); Dependabot's `cooldown` is 1 day, its smallest unit.
-- **`dist/` is the product; `src/routes` does not exist.** The Svelte packages are `svelte-package` libraries, not SvelteKit apps: nothing under `src/lib/` may import `$app/*` or `$env/*`. The core package is a `vp pack` (tsdown) library with one bundle per entry point. Every package consumes its siblings the way a consumer does — through their published `exports`, i.e. their built `dist/` — never a relative path into another package's `src/`, which is why downstream `check` / `test:unit` / `build` tasks take a `{ task: 'build', from: 'dependencies' }` edge.
-- **`"sideEffects": false` is a claim about `dist/`, and it is load-bearing.** Every emitted `.js` must be pure declarations: no top-level statements, no top-level `await`. The only bare imports allowed in the built output are `prosekit/basic/style.css` + `prosekit/basic/typography.css` inside `Editor.svelte` and `@xyflow/svelte/dist/style.css` inside `Flowchart.svelte` — modules in _other_ packages, whose own packaging governs their inclusion. Nothing else. That is what lets a consumer keep ProseKit off every page without a document field. `vp run check:dist` enforces it on every `.js` and `.svelte` file in each `dist/`: a load-time call must be `/* @__PURE__ */`-annotated in source, and the comment goes before the outer call and before each call nested in its arguments (`/* @__PURE__ */ Schema.Struct({ data: /* @__PURE__ */ Schema.Struct(…) })`, `/* @__PURE__ */ required(…)`) — one comment covers a chain like `Schema.TaggedError()(…)`, whose calls start at the same place; tsdown and `svelte-package` keep it. Nothing is trusted by name, Effect's `Schema` / `Option` and the workspace's own factories included: an unannotated call keeps its constant in a consumer's bundle. The one exception is a direct `Symbol.for` call with a single string-literal key, where `Symbol` isn't shadowed — the shape esbuild already drops when unused; a variable or object key, a second argument, or a module-level `Symbol` (an import, a declaration, a destructured name) gets no exemption (see `isSymbolFor` in [`scripts/check-dist-boundaries.ts`](scripts/check-dist-boundaries.ts)). Annotate only a call whose result is just assigned and whose callee you have read: a wrong annotation lets a bundler drop a needed effect. Implicit getters and iterators aren't visible to a syntax check.
-- **Accessibility regresses silently.** Type errors don't catch a lost accessible name, a broken focus order or a dropped `aria-pressed`. That is the whole reason the Svelte suites drive a real browser.
-
-## Conventions
-
-- **Absence is an `Option`, and optional members are bare `?:`.** In the Effect code (the core and the flowchart's `./node`), a value that may be missing is `Option.Option<T>`, never `T | null`; an optional property that holds one is `x?: Option.Option<T>`; an options-object member is `readonly x?: T` (no `| undefined`); an optional parameter is `x?: T`. The workspace compiles with `exactOptionalPropertyTypes`, so a caller forwarding an optional of its own spreads it in only when present. `effect/prefer-option-over-null` is at error. ProseMirror document and JSON wire shapes (`NodeJSON`, `MarkJSON`: ProseMirror's own bare `?:`) and Svelte props keep their native forms; Svelte props stay `x?: T | undefined`, with function types parenthesised: `onSelect?: (() => void) | undefined`.
-- **Relative imports carry their `.ts` extension** (`allowImportingTsExtensions` + `rewriteRelativeImportExtensions` in `tsconfig.base.json`).
-- **Tests import from `vite-plus/test`**, never `vitest` — or from `@effect/vitest` for Effect-returning tests (`it.effect`; the `describe` / `expect` around it still come from `vite-plus/test`). A `.ts` test file under `tests/` mirrors the module it covers.
-- **Every export is documented** with a doc comment whose first sentence says what it is for, in words that stand alone in a consumer's hover — no app names there. Provenance (which app behaviour it carries) goes below the summary or in a `//` comment. A comment that cites a Website issue (`#NNN`) or an invariant id (`SEC-XSS-001`, `PERF-CPU-001`) is pointing at the app repos' evidence, not at anything here.
-- **Svelte authoring rules** (runes, `class` merging, strings as props, bits-ui, daisyUI lookup tables, stories and browser tests) are in [`.claude/rules/svelte.md`](.claude/rules/svelte.md), loaded when you touch either Svelte package.
-- **New rules:** formatter/lint config goes in `vite.config.ts` first; a rule scoped to some files goes in `.claude/rules/` with `paths:`; a package-local rule goes in that package's `AGENTS.md`; otherwise here.
-
-## Commands
-
-The toolchain is **Vite+** (the `vp` CLI) on **Node + pnpm**. Invoke everything through `vp` — `vp run <script>`, `vp exec <bin>` (instead of `npx`). The sanctioned non-`vp` calls: `pnpm install` (CI and the release jobs install through `voidzero-dev/setup-vp`'s `vp install --frozen-lockfile`, with `--ignore-scripts` in the release jobs), `pnpm changeset`, `pnpm audit`, `pnpm pack` / `npm publish` on the release path, `pnpm exec playwright install` in CI. Run fallow through Vite+ (`vp exec fallow …`, or the `vp run fallow` / `vp run fallow:audit` tasks).
-
-- `pnpm install` — dependencies, the Vite+ git hooks ([CONTRIBUTING.md § Git hooks](CONTRIBUTING.md#git-hooks); there is **no pre-push hook**, so run the gates yourself before pushing), and the `prepare` step that patches the native `tsc` and vite-plus's `oxlint` with `@effect/tsgo`.
-- `vp run ci` — steps 1–8 of § Verification in order, stopping at the first failure: exactly what CI runs.
-- `vp check` — format + lint (Oxfmt + Oxlint: the `correctness`, `suspicious` and `perf` categories over the `typescript`, `unicorn`, `oxc`, `import`, `promise`, `vitest` and `jsdoc` plugins workspace-wide, with `@enfect/oxlint`'s and `@effect/tsgo`'s `recommended` presets on the Effect code only — the core package and the flowchart's `./node`; each rule exemption carries its reason in the root `vite.config.ts`). Lint is type-aware through vite-plus's bundled oxlint-tsgolint (`typeAware`; `typeCheck` stays off because tsgolint cannot type `.svelte` imports), which reads each file's nearest `tsconfig.json`: the Svelte packages' `tsconfig.json` maps the siblings to their `src/` for it, while their `check` and `build` use `tsconfig.dist.json`, which resolves them through `dist/`. `vp run check` — the type gate: the root aggregate over every package's `check` (`tsc` for the core, `svelte-kit sync` + `svelte-check` for the Svelte packages), then `tsc` over the root's `vite.config.ts` and `scripts/`. They are different commands.
-- `vp run -r test:unit` — every suite: node Vitest for the core, headless Chromium under Vitest browser mode for the Svelte packages.
-- `vp run --filter ./packages/prosekit-utilities test:coverage` — the core's node suite under istanbul coverage, failing below the thresholds in its `vite.config.ts` (statements 90 / branches 85 / functions 90 / lines 90). CI runs this in place of the core's plain `test:unit`, and `vp run --filter '!./packages/prosekit-utilities' test:unit` for the Svelte packages' browser suites. Never lower a threshold to get green; add the missing tests.
-- `vp run -r build` — `vp pack` → `packages/prosekit-utilities/dist`, `svelte-package` → the two Svelte `dist/`s.
-- `vp run check:dist` — the entry-point import boundaries, checked against the built `dist/` ([`scripts/check-dist-boundaries.ts`](scripts/check-dist-boundaries.ts)): the core's `.`, `./derive` and `./drizzle` reach no `prosekit` / `@prosekit/*`, and the flowchart's `./node` reaches no Svelte or xyflow. Depends on every package's `build`; fails, never skips, when a `dist/` is missing.
-- `vp run --filter ./packages/prosekit-svelte storybook` — the dev loop on port 6006; `storybook:build` for the static build. One Storybook for the workspace: its `stories` glob reaches across into `packages/prosekit-flowchart/src/stories`.
-- `cd packages/<name> && vp test run tests` — one package's suite while iterating; `vp run -r` from the root is the gate.
-- `vp run test:coverage` (from the root) — every package's suite under one istanbul map at `coverage/coverage-final.json`, which `fallow audit` reads for per-function CRAP scores. Not the core's threshold gate above; run it before `fallow audit`.
-- `vp run fallow` / `vp run fallow:audit` — fallow's dead-code / duplication / complexity summary, and the change-set audit (§ Fallow local gate). `.fallowrc.json`'s zones restate the entry-point boundaries between the packages' `src/` trees (the core's root, `./derive` and `./drizzle` import no other zone; `./node` only the core's root and `./derive`); `check:dist` stays the authority on external imports in `dist/`.
-- `pnpm audit --audit-level high` — known high or critical advisories; a CI step (network).
-- `pnpm changeset` — add a changeset.
-
-## Verification
-
-Before you report work as done, run the gates below in order and quote each command with its final pass/fail. If a gate can't run here, say which and why in the PR body; never imply it ran.
-
-1. `vp check`
-2. `vp run check`
-3. `vp run --filter ./packages/prosekit-utilities test:coverage`
-4. `vp run --filter '!./packages/prosekit-utilities' test:unit`
-5. `vp run -r build`
-6. `vp run check:dist`
-7. `vp run --filter ./packages/prosekit-svelte storybook:build`
-8. `pnpm audit --audit-level high` (network)
-9. `vp run test:coverage`, then `vp exec fallow audit --format json --quiet --explain --gate-marker agent --base origin/trunk` — the fallow gate below; not a CI step.
-
-Steps 1–8 are the root `ci` task, in its order: `vp run ci` runs them fail-fast, and it is the only command [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs after install, on the current Node LTS and latest lines. None needs a credential. The browser suites need a Chromium matching the pinned `playwright` — see that entry's comment in the catalog. Before every push, prove CI parity from a clean tree: `rm -rf node_modules packages/*/node_modules packages/*/.svelte-kit packages/*/dist && pnpm install --frozen-lockfile`, then the gates above. A warm local tree hides a missing peer; a fresh runner does not.
-
-## Branches and pull requests
-
-- **The default branch is `trunk`. Branch off `trunk`; PR against `trunk`; squash-merge.** Name branches `issue-<n>-<slug>` for issue-linked work, or a plain descriptive slug otherwise.
-- **Rebase onto `origin/trunk` before opening or updating a PR** (`git fetch origin trunk && git rebase origin/trunk`); never merge `trunk` into your branch — merging silently auto-resolves convergent edits between parallel worktrees. GitHub's Update-branch button and auto-merge both merge; don't use them.
-- **Every change to a published package's behaviour carries a changeset** (`pnpm changeset`), one per affected package; docs-, CI- and tooling-only changes need none. A change to the derivation, a node/mark spec or the attribute overlay is a **major** — see [`packages/prosekit-utilities/AGENTS.md`](packages/prosekit-utilities/AGENTS.md).
-- **Never publish or version by hand.** Merging to `trunk` makes `.github/workflows/release.yml` open the "Version Packages" PR (`chore: version packages`); the owner merges it, and the workflow publishes through [`scripts/release.sh`](scripts/release.sh). Publishing is npm trusted publishing (OIDC) from the protected `release` environment; there is no `NPM_TOKEN`. Never add `--provenance` or `NPM_CONFIG_PROVENANCE=true` — from a private repository it fails the publish. The reason for each release step is in the comments of `scripts/release.sh` and `release.yml`; the one-time owner setup is in [PUBLISHING.md](PUBLISHING.md).
-- **Standing approvals** (they override any default "don't open a PR unless asked"): open a PR against `trunk` once a branch has pushed a commit; watch it to merge or close, investigating CI failures and review comments as they arrive and rebasing promptly when it goes conflicting; keep the PR body current as the implementation diverges from it.
-- **GitHub writes go to `thomasfosterau/prosekit-utilities` only**; pass `-R thomasfosterau/prosekit-utilities` whenever the cwd might be another checkout (`gh` infers the repo from the cwd's remote). Never write to any other repository — upstream projects and the owner's app repos included — without the owner's explicit approval for that action in the current session; nothing enforces this mechanically. Use the `gh` CLI for GitHub operations, even when GitHub MCP tools are available.
-
-## Work tracker
-
-- The issue tracker for `thomasfosterau/prosekit-utilities` is the backlog: file an issue rather than leaving a TODO in code.
-- The issue is the spec: read all of it, comments included (`gh issue view <n> -R thomasfosterau/prosekit-utilities --comments`), and re-verify its claims against current `trunk` before editing.
-- Record decisions and findings as comments on the issue; later comments override the body.
-- Stop-and-report is a valid outcome: on a blocker outside the issue's scope, comment the evidence on the issue and stop.
-- No silent deferrals: scope cut mid-PR becomes a linked issue before merge.
-
-## Effect
-
-Effect is used by the core package and by `prosekit-flowchart`'s `./node` entry only; its house style is in [`packages/prosekit-utilities/AGENTS.md`](packages/prosekit-utilities/AGENTS.md). The pinned version is the `effect` entry of the catalog; the published peer range is the literal `^4.0.0` in the core's and the flowchart's package.json. Raise a package's range only when one of its own dependencies requires it (or its code needs an unstable module first shipped in a later minor), naming that dependency or module in the package's `AGENTS.md`, and prove the floor by re-running the gates with the catalog pin at that version. Before writing Effect code, read the API from the installed package rather than from memory: `node_modules/effect/AGENTS.md` and `node_modules/effect/ai-docs/` (the pinned version ships both), the signatures in `node_modules/effect/dist/*.d.ts` and the implementations in `node_modules/effect/src` (after `pnpm install`). Where general Effect guidance differs from the core's house style, the house style wins. Never guess at an Effect pattern.
-
-`vp check` holds the Effect code to `@enfect/oxlint`'s `recommended` rules (the `effect/*` rules, anti-slop included). Fix a finding with the idiomatic shape (`effect/Array` over loops and `.length` branching, `effect/Predicate` over `typeof`, `Option` / `assert` over `!`, Schema JSON codecs over `JSON.*`, `Result.try` / `Effect.try` over `try`), never an `oxlint-disable` comment. A type assertion that genuinely must stay (ProseMirror's untyped `attrs`, a deliberately malformed test fixture) is preceded by a `// SAFETY: <invariant>` comment, the rule's own mechanism.
-
-## Documentation surfaces
-
-Each fact has one home: a decision, findings report or invariant discovered while working an issue → a comment on that issue; a rule scoped to some files → `.claude/rules/`; a package's boundary, invariants and terms → that package's `AGENTS.md`; the API reference → the TSDoc on each export; usage guides and worked examples → [`docs/*.md`](docs); a package's landing page → its `README.md` (what npm shows): what it is, install and peers, one minimal example, an entry-point table and links, nothing more; the repository landing page → the root `README.md`; human setup, hooks and single checks → [CONTRIBUTING.md](CONTRIBUTING.md); the release mechanics → the comments in `scripts/release.sh` and `release.yml`; the release flow and one-time owner setup → [PUBLISHING.md](PUBLISHING.md); the reporting channel and supply-chain posture → [SECURITY.md](SECURITY.md); Claude Code's hooks, settings and session specifics → [`.claude/CLAUDE.md`](.claude/CLAUDE.md). `docs/` holds the guides (document surfaces, derivation, nodes and marks, HTML and Markdown, Drizzle, the Svelte editor, the flowchart block); each starts with a one-paragraph purpose and links to the TSDoc rather than restating signatures.
-
----
-
-## Fallow local gate
-
-Before any `git commit` or `git push`, run `fallow audit --format json --quiet --explain --gate-marker agent --base origin/trunk`. If the verdict is `fail`, fix the reported findings before retrying. Treat JSON runtime errors like `{ "error": true, ... }` as non-blocking. Audit defaults to `gate=new-only`: only findings introduced by the current changeset affect the verdict.
-
-## Fallow task map
-
-| When the agent is about to... | Run |
-| --- | --- |
-| delete an "unused" export or file | `fallow dead-code --trace <file>:<export>` |
-| delete an "unused" dependency | `fallow dead-code --trace-dependency <name>` |
-| commit or open a PR | `fallow audit --base origin/trunk` |
-| check which architecture rules apply to a file before changing it | `fallow guard <files>` |
-| understand a finding | `fallow explain <issue-type>` |
+- **Effect idioms.** Prefer Effect v4's own modules over hand-rolled utilities; read `node_modules/effect/` rather than guessing an API. Svelte components and measured hot paths are the exceptions.
+- **Wire compatibility.** The consuming apps have stored documents. A change to the derivation, a node or mark spec, or the attribute overlay changes what they decode as; the golden fixtures in `packages/prosekit-utilities/tests/prosekit/document-models.test.ts` catch it, and it takes a major changeset.
+- **Bundle boundaries.** The core's `.`, `./derive` and `./drizzle` must not reach ProseKit, and the flowchart's `./node` must not reach Svelte or xyflow. Type checks don't catch this; `vp run check:dist` does, on the built `dist/`.
+- **Browser suites** need Chromium, and the pre-commit fallow audit runs them: in a session, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE=/opt/pw-browsers/chromium`. On a fresh checkout run `vp run -r sync` before `vp check`.

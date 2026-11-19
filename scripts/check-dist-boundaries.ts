@@ -1,45 +1,8 @@
 /**
- * Enforces the entry-point import boundaries against the BUILT `dist/` —
- * the files a consumer actually loads — rather than against `src/`.
- *
- * For each guarded entry point it resolves every file the package's `exports`
- * maps the entry to, under every condition but `types` (`import`, `node`,
- * `browser`, `svelte`, `default`, …), then walks the emitted module graph
- * from each: every static import, re-export, dynamic `import()` and
- * `require()` call of a relative `.js` / `.mjs` file is followed into the shared chunks it reaches,
- * and every specifier on the way — bare or relative — is checked against the
- * entry's forbidden list. A relative `.svelte` or `.css` import is a leaf:
- * checked by name, never opened. Specifiers are read with the oxc parser
- * Vite+ ships, so a comment or string that merely mentions a package never
- * counts, and a type-only import never survives into `.js`.
- *
- * It is fail-closed: it fails — never skips — when a built entry is missing
- * or lies outside the package's `dist/`, when a dynamic `import()` or a
- * `require()` has no literal specifier, when `require` is used other than as
- * a direct call, when a file imports `module` / `node:module` (whose
- * `createRequire()` hands out a `require` the walk cannot trace), when a
- * relative import leaves `dist/` (into `src/`, `node_modules/`, …, lexically
- * or through a symlink) or names a file it does not open as a module
- * (extensionless, `.json`, `.cjs`, anything but the `.svelte` and `.css`
- * leaves) or that does not exist, when a specifier is neither relative nor a
- * bare package name (empty, containing a control character, a `#` subpath
- * import, an absolute path, or a URL other than a `node:` builtin), and when a
- * positive control cannot see the import it must see (so the walk can never
- * pass vacuously).
- *
- * It also enforces the `"sideEffects": false` claim over every `.js`, `.mjs`
- * and `.svelte` file in each package's `dist/` (`sideEffects` below): no bare
- * side-effect import but the three allow-listed stylesheets, no top-level
- * statement other than a declaration, import or export, and no load-time
- * effect inside a declaration — an `await`, an assignment, or a call that is
- * not `/* @__PURE__ *\/`-annotated (the one exception, `isSymbolFor`, is a
- * direct `Symbol.for` call with a single string-literal key, where `Symbol`
- * isn't shadowed). A component's `<script module>` gets every rule; its
- * instance `<script>` runs per component, so only its imports are checked.
- *
- * Run it after the build: `vp run check:dist` (the root task depends on every
- * package's `build`). The boundaries themselves are documented in each
- * package's AGENTS.md § Boundary.
+ * Enforces the entry-point import boundaries and the `"sideEffects": false`
+ * claim against the built `dist/`. It walks each guarded entry's emitted
+ * module graph (static, dynamic and `require` imports, through shared chunks)
+ * and fails closed on anything it cannot follow. Run by `vp run check:dist`.
  */
 
 import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
@@ -459,8 +422,8 @@ const PUBLISHED: ReadonlyArray<string> = readdirSync(resolve(root, 'packages'), 
 
 /**
  * The only bare side-effect imports `dist/` may carry: the stylesheets of
- * another package, each inside the one component that owns it (see the root
- * AGENTS.md on `"sideEffects": false`). Each is also a positive control — the
+ * another package, each inside the one component that owns it. Each is also
+ * a positive control — the
  * check fails if it cannot see one, so a broken `<script>` extraction can
  * never pass vacuously.
  */

@@ -1,39 +1,8 @@
 /**
- * @copyright Thomas Foster
- *
- * The derivation engine: a memoised builder that turns one ProseMirror
- * {@link PmSchema} plus a set of {@link DeriveOptions} into Effect schemas for
- * its marks and (mutually recursive) nodes.
- *
- * Nodes reference each other through their content models, so the node
- * schemas form a mutually recursive graph. The graph is expressed with
- * `Schema.suspend`: a node's content field holds a union of *deferred*
- * references to its admissible child schemas, and each reference resolves
- * through {@link Registry.node}, which memoises so the graph is built once and
- * cycles terminate. `suspend` also keeps construction lazy — building one node
- * never forces its children — so declaration order is irrelevant and recursive
- * grammars (a list inside a list) are fine.
- *
- * A {@link Registry} is internal plumbing; the public entry points in
- * `./Derive` create one and read a single schema out of it. Several
- * `Registry` instances — one per ProseMirror schema — can share a single
- * {@link RegistryCache} so structure the schemas have in common (e.g. two
- * ProseKit extensions both composing the same `defineAllMarks()`) is built
- * once rather than once per schema; {@link import("./Derive.ts").deriveDocumentSchemas}
- * is the public entry point that does this. Memoization is by mark/node
- * *name*, so sharing a cache across schemas is only correct when same-named
- * types across those schemas are structurally identical — true by
- * construction when the schemas are assembled from the same extension
- * definitions, which is the only scenario `deriveDocumentSchemas` targets.
- *
- * That includes the **mark set**. An inline node's derived `marks` field is
- * the schema-wide union of inline marks (see `#inlineMarks`), so two schemas
- * that both define `text` identically but admit different marks still derive
- * different `text` schemas, and the cache keeps whichever was built first. A
- * schema with an extra mark that is derived first makes the other accept that
- * mark; derived second, it rejects its own mark. Nothing reports the clash.
- *
- * @module @thomasfosterau/prosekit-utilities/derive/Registry
+ * The derivation engine: a memoised builder from one ProseMirror schema to
+ * Effect schemas for its marks and mutually recursive nodes, linked lazily
+ * through `Schema.suspend`. A shared `RegistryCache` memoises by name, so it
+ * is sound only across schemas built from the same extension definitions.
  */
 
 import * as Arr from 'effect/Array';

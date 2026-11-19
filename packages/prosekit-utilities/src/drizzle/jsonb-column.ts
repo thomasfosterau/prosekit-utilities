@@ -1,13 +1,4 @@
-/**
- * A typed `jsonb` Drizzle custom column backed by an Effect Schema.
- *
- * Generalises the apps' `customType` body (Gardeneria's
- * `packages/database/src/columns.ts`, byte-identical to Website's) over an
- * arbitrary codec `A`, so a consumer supplies its own document (or any other
- * JSON-shaped) schema instead of the library naming one.
- *
- * @module
- */
+/** A typed `jsonb` Drizzle custom column backed by an Effect Schema. */
 import * as Option from 'effect/Option';
 import * as P from 'effect/Predicate';
 import * as Schema from 'effect/Schema';
@@ -34,10 +25,8 @@ const decodeJson = /* @__PURE__ */ Schema.decodeUnknownOption(JsonText);
  * `schema` itself on the way out. That is deliberate, not an oversight: the
  * write path is validated upstream, at the API edge and by whatever schema
  * governs the value before it reaches this column, and the read path is
- * where a jsonb row earns the strict, derived schema back. Read validation
- * is what closes SEC-XSS-001 on both directions in practice — a hostile row
- * written by any means other than the validated path is refused on the way
- * back out.
+ * where a jsonb row earns the strict, derived schema back: a hostile row
+ * written by any other path is refused on the way out.
  *
  * The runtime driver is expected to be node-pg (`pg`), which already parses
  * `jsonb` columns for you, so `fromDriver`'s `!P.isString(value)`

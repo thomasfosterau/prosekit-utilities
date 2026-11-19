@@ -1,27 +1,14 @@
 /**
- * Root workspace config. Owns the repo-wide format/lint/staged passes (read
- * statically by `vp fmt` / `vp lint` / `vp staged`) and the two aggregate
- * tasks — `check`, the type-check gate over every package and the root
- * project, and `check:dist`, the entry-point boundary and `"sideEffects":
- * false` check over every built `dist/`.
- *
- * The Svelte plugin, the browser test suites, the `svelte-package` and
- * `vp pack` builds and the Storybook tasks all live in each package's own
- * vite.config.ts: this file deliberately compiles nothing, so adding a
- * package never means editing it.
+ * Root config: repo-wide format, lint and staged passes, and the aggregate
+ * `ci`, `check`, `check:dist` and `test:coverage` tasks. Builds and test
+ * suites live in each package's own vite.config.ts.
  */
 
 import { recommended } from '@effect/tsgo/oxlint-presets';
 import effect from '@enfect/oxlint';
 import { defineConfig } from 'vite-plus';
 
-/**
- * The Effect-using code, and the only files the Effect lint rules apply to:
- * the core package (all four entries and its node suite) and the flowchart's
- * canvas-free `./node` entry with its tests. The Svelte components are not
- * Effect code — their state is runes, their props plain values — so the
- * preset has no idiomatic fix to offer there.
- */
+/** The Effect code: the only files the Effect lint rules apply to. */
 const EFFECT_FILES = [
   'packages/prosekit-utilities/src/**/*.ts',
   'packages/prosekit-utilities/tests/**/*.ts',
@@ -29,11 +16,7 @@ const EFFECT_FILES = [
   'packages/prosekit-flowchart/tests/node/**/*.ts',
 ];
 
-/**
- * A preset's rules with every `warn` level raised to `error`, the options
- * of a `[level, options]` entry kept. A rule this workspace cannot satisfy
- * is switched off by name below, with its reason, never left at `warn`.
- */
+/** A preset's rules with every `warn` raised to `error`. */
 const atError = (rules: Readonly<Record<string, unknown>> | undefined): Record<string, unknown> =>
   Object.fromEntries(
     Object.entries(rules ?? {}).map(([name, level]) => [
@@ -47,14 +30,8 @@ const atError = (rules: Readonly<Record<string, unknown>> | undefined): Record<s
   );
 
 export default defineConfig({
-  // Staged-file checks run by `vp staged` (pre-commit). Routed by type: oxfmt
-  // cannot format `.svelte`, so Svelte goes through lint alone while the
-  // oxfmt-supported types get a format pass with fixes, then a lint pass
-  // WITHOUT them. Lint is type-aware, and `--fix` would apply type-aware
-  // autofixes (even of rules at `warn`) to staged files at commit time, so
-  // the commit would differ from the tree that was verified.
-  // `--no-error-on-unmatched-pattern` keeps a commit of only `.md` / `.json`
-  // / `.css` files from failing the lint step, which has no file to lint.
+  // oxfmt can't format `.svelte`, so it is only linted. Lint runs without
+  // `--fix`, so no type-aware autofix lands unverified.
   staged: {
     '*.{js,ts,css,json,md}': [
       'vp check --fix --no-lint',
@@ -65,13 +42,11 @@ export default defineConfig({
 
   run: {
     tasks: {
-      // The whole CI gate, in AGENTS.md § Verification's order (steps 1–8):
-      // CI's one command after install is `vp run ci`, so a local run and CI
-      // are the same thing. Each entry runs only if the one before passed
-      // (fail-fast): the first failure ends the run. Uncached: every gate
-      // underneath keeps its own cache. `pnpm audit` needs the network.
+      // Everything CI runs, fail-fast; `pnpm audit` needs the network. The
+      // Svelte packages' tsconfigs extend `$app/tsconfig`, which `sync` writes.
       ci: {
         command: [
+          'vp run -r sync',
           'vp check',
           'vp run check',
           'vp run --filter ./packages/prosekit-utilities test:coverage',
@@ -83,44 +58,30 @@ export default defineConfig({
         ],
         cache: false,
       },
-      // The type-check gate, as one task: every package's `check` pipeline
-      // (the root takes the three packages as dependencies so this edge
-      // reaches them), then the root project itself — `tsconfig.json`'s
-      // `vite.config.ts` and `scripts/**/*.ts`, which no package covers.
-      // `tsc` is TypeScript 7's native compiler, as in the core's `check`.
-      // Uncached: the root project is two files, and the package checks
-      // underneath keep their own caches.
+      // Every package's `check`, then the root project (this file and
+      // `scripts/`).
       check: {
         command: 'tsc -p tsconfig.json',
         dependsOn: [{ from: 'dependencies', task: 'check' }],
         cache: false,
       },
-      // The entry-point import boundaries, checked against the BUILT dist/:
-      // the core's `.`, `./derive` and `./drizzle` reach no ProseKit, and the
-      // flowchart's `./node` reaches no Svelte or xyflow; and every emitted
-      // module is side-effect-free, as `"sideEffects": false` claims. It
-      // reads every package's dist/, so it depends on every package's
-      // `build`. Uncached: it is a fast read of files another task wrote.
+      // Entry-point import boundaries and `"sideEffects": false`, on the
+      // built `dist/`.
       'check:dist': {
         command: 'node scripts/check-dist-boundaries.ts',
         dependsOn: [{ from: 'dependencies', task: 'build' }],
         cache: false,
       },
-      // Every package's suite — the core's node suite and both Svelte
-      // packages' browser suites — under ONE istanbul map at
-      // `coverage/coverage-final.json`, which `fallow audit` reads for exact
-      // per-function CRAP scores (`health.coverage` in .fallowrc.json).
-      // Without it fallow estimates every function as uncovered, and any
-      // function with cyclomatic complexity ≥ 5 fails the gate on its own.
-      // Run this before a manual `fallow audit`. The PreToolUse fallow gate
-      // runs it itself when the map is missing or stale.
-      //
-      // Not the core's threshold gate: that stays the core's own
-      // `test:coverage`, which CI runs. One vitest process runs every
-      // project here, so no `from: 'dependencies'` edge builds the siblings a
-      // suite imports through `exports` (→ `dist/`), nor runs the Svelte
-      // packages' `svelte-kit sync`: each is named explicitly (cached, so a
-      // warm tree pays nothing).
+      fallow: { command: 'vp exec fallow --summary', cache: false },
+      // The pre-commit gate; it reads the coverage map `test:coverage` writes.
+      'fallow:audit': {
+        command: 'vp exec fallow audit --base origin/trunk --quiet',
+        dependsOn: ['test:coverage'],
+        cache: false,
+      },
+      // Every suite under one istanbul map, which `fallow audit` reads. One
+      // vitest process, so the builds and `svelte-kit sync` the suites need
+      // are named explicitly.
       'test:coverage': {
         command: 'vp test run --coverage',
         dependsOn: [
@@ -133,9 +94,6 @@ export default defineConfig({
     },
   },
 
-  // Oxlint, type-aware through vite-plus's bundled oxlint-tsgolint (patched by
-  // `effect-tsgo patch --oxlint`, so the `effecttsgo/*` rules of the preset
-  // below run too). See `options` at the end of this block.
   lint: {
     ignorePatterns: [
       '**/dist/**',
@@ -144,8 +102,6 @@ export default defineConfig({
       '**/storybook-static/**',
       '**/coverage/**',
     ],
-    // Oxlint's built-in plugins beyond the default set: `import`, `promise`,
-    // `vitest` and `jsdoc` add their correctness / suspicious / perf rules.
     plugins: ['eslint', 'typescript', 'unicorn', 'oxc', 'import', 'promise', 'vitest', 'jsdoc'],
     categories: {
       correctness: 'error',
@@ -161,16 +117,12 @@ export default defineConfig({
       // `it.effect` bodies are test blocks; `expect` inside them is not
       // standalone.
       'vitest/no-standalone-expect': ['error', { additionalTestBlockFunctions: ['it.effect'] }],
-      // Stylesheets are imported for their side effect on purpose (AGENTS.md
-      // § Common pitfalls lists the only ones `dist/` may carry), and the
-      // test setup files register jest-dom's matchers the same way.
+      // Stylesheets, and jest-dom's matcher registration in test setup.
       'import/no-unassigned-import': [
         'error',
         { allow: ['**/*.css', '@testing-library/jest-dom/vitest'] },
       ],
     },
-    // Registered workspace-wide (loading a plugin enables none of its rules);
-    // the Effect rules themselves are switched on only for EFFECT_FILES below.
     jsPlugins: [
       { name: 'vite-plus', specifier: 'vite-plus/oxlint-plugin' },
       ...effect.configs.recommended.jsPlugins,
@@ -180,47 +132,13 @@ export default defineConfig({
         files: EFFECT_FILES,
         plugins: recommended.plugins ?? [],
         rules: {
-          // Every preset rule at `error`: the presets ship many at `warn`, and
-          // this workspace keeps no rule below error (each is at zero sites).
           ...atError(recommended.rules),
           ...atError(effect.configs.recommended.rules),
-          // Both cast rules are at zero sites; keep them at `error`.
-          'effect/casting-awareness': 'error',
           'typescript/no-unsafe-type-assertion': 'error',
-          // The workspace uses the rule's canonical aliases (`Arr`, `P`, `R`,
-          // `Str`, …), not full names.
-          'effect/prefer-namespace-imports': 'error',
-          // No "Shape" in symbol names: the document type is `DocumentEnvelope`.
-          'effect/no-shape-in-symbol-names': 'error',
-
-          // ---- Rules this workspace's conventions cut across --------------
-          // As in effect-web: each stays visible as a warning, so a NEW site
-          // is still read, while the published surface it fires on today
-          // keeps its shape.
-          //
-          // Absence is an `Option`, never `T | null`; options-object members
-          // are `readonly x?: T` (no `| undefined`) and optional parameters
-          // `x?: T` (AGENTS.md § Conventions). Zero sites.
-          'effect/prefer-option-over-null': 'error',
-          // `NodeJSON` / `MarkJSON` attrs are `Schema.Json`-valued; guards are
-          // `Predicate` / `Refinement` over `unknown`, and decode boundaries
-          // take `Schema.Json`. Both at zero sites.
-          'effect/no-unsafe-dictionary-type': 'error',
-          'effect/no-unknown-parameters': 'error',
-          // Every Schema class and tagged error carries its brand
-          // (`{ readonly brand: unique symbol }`), and no error payload has a
-          // `name` field to shadow `Error.prototype.name`: both at zero sites.
-          'effecttsgo/schema-class-missing-brand': 'error',
-          'effecttsgo/error-payload-shadows-name': 'error',
         },
       },
-      // The one place a type assertion is unavoidable: a schema built at
-      // runtime from configuration has no static type to decode into, so
-      // its `Schema.Top` is asserted to the codec type it was built to be,
-      // once, each beside a `SAFETY:` comment. These are the dynamic
-      // `Schema.Struct`s the Registry derives per node and mark, the derived
-      // and structural document schemas pinned to `DocumentJSON<Name>`, and
-      // the test helper that decodes those erased schemas.
+      // Schemas built at runtime from configuration have no static type to
+      // decode into; each assertion carries a `SAFETY:` comment.
       {
         files: [
           'packages/prosekit-utilities/src/derive/Registry.ts',
@@ -234,21 +152,14 @@ export default defineConfig({
         },
       },
     ],
-    // `typeAware` runs the type-aware rules through oxlint-tsgolint.
-    // `typeCheck` stays OFF, measured: tsgolint has no Svelte language
-    // service, so every `.svelte` import types as untyped, and with it on
-    // the Svelte suites report 10 false "unused @ts-expect-error" (TS2578)
-    // and a false implicit-any (TS7031) at props svelte-check rejects
-    // correctly. Type checking stays the job of `vp run check` (TS7 `tsc`
-    // and svelte-check), the gate that understands `.svelte`.
+    // `typeCheck` stays off: tsgolint can't type `.svelte` imports, so it
+    // reports false errors in the Svelte suites. `vp run check` type-checks.
     options: {
       typeAware: true,
       typeCheck: false,
     },
   },
 
-  // The root `test:coverage` run above: each package's vite.config.ts is a
-  // vitest project, so one run and one coverage map cover them all.
   test: {
     projects: ['packages/*/vite.config.ts'],
     coverage: {
@@ -260,11 +171,6 @@ export default defineConfig({
     },
   },
 
-  // Oxfmt — formatter of record for the workspace. `.svelte` files are outside
-  // its remit and are kept in the same style by hand. `sortTailwindcss` is on
-  // because the Svelte packages emit Tailwind classes: class order is a
-  // diff-noise source otherwise, and a literal lookup table is exactly the
-  // shape it can sort.
   fmt: {
     ignorePatterns: ['**/dist/**', '**/.svelte-kit/**', '**/storybook-static/**'],
     singleQuote: true,

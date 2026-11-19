@@ -213,10 +213,6 @@ describe('defineMention', () => {
     element.setAttribute('data-mention-id', '');
     expect(present(rule.getAttrs, 'getAttrs')(element)).toEqual({ id: '', label: '' });
   });
-
-  it('defineMention() returns an extension object', () => {
-    expect(defineMention()).toBeTruthy();
-  });
 });
 
 describe('defineFigure', () => {
@@ -279,10 +275,6 @@ describe('defineSidenote', () => {
       { 'data-sidenote': '' },
       0,
     ]);
-  });
-
-  it('defineSidenote() returns an extension object', () => {
-    expect(defineSidenote()).toBeTruthy();
   });
 });
 
@@ -379,10 +371,6 @@ describe('defineCitation', () => {
     const mark = present(parsed.firstChild?.firstChild?.marks[0], 'parsed citation mark');
     expect(mark.type.name).toBe('citation');
     expect(mark.attrs).toEqual({ workId: 'w-2' });
-  });
-
-  it('defineCitation() returns an extension object', () => {
-    expect(defineCitation()).toBeTruthy();
   });
 });
 

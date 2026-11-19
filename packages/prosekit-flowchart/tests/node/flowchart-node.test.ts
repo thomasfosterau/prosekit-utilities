@@ -1,25 +1,6 @@
 /**
- * Behavioural tests for the flowchart ProseKit node spec and command
- * (`../../src/lib/node/flowchart-node.ts`).
- *
- * Pins the registered node's shape (an isolating block atom), the
- * unicode-escaped `data-payload` `toDOM` emits, the empty-payload fallback
- * when `data` is absent, `updateFlowchartData`'s mutate-in-place behaviour on
- * a mounted editor (and its no-op guard on a non-flowchart position), and the
- * `parseDOM.getAttrs` round-trip — `data-payload` first, `textContent`
- * fallback for legacy documents, empty payload for unparseable content.
- *
- * Runs in Vitest browser mode (real Chromium, per this package's
- * `vite.config.ts`), so a mounted ProseMirror `EditorView` is available
- * without a `happy-dom` pragma — unlike Website's node-Vitest suite, which
- * needed one for exactly this reason.
- *
- * Ported from the `describe("defineFlowchart", ...)` block of Website's
- * `tests/editor-extensions.test.ts` and the
- * `describe("flowchart parseDOM.getAttrs (DOM round-trip)", ...)` block of
- * `tests/editor-html-browser.test.ts`.
- *
- * @module
+ * Tests for the flowchart ProseKit node spec and its `updateFlowchartData`
+ * command.
  */
 
 import { assert, describe, expect, it, onTestFinished } from 'vite-plus/test';

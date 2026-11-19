@@ -1,27 +1,5 @@
-# pnpm workspace — three publishable packages: the ProseKit / Effect / Drizzle
-# core (`packages/prosekit-utilities`), the Svelte 5 editor components
-# (`packages/prosekit-svelte`) and the flowchart canvas
-# (`packages/prosekit-flowchart`).
-#
-# The `catalog:` protocol pins versions that MUST be singletons across the
-# workspace. `effect` and `svelte` especially: two copies of `effect` break
-# Schema / Context identity at runtime, and two copies of `svelte` break the
-# compiler's runtime identity (`$state` proxies, context keys, snippet types)
-# in ways that only show up at render time.
-#
-# EVERY external dependency version lives here — package.json files reference
-# only `catalog:` (or `workspace:*` for internal packages). `catalogMode:
-# strict` makes `pnpm add` enforce this at add time and `pnpm install` reject
-# non-catalog specifiers. Peer ranges are the one place a literal range is
-# written, and only where it is deliberately wider than the catalog pin.
-# After editing this catalog, ALWAYS run `pnpm install` and commit the
-# regenerated pnpm-lock.yaml — a stale lockfile fails every CI job at once
-# with ERR_PNPM_LOCKFILE_CONFIG_MISMATCH.
-#
-# Versions are kept in lockstep with the owner's app repos (the Gardeneria /
-# Website foundation catalog) wherever the two overlap, so a document schema
-# derived here decodes identically in the app that consumes it. The entries
-# that deliberately differ are commented below.
+# Every external version lives in this catalog (`catalogMode: strict`).
+# After editing it, run `vp install` and commit pnpm-lock.yaml.
 packages:
   - packages/*
 
@@ -29,182 +7,80 @@ catalogMode: strict
 
 catalog:
   '@changesets/cli': ^3.0.3
-  # Effect Language Service as a native (TypeScript-Go) binary. The root
-  # `prepare` runs `effect-tsgo patch --typescript --oxlint`, which overwrites
-  # the native `tsc` (`@typescript/native`) and vite-plus's `oxlint` and
-  # `oxlint-tsgolint` with Effect-patched builds matched by gitHead, and
-  # `vite.config.ts` lints with its `oxlint-presets`. Each release hard-errors
-  # (UnsupportedTargetPackageVersionError) on any other component version, so
-  # it moves in lockstep with `@typescript/native` (0.68.0 supports 7.0.2) and
-  # with the `oxlint` / `oxlint-tsgolint` that `vite-plus` pins (0.68.0
-  # supports oxlint 1.91.0 – 1.93.0 and tsgolint 7.0.2005 / 7.0.2006;
-  # vite-plus 1.6.0 carries 1.93.0 / 7.0.2006). Read the `components` table
-  # in node_modules/@effect/tsgo/dist/effect-tsgo.cjs before bumping any of
-  # the three.
+  # `prepare` patches `tsc` and vite-plus's oxlint with this; it supports only
+  # specific versions, so it moves with `@typescript/native` and `vite-plus`
+  # (see the `components` table in node_modules/@effect/tsgo/dist/effect-tsgo.cjs).
   '@effect/tsgo': 0.68.0
-  # `it.effect` for tests that return an Effect, so no test calls
-  # `Effect.runSync` / `runPromise`. Same release train as `effect` (pin it
-  # equal); it peers `vitest` ^5, which vite-plus's pin satisfies.
   '@effect/vitest': 4.1.4
-  # Effect lint rules (`effect.configs.recommended` in vite.config.ts, the
-  # 74 `effect/*` rules including the anti-slop set), scoped there to the
-  # Effect-using code: the core package and the flowchart's `./node`. It
-  # replaced `@mpsuesser/oxlint-plugin-effect`. It declares `effect` 4.1.0
-  # exactly, but the `effect` singleton override resolves it to the
-  # catalog's copy, which it lints fine on: the linter is no reason to move
-  # the Effect line. Loads into vite-plus's oxlint but ranges
-  # `@oxlint/plugins`, so Dependabot proposes it on its own (no group).
   '@enfect/oxlint': 0.10.0
-  # ProseMirror's model / view / state / transform, re-published as one
-  # package by ProseKit. Type-only for `./derive`; a runtime peer of
-  # `./prosekit` and the Svelte packages.
   '@prosekit/pm': ^0.1.21
-  # Storybook 10 over the SvelteKit framework preset — the Svelte 5 + Vite
-  # pipeline a `svelte-package` library uses too — plus the Svelte CSF addon
-  # so snippet-taking components can be storied in `.svelte`, and the a11y
-  # addon because accessibility is part of this library's contract.
   '@storybook/addon-a11y': ^10.6.7
   '@storybook/addon-svelte-csf': ^5.1.6
   '@storybook/sveltekit': ^10.6.7
-  # SvelteKit is a BUILD-TIME dependency here, not a runtime one: `svelte-kit
-  # sync` generates the package's ambient types and `svelte-package` emits
-  # `dist/`. Nothing in `src/lib/` may import `$app/*`.
   '@sveltejs/kit': 3.2.0
   '@sveltejs/package': 3.0.2
   '@sveltejs/vite-plugin-svelte': ^7.3.1
   '@tailwindcss/vite': ^4.3.5
   '@testing-library/jest-dom': ^7.0.1
   '@types/node': ^26.6.6
-  # TypeScript 7 (the native Go compiler, bin `tsc`) type-checks the pure-TS
-  # core package, 8–12× faster than TS6; svelte-check still needs the TS6 JS
-  # API (the `typescript` alias below). The same split the app repos run.
+  # TS7 (bin `tsc`) for the core's type check; svelte-check and the
+  # declaration emit need the TS6 JS API (`typescript` below).
   '@typescript/native': npm:typescript@7.0.2
-  # Vitest browser mode: the Playwright provider is its own package as of
-  # v4 and pins `vitest` EXACTLY, so it must track the `vitest` entry below
-  # (which itself must match vite-plus's exact pin — see that entry).
   '@vitest/browser-playwright': 5.1.0
   '@vitest/coverage-istanbul': 5.1.0
-  # The REQUIRED peer of `@thomasfosterau/prosekit-flowchart` — and the
-  # reason that package exists apart from the editor package: a component
-  # whose behaviour needs a specific third-party engine lives in its own
-  # package, so the editor package stays free of it. Installed as a
-  # devDependency of the flowchart package too, so its browser suite and its
-  # stories load the real module.
   '@xyflow/svelte': ^1.7.1
-  # Headless Svelte 5 primitives. The toolbar (roving focus, `aria-pressed`),
-  # the insert menu and the dialogs are built on these rather than on
-  # hand-rolled keyboard and focus handling. A runtime `dependency` of the
-  # Svelte packages, not a peer: consumers should not have to know it exists.
   bits-ui: ^2.21.0
   daisyui: ^5.7.50
-  # A peer of `@thomasfosterau/prosekit-utilities/drizzle` only. The app
-  # repos are on this release candidate; the peer range is `^1.0.0-rc.5`.
+  # Peer of `./drizzle` only.
   drizzle-orm: 1.0.0-rc.5
-  # Effect 4. A PEER of every package here that uses it, never a dependency:
-  # the consuming app owns the singleton.
+  # A peer of every package that uses it, never a dependency.
   effect: 4.1.4
-  # The dead-code / duplication / complexity audit (`.fallowrc.json`), run by
-  # the PreToolUse gate in agent sessions and by hand before a PR.
   fallow: 3.42.0
   happy-dom: ^21.0.4
-  # The server-side DOM the HTML renderer reaches through a dynamic import
-  # when `globalThis.document` is absent. linkedom, not happy-dom: happy-dom
-  # pulls `node:child_process` / `node:vm`, which workerd does not provide.
-  # At least 0.18.15: 0.18.14 imports a `parse` that `@acemir/cssom` does not
-  # export, which fails the Storybook build (rolldown: "Missing export").
+  # The server-side DOM the HTML renderer imports when there is no
+  # `document`; happy-dom needs `node:*` modules workerd lacks.
   linkedom: ^0.18.15
-  # The ONLY consumer is the Vitest browser provider above (`playwright: "*"`
-  # peer); this repo has no Playwright test suite of its own.
-  #
-  # PINNED EXACT. At least 1.65.0: GitHub's `ubuntu-latest` is Ubuntu 26.04,
-  # and through 1.64 `playwright install --with-deps` refuses it ("Playwright
-  # does not support chromium on ubuntu26.04-x64"), which failed every CI run.
-  # (1.60.0 was the floor before that: through 1.59.1 the bundled zip
-  # extractor stalls on Node 26, #65, #53.)
-  #
-  # 1.65.0 expects Chromium revision 1254 (Chrome 158). CI installs exactly
-  # that itself (`pnpm exec playwright install --with-deps chromium`). The
-  # agent-session image pre-installs a different revision under
-  # /opt/pw-browsers (1243 at the time of writing), so the SessionStart hook
-  # (.claude/hooks/session-start.sh, section 5) builds a directory of symlinks
-  # named for 1254 that point at whichever build the image carries and exports
-  # `PLAYWRIGHT_BROWSERS_PATH` to it. That is what lets `vp run -r test:unit`
-  # launch a real browser in a session with no download.
-  # Bump this together with the hook's PW_WANT_REV, and check the image's build
-  # still launches under the new release; drop the bridge once the image
-  # carries the wanted revision.
+  # Only the Vitest browser provider uses it. CI installs its Chromium
+  # revision; elsewhere set PLAYWRIGHT_CHROMIUM_EXECUTABLE (docs/CONTRIBUTING.md).
   playwright: 1.65.0
-  # The editor runtime, in the `prosekit` lockstep group with `@prosekit/pm`.
-  # The packages' literal peers are `^0.23.0` / `^0.1.21` (the `@prosekit/pm`
-  # that prosekit 0.23.0 pins). Raise both when this minor moves. 0.22.x is not
-  # admitted because it can't be proven here (#153): a fresh install of
-  # prosekit 0.22.2 or 0.22.4 resolves a second `@prosekit/core` (0.13.4,
-  # under `@prosekit/extensions`) beside prosekit's own pin, and every
-  # schema-building test then fails with `[prosekit] Assertion failed`.
+  # The packages' peer ranges are literal (`^0.23.0` / `^0.1.21`): raise them
+  # with this minor.
   prosekit: ^0.23.1
   storybook: ^10.6.7
   svelte-check: ^4.7.8
   svelte: ^5.57.3
   tailwindcss: ^4.3.5
-  # The TS6 JS compiler (bin `tsc6`), aliased so the package stays importable
-  # as `typescript`: svelte-check and tsdown's declaration emit drive
-  # TypeScript through its JS API, which TypeScript 7 does not ship until 7.1.
+  # TS6 JS compiler (bin `tsc6`), for svelte-check and declaration emit.
   typescript: npm:@typescript/typescript6@6.0.2
-  # vite-plus pins `oxlint`, `oxfmt`, `oxlint-tsgolint` (the type-aware lint
-  # backend `vp check` runs), `vitest` and the `@vitest/*` runtime packages
-  # to exact versions, so `vitest`, `@vitest/browser-playwright` and
-  # `@vitest/coverage-istanbul` must all match vite-plus's own pin (1.6.0 ->
-  # 5.1.0). It also decides the `oxlint` (1.6.0 -> 1.93.0, tsgolint
-  # 7.0.2006) that `effect-tsgo patch --oxlint` must support: see the
-  # `@effect/tsgo` entry, which moves with this one and `@typescript/native`.
-  # The `vitest@*: "catalog:"` override forces every resolution to the
-  # catalog singleton, a mismatch breaks the browser provider's exact peer,
-  # and vite-plus refuses to start `test:coverage` when the coverage provider
-  # differs from its pin. Bump vite-plus first, then the vitest set to its pin.
-  # Dependabot never proposes `vitest` / `@vitest/*` on their own (they are
-  # ignored in .github/dependabot.yml, #60): on its vite-plus PR, set all
-  # three to the new vite-plus's `dependencies.vitest` by hand, in that PR.
-  # `vite` is the same release published under its aliased core package.
+  # vite-plus pins `vitest` / `@vitest/*` exactly: keep them, and `vite` (its
+  # aliased core), equal to its pin.
   vite-plus: 1.6.0
   vite: npm:@voidzero-dev/vite-plus-core@1.6.0
   vitest: 5.1.0
-  # `render` + locators for Svelte components under Vitest browser mode.
   vitest-browser-svelte: ^3.1.0
 
 overrides:
-  # Singletons. See the `catalog:` note at the top.
-  # `vite@*` / `vitest@*` are the keys `vp migrate` manages under pnpm.
+  # Singletons: two copies of `effect` or `svelte` break runtime identity.
   effect: 'catalog:'
   svelte: 'catalog:'
   vite@*: 'catalog:'
   vitest@*: 'catalog:'
   '@sveltejs/kit': 'catalog:'
-  # The derivation in `./derive` walks ProseMirror's compiled `ContentMatch`
-  # automaton and `AttributeSpec`s; a stored document is only guaranteed to
-  # decode identically while the model it was derived from is the same. The
-  # app repos pin these two exactly for that reason; so does this one.
+  # A stored document decodes identically only while the ProseMirror model it
+  # was derived from is the same, so these move only by the owner's decision.
   prosemirror-model: 1.25.7
-  # 1.42.3 is the first release fixing GHSA-c8x8-7fp4-3x9w (an XSS in paste
-  # handling); raised from 1.41.8 by the owner's decision so `pnpm audit
-  # --audit-level high` passes. `@prosekit/pm` declares `^1.42.4`.
+  # 1.42.3 fixes GHSA-c8x8-7fp4-3x9w.
   prosemirror-view: 1.42.3
 
 nodeLinker: hoisted
 
-# Install scripts are opt-in. `playwright` is deliberately ABSENT: its
-# postinstall downloads a browser bundle, which the session image already
-# provides and CI installs explicitly in its own step.
+# `playwright` is absent on purpose: its postinstall downloads a browser.
 allowBuilds:
   '@tailwindcss/oxide': true
   esbuild: true
-  # msgpackr's optional native accelerator, reached transitively through the
-  # toolchain; the pure-JS fallback is what runs, so it stays unbuilt.
   msgpackr-extract: false
 
-# Storybook 10.6 declares `vite-plus: "^0.1.15 || ^0.2.0"` and this workspace
-# is on 1.x — the toolchain is deliberately ahead of what the addon
-# ecosystem has caught up to, and the same goes for `vite` / `vitest` /
-# `@sveltejs/kit`, all forced to one catalog singleton by the overrides above.
+# Storybook and its addons lag the 1.x Vite+ toolchain in their peer ranges.
 peerDependencyRules:
   allowAny:
     - vite
@@ -217,16 +93,5 @@ peerDependencyRules:
     vitest: '*'
     '@sveltejs/kit': '*'
 
-# Supply-chain delay (owner's policy): hold newly published versions for 8
-# hours before pnpm will install them, so a compromised release has a window
-# to get pulled before it reaches this workspace. Unit is MINUTES, not seconds
-# (`opts.minimumReleaseAge * 60 * 1e3` in pnpm's own source), so 8 h = 480.
-# Dependabot's `cooldown` (whole days only) is 1 day, longer than this, so it
-# never proposes a version pnpm would still refuse. `vp migrate` adds the
-# toolchain packages to the exclusions below; they are removed again on
-# purpose, so the toolchain waits like everything else.
+# Hold new releases for 8 hours (minutes).
 minimumReleaseAge: 480
-# First-party releases are exempt from the delay, so the app repos and this
-# one can consume each other's releases the day they land.
-minimumReleaseAgeExclude:
-  - '@thomasfosterau/*'

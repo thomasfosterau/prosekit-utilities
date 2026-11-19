@@ -100,7 +100,7 @@ const Document = deriveDocumentSchema(schema, {
 
 | Export | Notes |
 | --- | --- |
-| `lazySchema` | Compile-once, cache-forever (`Option`-backed). Never call `createEditor` on a per-row or per-render path — PERF-CPU-001. |
+| `lazySchema` | Compile-once, cache-forever (`Option`-backed). Never call `createEditor` on a per-row or per-render path. |
 | `AttributeOverrides` | The record `attributeOverlay()` (`./derive`) consumes. |
 | `STANDARD_ATTRIBUTE_OVERRIDES` | `heading.level`, `list.kind`/`order`, `image.src`/`width`/`height`, `codeBlock.language`, `tableCell`/`tableHeaderCell.colwidth`. Attributes a live editor always serialises (`heading.level`, `list.kind`, `image.src`/`width`/`height`, `codeBlock.language`) are wrapped in `required(…)`; `colwidth` is not, because an unresized cell genuinely has none. |
 | `MENTION_ATTRIBUTE_OVERRIDES` | `mention: { id: required(Schema.String), label: required(Schema.String) }` — merge in when the grammar includes `defineMention()`. |

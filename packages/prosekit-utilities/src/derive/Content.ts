@@ -1,32 +1,9 @@
 /**
- * @copyright Thomas Foster
- *
- * Content-model derivation — reading a node type's allowed children and
- * cardinality straight from ProseMirror's compiled content expression.
- *
- * A node's content expression (`"block+"`, `"(tableCell | tableHeaderCell)*"`,
- * …) is compiled into a {@link ContentMatch} finite automaton at schema-build
- * time. Rather than re-parse the source string — which ProseMirror also
- * exposes as `spec.content`, but only as an opaque string — we walk that
- * automaton. Every edge names a {@link NodeType} that may appear, and the
- * start state's `validEnd` tells us whether empty content is legal (`*`/`?`
- * style) or at least one child is required (`+`).
- *
- * Walking the DFA is robust for arbitrary expressions and needs no grammar
- * parser of our own; the trade-off is that we recover the *set* of admissible
- * child types and the empty-vs-non-empty distinction, not the full ordered
- * sequence. That is exactly the granularity the derived Effect schema models
- * (an array of a child union). A fixed sequence such as the figure node's
- * `image figcaption` therefore derives as a non-empty array of
- * `image | figcaption`: a stored figure without its caption, or with the two
- * halves reordered, decodes. This is intended: order and per-type
- * multiplicity within a content expression are left to ProseMirror's DOM
- * parser and editing transactions, which enforce them. Loading JSON does not:
- * `schema.nodeFromJSON` (and so ProseKit's `defaultContent`) checks attributes
- * but not content, so such a figure loads unchecked unless the consumer calls
- * `node.check()`, as ProseKit's `editor.setContent` already does.
- *
- * @module @thomasfosterau/prosekit-utilities/derive/Content
+ * Content-model derivation from ProseMirror's compiled `ContentMatch`
+ * automaton. It recovers the set of admissible children and whether content
+ * may be empty, not their order: `image figcaption` derives as a non-empty
+ * array of either, as ProseMirror's own JSON loading does not check order
+ * either.
  */
 
 import * as Arr from 'effect/Array';

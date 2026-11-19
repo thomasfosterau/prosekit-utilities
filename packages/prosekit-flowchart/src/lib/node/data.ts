@@ -7,9 +7,6 @@
  * directly by the package barrel, since each already merges the Effect Schema
  * value and its decoded type under one name.
  *
- * Ported verbatim (semantics unchanged) from Website's
- * `src/editor/flowchart/types.ts`.
- *
  * @module @thomasfosterau/prosekit-flowchart/node/data
  */
 

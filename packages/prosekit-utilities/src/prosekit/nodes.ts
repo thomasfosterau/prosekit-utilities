@@ -1,22 +1,6 @@
 /**
- * Node extensions: ProseKit's stock set, re-exported, plus the opt-in node
- * definitions this library adds.
- *
- * The stock re-exports exist so a consumer composes one grammar from one
- * import rather than a dozen `prosekit/extensions/*` specifiers, and so the
- * presets in `./presets.ts` and an application's own extension are provably
- * built from the same definitions.
- *
- * The opt-in nodes below are **not** in either preset. Each one changes what
- * the derived wire schema accepts, and a document written under a grammar
- * that includes `mention` does not decode under one that does not, so adding
- * one is a deliberate act at the application's own `defineBlockDocumentExtension(…)`
- * call site. Every `toDOM` here emits data attributes only — no `href`, no
- * `src` — so the one URL-valued attribute in the stock grammar stays the
- * `image` node's `src`, which `sanitiseDocument` and `isSafeHref` already
- * gate (SEC-XSS-001 in the source applications).
- *
- * @module
+ * Node extensions: ProseKit's stock set plus the opt-in nodes this library
+ * adds. Their attribute shapes are the stored wire format.
  */
 
 import * as Option from 'effect/Option';

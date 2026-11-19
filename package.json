@@ -13,9 +13,6 @@
   "type": "module",
   "scripts": {
     "prepare": "vp config && effect-tsgo patch --typescript --oxlint",
-    "changeset": "changeset",
-    "fallow": "fallow --summary",
-    "fallow:audit": "fallow audit",
     "version": "changeset version && vp fmt",
     "release": "bash scripts/release.sh"
   },
@@ -36,9 +33,11 @@
     "vite": "catalog:",
     "vite-plus": "catalog:"
   },
-  "engines": {
-    "node": "^22.18.0 || ^24.11.0 || >=26.0.0",
-    "pnpm": ">=11"
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "lts"
+    }
   },
   "packageManager": "pnpm@11.26.0"
 }
