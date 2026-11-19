@@ -9,6 +9,8 @@ import tailwindcss from '@tailwindcss/vite';
 import { playwright } from 'vite-plus/test/browser-playwright';
 import { defineConfig } from 'vite-plus';
 
+const chromium = process.env['PLAYWRIGHT_CHROMIUM_EXECUTABLE'];
+
 /**
  * Input fingerprint for this package's cached tasks: everything the task can
  * read, minus `node_modules`, plus the lockfile — so a dependency bump busts
@@ -84,15 +86,16 @@ export default defineConfig({
           output: [],
         },
       },
-      // Browser mode, so `test:unit` never needs `PLAYWRIGHT_BROWSERS_PATH`
-      // spelled out here: Playwright reads it from the environment (the agent
-      // image and the devcontainer both set it; CI installs the browser in a
-      // step of its own).
       'test:unit': {
         command: 'vp test run tests',
         dependsOn: ['sync', { task: 'build', from: 'dependencies' }],
         cache: {
-          env: ['VITEST_MAX_WORKERS', 'NODE_OPTIONS', 'PLAYWRIGHT_BROWSERS_PATH'],
+          env: [
+            'VITEST_MAX_WORKERS',
+            'NODE_OPTIONS',
+            'PLAYWRIGHT_BROWSERS_PATH',
+            'PLAYWRIGHT_CHROMIUM_EXECUTABLE',
+          ],
           input: cacheInputs,
           output: [],
         },
@@ -189,7 +192,12 @@ export default defineConfig({
     browser: {
       enabled: true,
       headless: true,
-      provider: playwright(),
+      // `PLAYWRIGHT_CHROMIUM_EXECUTABLE` points at a preinstalled Chromium
+      // (an agent session's /opt/pw-browsers/chromium); unset, Playwright
+      // uses its own download.
+      provider: playwright({
+        launchOptions: chromium === undefined ? {} : { executablePath: chromium },
+      }),
       instances: [{ browser: 'chromium' }],
       screenshotFailures: false,
     },
