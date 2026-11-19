@@ -5,7 +5,7 @@
 | Export | Notes |
 | --- | --- |
 | `jsonbSchemaColumn` | Generalises the apps' `customType` body over any codec: `dataType() = 'jsonb'`, `toDriver` = `Schema.encodeSync` over the wire form, `fromDriver` = a three-branch decode (string driver value / already-parsed / non-string) that validates. `null` passes through untouched. Validates on read only — the write path is trusted upstream. |
-| `documentColumn` | `jsonbSchemaColumn(schema.Document)` — the strict, ProseKit-derived schema, SEC-XSS-001 on the read direction. Pass a `DocumentSchema` from `./prosekit`. |
+| `documentColumn` | `jsonbSchemaColumn(schema.Document)` — the strict, ProseKit-derived schema. Pass a `DocumentSchema` from `./prosekit`. |
 | `HasDocumentSchema<A>` | The one piece of `./prosekit`'s `DocumentSchema` this entry needs, written structurally so `./drizzle` never imports `./prosekit` (or ProseKit) at all — a consumer can depend on this entry alone. |
 | `documentTextSql` | The `jsonb_path_query_array(... 'strict $.** ? (@.type == "text").text')` fragment, unnested and joined with `' '` — the SQL twin of `extractDocumentText` (the root entry), tested against the same fixtures. |
 

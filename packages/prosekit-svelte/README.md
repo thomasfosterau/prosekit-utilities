@@ -46,4 +46,4 @@ Import components by path, never through an always-loaded barrel; `Editor.svelte
 ## Links
 
 - [Svelte editor guide](https://github.com/thomasfosterau/prosekit-utilities/blob/trunk/docs/svelte-editor.md): setup, app integration, forms, component reference, the toolbar's data model
-- [CHANGELOG](CHANGELOG.md), [CONTRIBUTING](https://github.com/thomasfosterau/prosekit-utilities/blob/trunk/CONTRIBUTING.md), [AGENTS.md](https://github.com/thomasfosterau/prosekit-utilities/blob/trunk/AGENTS.md), [PUBLISHING](https://github.com/thomasfosterau/prosekit-utilities/blob/trunk/PUBLISHING.md), [SECURITY](https://github.com/thomasfosterau/prosekit-utilities/blob/trunk/SECURITY.md)
+- [CHANGELOG](CHANGELOG.md), [CONTRIBUTING](https://github.com/thomasfosterau/prosekit-utilities/blob/trunk/docs/CONTRIBUTING.md), [AGENTS.md](https://github.com/thomasfosterau/prosekit-utilities/blob/trunk/AGENTS.md), [PUBLISHING](https://github.com/thomasfosterau/prosekit-utilities/blob/trunk/docs/PUBLISHING.md), [SECURITY](https://github.com/thomasfosterau/prosekit-utilities/blob/trunk/docs/SECURITY.md)
