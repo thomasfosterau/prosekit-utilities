@@ -1,35 +1,8 @@
 /**
- * Document envelopes: the ProseKit-free view onto a document wire schema.
- *
- * ## Why this module exists
- *
- * A schema derived from a compiled ProseMirror grammar (the ProseKit entry point's
- * `defineDocumentSchema`) has to import the editor runtime — `createEditor`
- * and the whole node / mark registry — to exist at all. A model layer that
- * declares a document-valued attribute is genuinely browser-reachable (API
- * clients, form components), so declaring it with the derived schema
- * statically bundles the editor, the single largest client chunk, into every
- * page including anonymous read-only ones.
- *
- * ## What a envelope does instead
- *
- * A {@link DocumentEnvelope} validates the ProseMirror JSON tree
- * **structurally** — the top-level `type`, and that `content` is an array of
- * JSON — with no ProseKit import at all. On top of that sits a pluggable
- * grammar check: a server runtime calls {@link DocumentEnvelope.install} once
- * (the ProseKit entry point's `installDocumentGrammars` does it for a whole set), and
- * from then on the envelope rejects exactly what the derived schema rejects.
- *
- * The structural check is a strict superset of the grammar check — anything
- * the compiled ProseMirror schema accepts passes it — so an uninstalled
- * runtime is permissive, never spuriously rejecting. That direction matters:
- * a client that wrongly rejected a valid document would break authoring,
- * whereas a client that wrongly accepts an invalid one is caught by the
- * server that actually decides. SEC-XSS-001's trust boundary is unchanged on
- * the server, and the browser — which is not a trust boundary — gets the
- * structural check alone.
- *
- * @module
+ * Document envelopes: a ProseKit-free, structural check of a stored document,
+ * safe in a browser bundle. A server calls `install` once to add the full
+ * derived grammar. The structural check accepts a superset of the grammar, so
+ * an uninstalled runtime is permissive, never wrongly rejecting.
  */
 
 import * as Option from 'effect/Option';

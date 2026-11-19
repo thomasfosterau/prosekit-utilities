@@ -1,23 +1,8 @@
 /**
- * Mark extensions: ProseKit's stock set, re-exported, plus the three marks
- * this library defines itself and the opt-in `citation` mark.
- *
- * `highlight`, `subscript` and `superscript` are **not** taken from
- * `prosekit/extensions/*` even though ProseKit ships same-named extensions:
- * theirs carry different attribute shapes, and the specs here are
- * wire-identical to documents the source applications have already persisted.
- * Since the derived wire schema reads its mark set off the compiled
- * ProseMirror schema, swapping in the stock versions would change what
- * already-stored rows decode as. They are exported individually as well as
- * through {@link defineStandardMarks} so an application composing a narrower
- * grammar can pick them up one at a time.
- *
- * The mark set is half of what constrains rendered HTML — a mark is what
- * turns a run of text into an element — so it is part of the same defence as
- * the HTML serialiser's link allow-list (SEC-XSS-001 in the source
- * applications).
- *
- * @module
+ * Mark extensions: ProseKit's stock set plus this library's `highlight`,
+ * `subscript`, `superscript` and opt-in `citation`. These keep the attribute
+ * shapes stored documents already use, so never swap in ProseKit's same-named
+ * marks.
  */
 
 import * as Option from 'effect/Option';

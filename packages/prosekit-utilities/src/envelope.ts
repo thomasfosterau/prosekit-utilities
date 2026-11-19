@@ -1,18 +1,6 @@
 /**
- * The envelope remap between a stored document and an editor document.
- *
- * A persisted document's root `type` is the application's own name for the
- * surface (`blockDocument`, `inlineDocument`, …); a compiled ProseMirror
- * schema's top node is always `doc`. Feeding the stored envelope straight into
- * an editor throws `RangeError: Unknown node type: blockDocument` and takes
- * the hosting page down with it, so every boundary between the two — the
- * editor component, the HTML renderer — remaps in both directions.
- *
- * Both helpers return a new object. A document read out of an editor or off
- * a store is shared with whatever else holds it, and mutating its `type` in
- * place has broken a downstream read more than once.
- *
- * @module
+ * The rename between a stored document's envelope type (`blockDocument`, …)
+ * and ProseMirror's top node, always `doc`.
  */
 
 import type { DocumentJSON, NodeJSON } from './json.ts';

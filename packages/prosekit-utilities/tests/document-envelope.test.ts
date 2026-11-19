@@ -1,30 +1,6 @@
 /**
- * Unit tests for `defineDocumentEnvelope`.
- *
- * Two properties carry the envelope/grammar split:
- *
- * 1. **Uninstalled, the check is structural and PERMISSIVE.** A browser
- *    bundle validates the top-level `type` and that `content` is an array of
- *    JSON, and nothing more — it must never reject a document the compiled
- *    ProseMirror schema would accept, because that would break authoring on
- *    the client while the server (which decides) was perfectly happy. The
- *    check is deliberately shallow rather than a full node walk: see
- *    `ContentEnvelope`'s doc for the measurement behind that.
- * 2. **Installed, the check is the full grammar.** A server runtime installs
- *    the guard derived from the compiled ProseMirror schema, so the API edge
- *    rejects exactly what that schema rejects — SEC-XSS-001 unchanged.
- *
- * The blocks below are order-dependent within a envelope: an install is global
- * to that envelope for the life of the isolate (that is the point — it is a
- * per-isolate upgrade, not a per-call option), so the uninstalled
- * expectations run against their own envelope.
- *
- * The guard installed here is a hand-written stand-in for the ProseKit-
- * derived one: the root entry cannot import ProseKit, and what these tests
- * pin is that an installed guard is consulted at validation time, not what
- * any particular grammar admits.
- *
- * @module
+ * Tests for `defineDocumentEnvelope`: the structural check, `install`, and
+ * `narrow`.
  */
 
 import * as DateTime from 'effect/DateTime';

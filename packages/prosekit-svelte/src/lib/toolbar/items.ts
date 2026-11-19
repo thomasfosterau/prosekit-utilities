@@ -1,19 +1,6 @@
 /**
- * The toolbar's data model, and the default sets built from it.
- *
- * `BlockToolbar` renders a list rather than a hard-coded row of buttons.
- * The applications this package was extracted from hard-coded theirs, and
- * the cost showed: one of them carried five buttons for node types its
- * grammar no longer had, and neither could add an item without editing the
- * component. Here an item is a value — an application appends its own,
- * reorders, drops one, or passes a list of its own making.
- *
- * An item's `run` receives a {@link ToolbarRunContext} rather than the
- * editor alone, because two of the default items open a dialog the toolbar
- * owns. `dialogs.link()` / `dialogs.image()` are how an item asks for one
- * without importing it.
- *
- * @module
+ * The toolbar's data model and the default item and slash-command sets, which
+ * cover exactly the `defineBlockDocumentExtension()` preset.
  */
 
 import type { CommandAction, Editor, MarkAction, NodeAction } from 'prosekit/core';

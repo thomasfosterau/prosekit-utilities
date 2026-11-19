@@ -1,27 +1,8 @@
 /**
- * The optional per-render-site copy override.
- *
- * Every string this package renders is already a prop with an English
- * default, so an application can translate one call site by passing props.
- * {@link setEditorMessages} is the other half: it changes those *defaults*
- * for one subtree, so an application that mounts the editor from several
- * places wires its catalogue once per place instead of threading twenty
- * props through each.
- *
- * It is deliberately set **per render site** — from the component that
- * mounts an editor — and never from a root layout. Wiring it high in the
- * tree means importing this package's barrel there, and `Editor.svelte`'s
- * bare `prosekit/basic/*.css` imports would then land in every page's shared
- * chunk along with the ProseKit runtime they pull behind them. That is the
- * one bundle boundary this package exists to hold (the app repos measured it
- * and enforce it with bundle-boundary tests; PERF-BUNDLE-001).
- *
- * When no provider is mounted — Storybook, a test, an application that never
- * wires it — {@link getEditorMessages} returns {@link defaultEditorMessages}.
- * The missing-provider case is the documented normal case, not an error:
- * the editor is silently un-translated, never broken.
- *
- * @module
+ * The optional per-render-site copy override. Set it where an editor renders,
+ * never from a root layout: importing this package's barrel there would pull
+ * the editor runtime into every page. Unset, every string is its English
+ * default.
  */
 
 import { getContext, setContext } from 'svelte';

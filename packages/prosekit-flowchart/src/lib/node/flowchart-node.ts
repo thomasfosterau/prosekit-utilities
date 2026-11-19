@@ -6,7 +6,6 @@
  * `<div data-flowchart>{JSON}</div>` so SSR and paste both round-trip the
  * data through textContent.
  *
- * Ported verbatim from Website's `src/editor/flowchart/flowchart-node.ts`.
  * The Svelte-backed node view lives at the flowchart package's root; this
  * module only registers the schema-side node spec and the editing command.
  *

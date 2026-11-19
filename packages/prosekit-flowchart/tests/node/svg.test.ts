@@ -1,23 +1,5 @@
 /**
- * Behavioural tests for the server-renderable flowchart SVG synthesiser
- * (`../../src/lib/node/svg.ts`) — the read-only fallback a consuming app's
- * HTML renderer injects so readers see a diagram without loading the
- * `@xyflow/svelte` runtime.
- *
- * Pins the structurally-faithful output: an accessible empty-state
- * placeholder, a node `<rect>` + label `<text>` per node, an edge `<path>`
- * with an arrow marker between connected nodes, the viewBox derived from
- * persisted node positions, the "Untitled" fallback for a blank label, that
- * an edge referring to a missing endpoint is dropped, that XML-sensitive
- * characters in a label are escaped, and that the three labels are
- * overridable. WHY: this markup is emitted verbatim into rendered prose, so
- * an unescaped label would be an XSS vector and a malformed viewBox would
- * break every diagram render.
- *
- * Ported from Website's `tests/flowchart-svg.test.ts` (7 cases), plus the
- * `labels` override this package adds.
- *
- * @module
+ * Tests for the server-renderable flowchart SVG.
  */
 
 import { describe, expect, it } from 'vite-plus/test';

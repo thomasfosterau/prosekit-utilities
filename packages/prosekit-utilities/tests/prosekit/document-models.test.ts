@@ -1,25 +1,6 @@
 /**
- * Golden-fixture tests for the derived document wire schema — the single
- * Effect Schema serving both the persistence / render trust boundary and the
- * generative contract for whole-document machine emission.
- *
- * Every node type, every mark, and every overlaid attribute (heading level,
- * list kind and order, image source and size, code-block language, table cell
- * colwidth, mention id and label) is exercised at least once. Two cases carry
- * more weight than the rest, because they need the derived **content model**
- * to be right rather than just registry membership:
- *
- * - `sidenote`, whose content is `(text | hardBreak)*`, so a nested sidenote
- *   must be rejected — derivation gets that from the compiled `ContentMatch`
- *   automaton, with no overlay entry;
- * - the `+`-cardinality content fields, which must reject an empty array at
- *   every depth, not only at the top level.
- *
- * These fixtures are the compatibility gate: a change to a node spec, a mark
- * spec or the overlay that breaks one of them changes what already-stored
- * documents decode as, and is a major version.
- *
- * @module
+ * Golden fixtures for the derived document wire schema. A failure here means
+ * stored documents would decode differently: a major change.
  */
 
 import { describe, expect, it } from 'vite-plus/test';

@@ -4,9 +4,8 @@
  * Link `href`s and image `src`s are passed through this allow-list before
  * being embedded, so a serialiser never emits a `javascript:` / `data:` /
  * `vbscript:` URI. Single-sourced here so the Markdown serialiser, the HTML
- * serialiser (the ProseKit entry point) and the allow-list write-seam check can never
- * drift apart — the SEC-XSS-001 defence-in-depth both apps this package was
- * extracted from rely on.
+ * serialiser (the ProseKit entry point) and the allow-list write-seam check can
+ * never drift apart.
  *
  * @module
  */

@@ -1,23 +1,7 @@
 /**
- * @copyright Thomas Foster
- *
- * The public derivation entry points: turn a ProseKit / ProseMirror node type,
- * mark type, or whole schema into an Effect {@link Schema}.
- *
- * - {@link deriveMarkSchema} — a single mark's `{ type, attrs? }` shape.
- * - {@link deriveNodeSchema} — a single node's recursive shape, using the
- *   node's own `schema` back-reference to resolve its descendants.
- * - {@link deriveDocumentSchema} — a whole document, rooted at the schema's
- *   top node (optionally renamed for an app that renames it at its own layer).
- * - {@link deriveDocumentSchemas} — two or more related whole documents, whose
- *   schemas share a single {@link Registry} so structure they have in common
- *   is derived once instead of once per document.
- *
- * Every function but {@link deriveDocumentSchemas} builds a private
- * {@link Registry} and reads one schema out of it, so a single call yields a
- * self-contained, fully recursive schema.
- *
- * @module @thomasfosterau/prosekit-utilities/derive/Derive
+ * The public derivation entry points, from a ProseMirror mark, node or whole
+ * schema to an Effect Schema. `deriveDocumentSchemas` shares one `Registry`
+ * across related documents so common structure derives once.
  */
 
 import type { MarkType, NodeType, Schema as PmSchema } from '@prosekit/pm/model';

@@ -12,18 +12,11 @@
 import { defineConfig } from 'vite-plus';
 
 /**
- * Input fingerprint for this package's cached tasks: everything the task can
- * read, minus `node_modules`, plus the lockfile — so a dependency bump busts
- * the cache and a `touch` does not.
- *
- * `'!.'` drops the package root's directory listing. `vp pack` and `tsc` list
- * the root, and the cache fingerprints a listing by entry name, so
- * `coverage/` appearing (written by `test:coverage`) or disappearing would
- * otherwise miss both tasks' cache. A negative glob filters tracked paths, not
- * the entries inside a listing, so `'!coverage/**'` cannot do this; no task
- * here reads a file under `coverage/` either. Every file a task does read
- * (`package.json`, `tsconfig.json`, this config, `src/`, `tests/`) is still
- * fingerprinted, and so are the `src/` and `tests/` listings.
+ * Cache inputs: everything a task reads except `node_modules`, plus the
+ * lockfile. `'!.'` drops the package root's directory listing, so a generated
+ * directory (`coverage/`, `storybook-static/`) appearing there doesn't bust
+ * the cache; the sibling `node_modules/` holds only workspace symlinks and
+ * generated scratch.
  */
 const cacheInputs = [
   { auto: true },

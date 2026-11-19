@@ -11,8 +11,8 @@
  * request time and takes down every page that renders prose.
  *
  * The expected HTML is an exact string, not a `toContain`: the serialiser's
- * escaping is half the SEC-XSS-001 defence in the source applications, and a
- * substring assertion would not notice it weakening.
+ * escaping is half the XSS defence, and a substring assertion would not notice
+ * it weakening.
  *
  * @module
  */

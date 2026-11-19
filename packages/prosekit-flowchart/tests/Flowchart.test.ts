@@ -1,20 +1,5 @@
 /**
- * Browser tests for `Flowchart` — the `@xyflow/svelte` canvas.
- *
- * Real Chromium, because the canvas measures its own box: a DOM shim reports
- * zero for every dimension and Svelte Flow renders nothing into it, so a
- * passing test there would prove nothing. Each of the three instance methods
- * is driven through `FlowchartFixture`, which binds the component and exposes
- * them as named buttons (a `.ts` test has no template to `bind:this` in).
- *
- * What is pinned: the container spreads native attributes and merges the
- * caller's `class` last; each payload node arrives as an `EditableNode`;
- * `getSnapshot()` round-trips what `resetTo()` was given; `addNode()` appends
- * with the label it was handed (or the `newNodeLabel` default); and
- * `interactive={false}` renders no `Controls`, so a published diagram offers
- * no affordance it would refuse to honour.
- *
- * @module
+ * Browser tests for `Flowchart`, the `@xyflow/svelte` canvas.
  */
 
 import { expect, test } from 'vite-plus/test';

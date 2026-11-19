@@ -1,25 +1,8 @@
 /**
- * @copyright Thomas Foster
- *
- * Attribute derivation — the part of a ProseMirror schema that is only
- * *partially* recoverable at runtime.
- *
- * An {@link AttributeSpec} carries a `default` and an optional `validate`
- * hint, nothing more. So this module recovers what it can, in priority order:
- *
- * 1. A caller {@link AttributeOverlay} override, if one is supplied.
- * 2. The `validate` string grammar (`"number | string | null"` …), parsed
- *    into a union of primitives — this is the one place ProseMirror records an
- *    attribute's value type.
- * 3. The `typeof` of a non-null `default` value.
- * 4. `Schema.Unknown` as the last resort.
- *
- * Key optionality follows ProseMirror's own rule: an attribute with a
- * `default` (of any value, `null` included) may be omitted and is emitted as
- * an optional key; an attribute with no default is required — the same split
- * `NodeType.hasRequiredAttrs()` reports.
- *
- * @module @thomasfosterau/prosekit-utilities/derive/Attribute
+ * Attribute derivation. ProseMirror records little about an attribute's type,
+ * so the schema comes from, in order: an overlay override, the `validate`
+ * string, the `typeof` of a non-null default, else `Schema.Unknown`. An
+ * attribute with a default is optional.
  */
 
 import * as Arr from 'effect/Array';

@@ -1,20 +1,5 @@
 /**
- * Behavioural tests for the document → Markdown serialiser.
- *
- * Pins faithful, clean CommonMark for every node and mark in the shared base
- * grammar plus the security-critical edges: the link / image safe-URL
- * allow-list (an unsafe `href` degrades to plain text, never an executable
- * URI), metacharacter escaping (a literal `*` / `[` cannot be reinterpreted
- * as syntax), code-fence widening (an embedded ``` cannot close a fence
- * early), and nested-list indentation. WHY: a pure dependency-free tree-walk
- * runs on a Worker without a DOM, so its output is the only thing standing
- * between authored prose and a malformed or unsafe Markdown render.
- *
- * The opt-in node cases — mention, figure, sidenote — go through the option
- * maps, which is how an application composes them, so this file exercises
- * the extension seam at the same time.
- *
- * @module
+ * Tests for the document to Markdown serialiser.
  */
 
 import * as P from 'effect/Predicate';

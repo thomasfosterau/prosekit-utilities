@@ -1,24 +1,6 @@
 /**
- * Two document schemas sharing one `RegistryCache` stay **independently lazy**.
- *
- * A block grammar and an inline grammar both compose `defineStandardMarks()`
- * and `defineText()`, so they derive the same mark schemas and the same `text`
- * node schema; passing both the same cache means whichever is forced first
- * builds that structure and the other reuses it. What must NOT follow is a
- * dependency: forcing one must not throw, skip or otherwise require the other
- * to have been forced first.
- *
- * Order is the whole point, so both orderings are exercised — each `describe`
- * builds its own pair and forces them the opposite way round, which is the
- * property a single shared module-scope cache could silently break.
- *
- * Sharing is only correct between grammars whose mark sets match, so the
- * shared-cache pair here is `createSharedCacheFixture`. The last suites pin
- * the other half of that rule: a block grammar with an opt-in mark the inline
- * grammar lacks (`citation`) derives against its own cache, and each grammar
- * then admits exactly its own marks whichever is forced first.
- *
- * @module
+ * Two document schemas sharing one `RegistryCache` stay independently lazy:
+ * deriving one never compiles the other.
  */
 
 import { describe, expect, it } from 'vite-plus/test';

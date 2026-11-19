@@ -12,34 +12,11 @@ import { defineConfig } from 'vite-plus';
 const chromium = process.env['PLAYWRIGHT_CHROMIUM_EXECUTABLE'];
 
 /**
- * Input fingerprint for this package's cached tasks: everything the task can
- * read, minus `node_modules`, plus the lockfile — so a dependency bump busts
- * the cache and a `touch` does not.
- *
- * `'!.'` drops the package root's directory listing. These tasks list the root,
- * and the cache fingerprints a listing by entry name, so `storybook-static/`
- * appearing (written by `storybook:build`) or disappearing would otherwise miss
- * `svelte-package`, `svelte-check` and the browser suite. A negative glob
- * filters tracked paths, not the entries inside a listing, so
- * `'!storybook-static/**'` alone cannot do this. It is here as well because
- * `svelte-check` walks the package for `.svelte` files and so lists every
- * directory under `storybook-static/`, whose chunk names change with each
- * Storybook build; nothing there is a `.svelte` file or in `tsconfig.json`'s
- * `include`. Every file a task does read (`package.json`, `tsconfig.json`,
- * `svelte.config.js`, this config, `src/`, `tests/`, `.storybook/`) is still
- * fingerprinted, and so are those directories' listings.
- *
- * The second workspace-relative exclusion drops each sibling package's
- * `node_modules/`. Resolving a bare import from a sibling's built `dist/`
- * probes that sibling's `node_modules/` first. Under `nodeLinker: hoisted` that
- * directory holds only pnpm's workspace symlinks (`@thomasfosterau/*`, whose
- * reads are fingerprinted at their real paths) and generated scratch (Vite's
- * `.vite` / `.vite-temp`, `svelte-kit sync`'s `$app` types), so its first
- * appearance would otherwise miss `svelte-package` and `storybook build` once.
- * The lockfile still stands in for every dependency.
- *
- * `build` and `storybook:build` take this list too: a task without `input`
- * tracks everything it touches, these exclusions included.
+ * Cache inputs: everything a task reads except `node_modules`, plus the
+ * lockfile. `'!.'` drops the package root's directory listing, so a generated
+ * directory (`coverage/`, `storybook-static/`) appearing there doesn't bust
+ * the cache; the sibling `node_modules/` holds only workspace symlinks and
+ * generated scratch.
  */
 const cacheInputs = [
   { auto: true },
@@ -57,9 +34,6 @@ export default defineConfig({
       // `svelte-kit sync` generates this package's ambient types. Both
       // `svelte-package` and `svelte-check` need it to have run.
       sync: { command: 'svelte-kit sync', cache: false },
-      // The published artifact. `exports` points at `dist`, so every consumer's
-      // type-check needs this to have run — they declare it topologically via
-      // `{ task: "build", from: "dependencies" }`.
       build: {
         command: 'svelte-package --tsconfig ./tsconfig.dist.json',
         dependsOn: ['sync', { task: 'build', from: 'dependencies' }],
@@ -68,12 +42,7 @@ export default defineConfig({
           output: ['dist/**'],
         },
       },
-      // Type-checks `src/` (stories included — they live under `src/stories/`,
-      // outside the `src/lib/` tree `svelte-package` ships), `tests/` and the
-      // Storybook config (`.storybook/**/*.ts` in the tsconfig `include`; the
-      // flowchart's stories are its own `check`'s). The core package is
-      // imported through its published `exports`, i.e. its built `dist/`, so
-      // this cannot run until that build has.
+      // Covers `src/` (stories included), `tests/` and `.storybook/`.
       check: {
         command: 'svelte-check --tsconfig ./tsconfig.dist.json',
         dependsOn: [
@@ -100,14 +69,8 @@ export default defineConfig({
           output: [],
         },
       },
-      // Storybook — a human-facing dev loop and a static build, deliberately
-      // OUTSIDE the `check` graph: the stories are type-checked by `check`
-      // above (they are `src/` files); CI runs `storybook:build` as its last
-      // step. `--no-open` because agent sessions have no browser to hand the
-      // URL to. One Storybook for the workspace: the
-      // `stories` glob reaches into the sibling packages/prosekit-flowchart,
-      // whose components import this package's built `dist/` — hence the
-      // `build` dependency.
+      // The workspace's one Storybook; its `stories` glob also reaches into
+      // packages/prosekit-flowchart.
       storybook: {
         command: 'storybook dev -p 6006 --no-open',
         dependsOn: ['sync', 'build'],
@@ -124,17 +87,12 @@ export default defineConfig({
     },
   },
 
-  // `tailwindcss()` is here for Storybook only (`.storybook/preview.css`
-  // imports the Tailwind + daisyUI stack a consumer runs); the unit suite and
-  // `svelte-package` never emit CSS through it.
+  // `tailwindcss()` serves Storybook's preview only.
   plugins: [svelte(), tailwindcss()],
 
-  // Every runtime dependency the browser suite reaches, pre-bundled BEFORE the
-  // first test file loads. Left to discovery, Vite optimises `bits-ui` (and
-  // the rest) the first time a test imports it, then reloads the page — and
-  // every test file in flight at that moment fails with "Failed to fetch
-  // dynamically imported module". A warm local cache hides it; a fresh CI
-  // runner does not.
+  // Pre-bundle every dependency the suite reaches: one discovered mid-run
+  // reloads the page and fails every test in flight ("Failed to fetch
+  // dynamically imported module").
   optimizeDeps: {
     include: [
       '@testing-library/jest-dom/vitest',
@@ -173,9 +131,7 @@ export default defineConfig({
       'svelte',
       'vitest-browser-svelte',
     ],
-    // Reached only through the core's dynamic `import('linkedom')`, which a
-    // browser never takes (there is a global `document`); left out of the
-    // pre-bundle rather than bundling a server DOM into the suite.
+    // Only the server branch of the HTML renderer imports it.
     exclude: ['linkedom'],
   },
 
@@ -184,11 +140,8 @@ export default defineConfig({
     // Registers the jest-dom matchers.
     setupFiles: ['./tests/setup.ts'],
     testTimeout: 30_000,
-    // A REAL browser, not a DOM shim. ProseMirror needs real layout and
-    // selection, and this library's contract is focus order, keyboard
-    // handling and the accessibility tree — none of which a shim models
-    // faithfully — so the suite drives Chromium through Playwright. Headless
-    // everywhere: CI has no display, and neither does an agent session.
+    // A real browser: ProseMirror needs layout and selection, and focus and
+    // the accessibility tree are the contract.
     browser: {
       enabled: true,
       headless: true,
