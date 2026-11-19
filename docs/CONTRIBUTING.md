@@ -13,12 +13,12 @@ The main branch is `trunk`. Branch off `trunk`, open a pull request into `trunk`
 
 ## Toolchain
 
-[Vite+](https://viteplus.dev) (`vp`) manages Node and pnpm; use `vp exec <bin>`, not `npx`. Its pre-commit hook runs `vp staged` (format with fixes, then lint without). Oxfmt can't format `.svelte`: keep those in the same style by hand (two-space indent, single quotes).
+[Vite+](https://viteplus.dev) (`vp`) manages Node and pnpm; use `vp exec <bin>`, not `npx`. Its pre-commit hook runs `vp staged` (format with fixes, then lint without), then `vp run fallow:audit`. Oxfmt can't format `.svelte`: keep those in the same style by hand (two-space indent, single quotes).
 
 | Command | What it does |
 | --- | --- |
 | `vp install` | Dependencies, git hooks, and the Effect-patched `tsc` / oxlint (`prepare`) |
-| `vp check` | Format and type-aware lint |
+| `vp check` | Format and type-aware lint; on a fresh checkout run `vp run -r sync` first (the Svelte tsconfigs extend the generated `$app/tsconfig`) |
 | `vp run check` | The type gate: `tsc` for the core, `svelte-kit sync` + `svelte-check` for the Svelte packages |
 | `vp run -r test:unit` | Every suite: Node for the core, headless Chromium for the Svelte packages |
 | `vp run -r build` | `vp pack` / `svelte-package` into each package's `dist/` |
@@ -30,7 +30,7 @@ The main branch is `trunk`. Branch off `trunk`, open a pull request into `trunk`
 
 **Browsers.** The Svelte suites need the Chromium revision the pinned `playwright` expects: `vp exec playwright install chromium`. Where a Chromium is already installed (an agent session's `/opt/pw-browsers/chromium`), set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to it instead.
 
-[Fallow](https://docs.fallow.tools) checks module boundaries, complexity and duplication: run `vp run test:coverage`, then `vp exec fallow audit --base origin/trunk`. Its findings are guidance, not dogma; CI doesn't run it.
+[Fallow](https://docs.fallow.tools) checks module boundaries, complexity and duplication. `vp run fallow:audit` (run by the pre-commit hook, after `test:coverage`, so it needs Chromium) blocks on findings your change introduces; `vp run fallow` summarises the whole tree. Its findings are guidance, not dogma; CI doesn't run it.
 
 ## Coding guidelines
 
@@ -55,7 +55,7 @@ Run `vp run ci`, or the gates one at a time:
 7. `vp run --filter ./packages/prosekit-svelte storybook:build`
 8. `pnpm audit --audit-level high` (network)
 
-Then the fallow audit. Say in the PR body which gates couldn't run.
+The pre-commit hook has already run the fallow audit. Say in the PR body which gates couldn't run.
 
 CI ([ci.yml](../.github/workflows/ci.yml)) runs `vp run ci` on Node LTS and latest. Workflows pin actions by exact tag, locked to commits by `.github/workflows/actions.lock`: run `gh actions-lock` after changing a `uses:`. `uvx zizmor --offline .github` audits the workflows.
 

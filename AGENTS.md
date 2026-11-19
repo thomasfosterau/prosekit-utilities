@@ -13,8 +13,4 @@ Read [README.md](README.md) and [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) fir
 - **Effect idioms.** Prefer Effect v4's own modules over hand-rolled utilities; read `node_modules/effect/` rather than guessing an API. Svelte components and measured hot paths are the exceptions.
 - **Wire compatibility.** The consuming apps have stored documents. A change to the derivation, a node or mark spec, or the attribute overlay changes what they decode as; the golden fixtures in `packages/prosekit-utilities/tests/prosekit/document-models.test.ts` catch it, and it takes a major changeset.
 - **Bundle boundaries.** The core's `.`, `./derive` and `./drizzle` must not reach ProseKit, and the flowchart's `./node` must not reach Svelte or xyflow. Type checks don't catch this; `vp run check:dist` does, on the built `dist/`.
-- **Browser suites** need Chromium: in a session, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE=/opt/pw-browsers/chromium`.
-
-## Fallow
-
-Before committing, run `vp run test:coverage`, then `vp exec fallow audit --base origin/trunk --format json --quiet --explain --gate-marker agent`. Fix findings when the verdict is `fail`; a runtime error (`{ "error": true }`) is not blocking. Only findings the change introduces count.
+- **Browser suites** need Chromium, and the pre-commit fallow audit runs them: in a session, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE=/opt/pw-browsers/chromium`. On a fresh checkout run `vp run -r sync` before `vp check`.

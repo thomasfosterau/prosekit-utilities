@@ -42,9 +42,11 @@ export default defineConfig({
 
   run: {
     tasks: {
-      // Everything CI runs, fail-fast; `pnpm audit` needs the network.
+      // Everything CI runs, fail-fast; `pnpm audit` needs the network. The
+      // Svelte packages' tsconfigs extend `$app/tsconfig`, which `sync` writes.
       ci: {
         command: [
+          'vp run -r sync',
           'vp check',
           'vp run check',
           'vp run --filter ./packages/prosekit-utilities test:coverage',
@@ -68,6 +70,13 @@ export default defineConfig({
       'check:dist': {
         command: 'node scripts/check-dist-boundaries.ts',
         dependsOn: [{ from: 'dependencies', task: 'build' }],
+        cache: false,
+      },
+      fallow: { command: 'vp exec fallow --summary', cache: false },
+      // The pre-commit gate; it reads the coverage map `test:coverage` writes.
+      'fallow:audit': {
+        command: 'vp exec fallow audit --base origin/trunk --quiet',
+        dependsOn: ['test:coverage'],
         cache: false,
       },
       // Every suite under one istanbul map, which `fallow audit` reads. One
