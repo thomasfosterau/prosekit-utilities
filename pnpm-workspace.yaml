@@ -42,7 +42,7 @@ catalog:
   linkedom: ^0.18.15
   # Only the Vitest browser provider uses it. CI installs its Chromium
   # revision; elsewhere set PLAYWRIGHT_CHROMIUM_EXECUTABLE (docs/CONTRIBUTING.md).
-  playwright: 1.65.0
+  playwright: 1.65.1
   # The packages' peer ranges are literal (`^0.23.0` / `^0.1.21`): raise them
   # with this minor.
   prosekit: ^0.23.1
