@@ -45,7 +45,7 @@ catalog:
   playwright: 1.65.0
   # The packages' peer ranges are literal (`^0.23.0` / `^0.1.21`): raise them
   # with this minor.
-  prosekit: ^0.23.1
+  prosekit: ^0.23.3
   storybook: ^10.6.7
   svelte-check: ^4.7.8
   svelte: ^5.58.0
