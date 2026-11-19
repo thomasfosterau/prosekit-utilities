@@ -1,7 +1,6 @@
 {
   "name": "prosekit-utilities",
-  // The tag must equal the catalog's `vite-plus` pin (the Dev Container
-  // workflow checks it); Dependabot does not move it.
+  // Equals the catalog's `vite-plus` pin; CI's `devcontainer` job checks it.
   "image": "ghcr.io/voidzero-dev/vite-plus:1.6.0",
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {},
@@ -9,7 +8,7 @@
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {},
     "ghcr.io/devcontainer-community/devcontainer-features/jq:1": {}
   },
-  "postCreateCommand": "vp install --frozen-lockfile && vp exec playwright install --with-deps chromium",
+  "postCreateCommand": "vp install --frozen-lockfile",
   // Storybook's dev server (`vp run --filter ./packages/prosekit-svelte storybook`).
   "forwardPorts": [6006],
   "customizations": {
