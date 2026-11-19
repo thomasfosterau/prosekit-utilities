@@ -11,5 +11,5 @@ These packages render and sanitise user-authored documents, so the most valuable
 - No long-lived npm token: releases use OIDC trusted publishing from a protected environment ([PUBLISHING.md](PUBLISHING.md)).
 - Release jobs install with `--ignore-scripts` and disable pnpm's `verify-deps-before-run`, so no dependency script runs where `id-token: write` is held. Dependency build scripts are opt-in through `allowBuilds`.
 - Workflows default to `permissions: {}`, pin actions by exact tag locked to commits (`actions.lock`), and check out without persisted credentials. CI holds no secrets.
-- `minimumReleaseAge` holds new releases for 8 hours; Dependabot waits a day. CI fails on high or critical advisories.
+- `minimumReleaseAge` holds new releases for 24 hours; Dependabot waits a day. CI fails on high or critical advisories.
 - `prosemirror-model` / `prosemirror-view` are pinned exactly.

@@ -93,5 +93,5 @@ peerDependencyRules:
     vitest: '*'
     '@sveltejs/kit': '*'
 
-# Hold new releases for 8 hours (minutes).
-minimumReleaseAge: 480
+# Hold new releases for 24 hours (minutes).
+minimumReleaseAge: 1440
