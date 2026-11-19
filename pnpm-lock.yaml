@@ -79,8 +79,8 @@ catalogs:
       specifier: 1.65.1
       version: 1.65.1
     prosekit:
-      specifier: ^0.23.1
-      version: 0.23.1
+      specifier: ^0.23.3
+      version: 0.23.3
     storybook:
       specifier: ^10.6.7
       version: 10.6.7
@@ -210,7 +210,7 @@ importers:
         version: 1.65.1
       prosekit:
         specifier: 'catalog:'
-        version: 0.23.1(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)(react@19.3.0)(svelte@5.58.0)
+        version: 0.23.3(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)(react@19.3.0)(svelte@5.58.0)
       svelte:
         specifier: ^5.58.0
         version: 5.58.0
@@ -274,7 +274,7 @@ importers:
         version: 1.65.1
       prosekit:
         specifier: 'catalog:'
-        version: 0.23.1(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)(react@19.3.0)(svelte@5.58.0)
+        version: 0.23.3(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)(react@19.3.0)(svelte@5.58.0)
       storybook:
         specifier: 'catalog:'
         version: 10.6.7(react@19.3.0)(vite-plus@1.6.0(@types/node@26.6.6)(@typescript/typescript6@6.0.2)(@vitest/browser-playwright@5.1.0(@voidzero-dev/vite-plus-core@1.6.0(@types/node@26.6.6)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))(playwright@1.65.1)(vitest@5.1.0))(@vitest/coverage-istanbul@5.1.0(vitest@5.1.0))(@vitest/ui@5.1.0(vitest@5.1.0))(esbuild@0.28.2)(happy-dom@21.0.4)(jiti@2.7.0)(playwright@1.65.1)(svelte@5.58.0)(yaml@2.9.1))
@@ -325,7 +325,7 @@ importers:
         version: 0.18.15
       prosekit:
         specifier: 'catalog:'
-        version: 0.23.1(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)(react@19.3.0)(svelte@5.58.0)
+        version: 0.23.3(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)(react@19.3.0)(svelte@5.58.0)
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -772,6 +772,9 @@ packages:
     peerDependencies:
       '@emnapi/core': ^1.7.1 || 2.0.0-beta.2
       '@emnapi/runtime': ^1.7.1 || 2.0.0-beta.2
+
+  '@ocavue/utils@1.12.0':
+    resolution: {integrity: sha512-PzQ6biw5KN0AKQd0TzngftFTzs3Jy22/NrYXHBKd1C60tew2Z8X5RNCr6x5ajQOQKILW+AGHbItXeDyy50Fj9Q==}
 
   '@ocavue/utils@1.9.0':
     resolution: {integrity: sha512-fHE+6t6Z0YfFnu5uiaKRRXoIo8NCTVBdT+b9SjMQydDTqTxHpvhNFvXsIUkYlJMyBQZjEpCyGlUfP+wscAmR1w==}
@@ -1308,14 +1311,14 @@ packages:
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
-  '@prosekit/basic@0.9.12':
-    resolution: {integrity: sha512-IcI8ffGZ92WSMn4tBFbds2SS6cZCLAmND3hE5eYFcukHJHxXd870icx9a/W6IZ7J2J2CRG+uHPwuhliR2RUJAQ==}
+  '@prosekit/basic@0.9.14':
+    resolution: {integrity: sha512-aV1jrQkUQIeoJmzwWz+ibR+h4wuzzfZZfBFt0PsUFAMWXyS8w48aiuSDvVN2StaobIiZ+huVh0s2cf3dMhqSmQ==}
 
   '@prosekit/core@0.13.5':
     resolution: {integrity: sha512-zHPIHz/FIlwclkFeRbLzLQSdwwxH/NCMN1xA1cTJg7cFFmdAaIUZr06G4+8lys2kcpyznnt0jMsJVYDevsJvfA==}
 
-  '@prosekit/extensions@0.18.6':
-    resolution: {integrity: sha512-SffzI1MiIzd3ZJUPt+aHzlTWDrWcDn5ZRPdwdpJfwJ+wXaISwHqUWo8kXBfZ5fWDUYmfFRe85Hb2CHEmD973KA==}
+  '@prosekit/extensions@0.18.8':
+    resolution: {integrity: sha512-W991RNpp3UYlZbvqLoXeBCRJx7qxf2dToZ+ZSOfdasZRgjFIL2KzUPAJASvm18CNK3jtcYuGBfs05l45sAK98w==}
     peerDependencies:
       loro-crdt: '>= 1.10.0'
       loro-prosemirror: '>= 0.4.1'
@@ -1331,22 +1334,22 @@ packages:
       yjs:
         optional: true
 
-  '@prosekit/lit@0.7.6':
-    resolution: {integrity: sha512-O8EGAo2Hg6dILvwAh0ZrIKZFkeaFDOldYkYlvKDOLpVPUox7APYveplE+SFB7+CU2GcIfClQS6VDOGRJ3hShfg==}
+  '@prosekit/lit@0.7.8':
+    resolution: {integrity: sha512-vgVLgATnxJWrOvtPVZ1Qx3pQXSmG0jpcOufHsLUCSmfW7dWoQFmw89E/u3NPxg8Ctxe9qhoKI2Vf3H7HH39yTw==}
 
   '@prosekit/pm@0.1.21':
     resolution: {integrity: sha512-Cjqp0W5q+SR47R832zX0GI+/JkX2IJ7omgqJ2L1+P3qbWIXuL5UlTzyPVy62CiptiSurKUWhuzd4Q6u1I40ghw==}
 
-  '@prosekit/preact@0.9.1':
-    resolution: {integrity: sha512-edBwsv6yaa3Ml7n3msuGHpdfC6ipZgIB2v6nRUNUVVOwId4y5/OHXXMX0bKvrmYmOddVaQbvtp9rzBLmgN2aQw==}
+  '@prosekit/preact@0.9.3':
+    resolution: {integrity: sha512-yXZcbnlfatHKQvEM3kAxLPDGNr/gQpPLy++SpVd3nvFfzdivuf+ohI7ZD+eee+tuENAQCOz7IcEwLwQn7T3Y9g==}
     peerDependencies:
       preact: '>= 10.11.0'
     peerDependenciesMeta:
       preact:
         optional: true
 
-  '@prosekit/react@0.9.1':
-    resolution: {integrity: sha512-zkkc3opg4ZQsRIrBonZ68gTf/fDtk+1F3kn8M7ODJ0DGrN8slYJUTFeBS929i1EK93CRmdtbQXkGaBplQEh6Tg==}
+  '@prosekit/react@0.9.3':
+    resolution: {integrity: sha512-kh6/5aI0C97rJmu7P8ZL2mWQqhIZjTeWTasRGkvHvl5HDqgj+q0yEqE7OmJa8ZVCNNgrvxIiQj1iep40/veRuw==}
     peerDependencies:
       react: '>= 18.2.0'
       react-dom: '>= 18.2.0'
@@ -1356,32 +1359,32 @@ packages:
       react-dom:
         optional: true
 
-  '@prosekit/solid@0.9.1':
-    resolution: {integrity: sha512-+SlY2gVp9hdFKoql+Zk8mcXLmZS1cNZFgHBdQSX5dyB8nln3lbz1nRMCqdw+qnGfHUcTgDOLRxS8HaPdhOVcYQ==}
+  '@prosekit/solid@0.9.3':
+    resolution: {integrity: sha512-Z5BkEr6PssWo8gkB1yotbZsmke5/9z9Z3sK3/8dJJX0lMvRSrj2MQbttIbWufwt4GdQg4Y8KlrhkbZdUL99t5A==}
     peerDependencies:
       solid-js: '>= 1.7.0'
     peerDependenciesMeta:
       solid-js:
         optional: true
 
-  '@prosekit/svelte@0.11.1':
-    resolution: {integrity: sha512-wq+no6KjKb0HhnT5Go6nIEK8xhb84O8uieypplXj8xxWs9BC3m5AOur2FUQmKgQNiC7YQAS0kgiRmAaRe4nSNw==}
+  '@prosekit/svelte@0.11.3':
+    resolution: {integrity: sha512-sprw5hI3Oo0VbALcL25wclj4Nc76spb+/tL8Z8HN1qWGfLJcT2rsGPC6qtY9t66v0umsfM7F7H2QillI2cb6zw==}
     peerDependencies:
       svelte: ^5.58.0
     peerDependenciesMeta:
       svelte:
         optional: true
 
-  '@prosekit/vue@0.9.1':
-    resolution: {integrity: sha512-ehr0yLheEueGKsTdK2O8GCZ91IFCJDnqaR6D6XFAfmGl24ZbB5DSO8JLMwX4aFaoh/HGkQy0WBNUeFWmtQmhSg==}
+  '@prosekit/vue@0.9.3':
+    resolution: {integrity: sha512-5RYONfYxf+mI/pEI48yRUznYLe/XNdSqRACVRWa/E5miv4kjBOa4ELz0FCn3vMq/dnGVVmadVps8X6LuxuIyJQ==}
     peerDependencies:
       vue: '>= 3.0.0'
     peerDependenciesMeta:
       vue:
         optional: true
 
-  '@prosekit/web@0.10.1':
-    resolution: {integrity: sha512-EuCYhTOLF1KyOiCsUmR1iwtE0S1ggeU5UywxzMv0EcKItpUAe1tFTg1sHssz22NKcDO5FsV+I9Z00MnfcWe6aQ==}
+  '@prosekit/web@0.10.3':
+    resolution: {integrity: sha512-KyJ3dfNlff/8N5ulf/k+HYB724/Zd/I6M5k21uABcK2yj/OoTctkXYby0JwhDcBf6llW7Z8M11kIDctY/IF/Dw==}
 
   '@prosemirror-adapter/core@0.5.5':
     resolution: {integrity: sha512-R1BV/up0qApb0mtZt81I4TCBmalclqb43ecCQXiVHD5LpoarYHMMBzEoZFanSFg+8YxB1CmvbJwN+DLqbXJwsg==}
@@ -3080,8 +3083,8 @@ packages:
   property-information@7.2.0:
     resolution: {integrity: sha512-IAtzIB6sUiWaJYrX9smp3V46pBGbBeLFRGdh25kg1334VcBlD8HzhPeNIWQH9zhGmo2itIe25EHt9dQP7G5hmg==}
 
-  prosekit@0.23.1:
-    resolution: {integrity: sha512-cuXopbR/8kciGLF4oUribHCn4pyoxh+uv+FYtiE42zEHvccppVKconIbvwoC2A0mOIBZP17GMasFNjVP9Rqixw==}
+  prosekit@0.23.3:
+    resolution: {integrity: sha512-dT58QQBV1L1cSWGgDV2SvCzUgLqrCfKADOjximJJ3E6UVxkNT9i1apGhCecuAsaKMxgSkzx6WBFntb5QUXrbAA==}
     peerDependencies:
       loro-crdt: '>= 1.10.0'
       loro-prosemirror: '>= 0.4.1'
@@ -3115,8 +3118,8 @@ packages:
       yjs:
         optional: true
 
-  prosemirror-changeset@2.4.4:
-    resolution: {integrity: sha512-Gyuz9jYdrAeA9I7AholyOes9KUmv/lEwsC5O9s5xF5VB3EgTPsXMGUxz4+H1B+wKVPdZbvRcg1Cp3x8qX+8ofA==}
+  prosemirror-changeset@2.4.6:
+    resolution: {integrity: sha512-P0cY3DSLm4M2boUOCmHDyaID5o6HgWmb21Bvs9p8lLqfJjKBBEHG5Ma5qW5SCmwOYamtWOLf2k+yvt6077zlTg==}
 
   prosemirror-commands@1.7.2:
     resolution: {integrity: sha512-q6Q6szxqdu9Xd6EcdKsqXghu5nQdZTpB4Q9yd04WRc7/jt763e/rT60Owh0L1GYY+T46o5rD+9lEN36dZS43tw==}
@@ -3130,8 +3133,8 @@ packages:
   prosemirror-enter-rules@0.1.6:
     resolution: {integrity: sha512-l/mddqScZT0FICDNu6Kijs6zpAPRnMZG4pZAlCHIl7uVg26kLSK+NM3JuKkFKBN1Zs2l1Qi/SYc2Z6dmA4elPQ==}
 
-  prosemirror-flat-list@0.7.3:
-    resolution: {integrity: sha512-gLnk/hq/4QXAubuemDl7LxMUUUyD/Xd2s81VpxGUh3VCPNMV5hipbgtnS/OXslK4cZ78BBYK30FD7Rkul35P1Q==}
+  prosemirror-flat-list@0.7.4:
+    resolution: {integrity: sha512-UYHPRohCUe1OGQzqRzQcGOY7hH/no9B9hTbvSbDyuu8mujKWCEXR9k2l0QywuuHFlQ20PM37WG6/2pLRTM48xA==}
 
   prosemirror-gapcursor@1.4.1:
     resolution: {integrity: sha512-pMdYaEnjNMSwl11yjEGtgTmLkR08m/Vl+Jj443167p9eB3HVQKhYCc4gmHVDsLPODfZfjr/MmirsdyZziXbQKw==}
@@ -3223,6 +3226,9 @@ packages:
 
   prosemirror-transform@1.12.4:
     resolution: {integrity: sha512-2/WuPum3pn+O/Vi2vzpi8210ICUe2kIPXdLYjQ09Pv5DtT5bcKWMJhAKPBwvpPjpp5iOYUVwVEr0gOM1BY1Mgw==}
+
+  prosemirror-transform@1.12.6:
+    resolution: {integrity: sha512-Npot0uIQTDObbDLCiw3TUc08EIT1jNcqbuadG+y5T4jT+4NN8f46AP5h/x+6wE++q7NcW8++oBvc1M0wXvFD/g==}
 
   prosemirror-view@1.42.3:
     resolution: {integrity: sha512-oTN7EtH+CpwxU9NrwEYWd0UZ4JUx7l048l5A2Xppm4p/60isZYLnth9QVQmC3VRIvdrIWCxwZSd+Uz791G31/w==}
@@ -4043,6 +4049,8 @@ snapshots:
       '@tybys/wasm-util': 0.10.4
     optional: true
 
+  '@ocavue/utils@1.12.0': {}
+
   '@ocavue/utils@1.9.0': {}
 
   '@oxc-parser/binding-android-arm-eabi@0.127.0':
@@ -4318,10 +4326,10 @@ snapshots:
 
   '@polka/url@1.0.0-next.29': {}
 
-  '@prosekit/basic@0.9.12(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)':
+  '@prosekit/basic@0.9.14(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)':
     dependencies:
-      '@prosekit/core': 0.13.5(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)
-      '@prosekit/extensions': 0.18.6(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)
+      '@prosekit/core': 0.13.5(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)
+      '@prosekit/extensions': 0.18.8(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)
       '@prosekit/pm': 0.1.21
     transitivePeerDependencies:
       - '@lezer/common'
@@ -4341,30 +4349,30 @@ snapshots:
       - y-prosemirror
       - yjs
 
-  '@prosekit/core@0.13.5(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)':
+  '@prosekit/core@0.13.5(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)':
     dependencies:
       '@ocavue/utils': 1.9.0
       '@prosekit/pm': 0.1.21
       orderedmap: 2.1.1
-      prosemirror-splittable: 1.1.0(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)
+      prosemirror-splittable: 1.1.0(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)
       type-fest: 5.10.0
     transitivePeerDependencies:
       - prosemirror-model
       - prosemirror-state
       - prosemirror-transform
 
-  '@prosekit/extensions@0.18.6(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)':
+  '@prosekit/extensions@0.18.8(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)':
     dependencies:
-      '@ocavue/utils': 1.9.0
-      '@prosekit/core': 0.13.5(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)
+      '@ocavue/utils': 1.12.0
+      '@prosekit/core': 0.13.5(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)
       '@prosekit/pm': 0.1.21
-      prosemirror-changeset: 2.4.4
+      prosemirror-changeset: 2.4.6
       prosemirror-drop-indicator: 0.1.4
       prosemirror-dropcursor: 1.8.4
       prosemirror-enter-rules: 0.1.6
-      prosemirror-flat-list: 0.7.3
+      prosemirror-flat-list: 0.7.4
       prosemirror-gapcursor: 1.4.1
-      prosemirror-highlight: 0.16.0(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)
+      prosemirror-highlight: 0.16.0(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)
       prosemirror-math: 0.2.2
       prosemirror-search: 1.1.1
       prosemirror-tables: 1.8.5
@@ -4384,9 +4392,9 @@ snapshots:
       - refractor
       - sugar-high
 
-  '@prosekit/lit@0.7.6(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)':
+  '@prosekit/lit@0.7.8(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)':
     dependencies:
-      '@prosekit/web': 0.10.1(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)
+      '@prosekit/web': 0.10.3(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)
     transitivePeerDependencies:
       - '@lezer/common'
       - '@lezer/highlight'
@@ -4416,11 +4424,11 @@ snapshots:
       prosemirror-transform: 1.12.4
       prosemirror-view: 1.42.3
 
-  '@prosekit/preact@0.9.1(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)':
+  '@prosekit/preact@0.9.3(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)':
     dependencies:
-      '@prosekit/core': 0.13.5(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)
+      '@prosekit/core': 0.13.5(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)
       '@prosekit/pm': 0.1.21
-      '@prosekit/web': 0.10.1(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)
+      '@prosekit/web': 0.10.3(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)
       '@prosemirror-adapter/core': 0.5.5
       '@prosemirror-adapter/preact': 0.5.6
     transitivePeerDependencies:
@@ -4441,11 +4449,11 @@ snapshots:
       - y-prosemirror
       - yjs
 
-  '@prosekit/react@0.9.1(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)(react@19.3.0)':
+  '@prosekit/react@0.9.3(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)(react@19.3.0)':
     dependencies:
-      '@prosekit/core': 0.13.5(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)
+      '@prosekit/core': 0.13.5(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)
       '@prosekit/pm': 0.1.21
-      '@prosekit/web': 0.10.1(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)
+      '@prosekit/web': 0.10.3(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)
       '@prosemirror-adapter/core': 0.5.5
       '@prosemirror-adapter/react': 0.5.5(react@19.3.0)
     optionalDependencies:
@@ -4468,11 +4476,11 @@ snapshots:
       - y-prosemirror
       - yjs
 
-  '@prosekit/solid@0.9.1(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)':
+  '@prosekit/solid@0.9.3(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)':
     dependencies:
-      '@prosekit/core': 0.13.5(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)
+      '@prosekit/core': 0.13.5(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)
       '@prosekit/pm': 0.1.21
-      '@prosekit/web': 0.10.1(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)
+      '@prosekit/web': 0.10.3(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)
       '@prosemirror-adapter/core': 0.5.5
       '@prosemirror-adapter/solid': 0.5.5
     transitivePeerDependencies:
@@ -4493,11 +4501,11 @@ snapshots:
       - y-prosemirror
       - yjs
 
-  '@prosekit/svelte@0.11.1(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)(svelte@5.58.0)':
+  '@prosekit/svelte@0.11.3(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)(svelte@5.58.0)':
     dependencies:
-      '@prosekit/core': 0.13.5(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)
+      '@prosekit/core': 0.13.5(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)
       '@prosekit/pm': 0.1.21
-      '@prosekit/web': 0.10.1(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)
+      '@prosekit/web': 0.10.3(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)
       '@prosemirror-adapter/core': 0.5.5
       '@prosemirror-adapter/svelte': 0.5.5(svelte@5.58.0)
     optionalDependencies:
@@ -4520,11 +4528,11 @@ snapshots:
       - y-prosemirror
       - yjs
 
-  '@prosekit/vue@0.9.1(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)':
+  '@prosekit/vue@0.9.3(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)':
     dependencies:
-      '@prosekit/core': 0.13.5(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)
+      '@prosekit/core': 0.13.5(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)
       '@prosekit/pm': 0.1.21
-      '@prosekit/web': 0.10.1(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)
+      '@prosekit/web': 0.10.3(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)
       '@prosemirror-adapter/core': 0.5.5
       '@prosemirror-adapter/vue': 0.5.5
     transitivePeerDependencies:
@@ -4545,15 +4553,15 @@ snapshots:
       - y-prosemirror
       - yjs
 
-  '@prosekit/web@0.10.1(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)':
+  '@prosekit/web@0.10.3(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)':
     dependencies:
       '@aria-ui/core': 0.2.1
       '@aria-ui/elements': 0.2.0
       '@aria-ui/utils': 0.1.8
       '@floating-ui/dom': 1.8.0
-      '@ocavue/utils': 1.9.0
-      '@prosekit/core': 0.13.5(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)
-      '@prosekit/extensions': 0.18.6(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)
+      '@ocavue/utils': 1.12.0
+      '@prosekit/core': 0.13.5(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)
+      '@prosekit/extensions': 0.18.8(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)
       '@prosekit/pm': 0.1.21
       prosemirror-tables: 1.8.5
     transitivePeerDependencies:
@@ -6000,19 +6008,19 @@ snapshots:
 
   property-information@7.2.0: {}
 
-  prosekit@0.23.1(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)(react@19.3.0)(svelte@5.58.0):
+  prosekit@0.23.3(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)(react@19.3.0)(svelte@5.58.0):
     dependencies:
-      '@prosekit/basic': 0.9.12(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)
-      '@prosekit/core': 0.13.5(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)
-      '@prosekit/extensions': 0.18.6(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)
-      '@prosekit/lit': 0.7.6(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)
+      '@prosekit/basic': 0.9.14(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)
+      '@prosekit/core': 0.13.5(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)
+      '@prosekit/extensions': 0.18.8(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)
+      '@prosekit/lit': 0.7.8(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)
       '@prosekit/pm': 0.1.21
-      '@prosekit/preact': 0.9.1(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)
-      '@prosekit/react': 0.9.1(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)(react@19.3.0)
-      '@prosekit/solid': 0.9.1(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)
-      '@prosekit/svelte': 0.11.1(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)(svelte@5.58.0)
-      '@prosekit/vue': 0.9.1(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)
-      '@prosekit/web': 0.10.1(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3)
+      '@prosekit/preact': 0.9.3(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)
+      '@prosekit/react': 0.9.3(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)(react@19.3.0)
+      '@prosekit/solid': 0.9.3(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)
+      '@prosekit/svelte': 0.11.3(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)(svelte@5.58.0)
+      '@prosekit/vue': 0.9.3(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)
+      '@prosekit/web': 0.10.3(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3)
     optionalDependencies:
       react: 19.3.0
       svelte: 5.58.0
@@ -6030,7 +6038,7 @@ snapshots:
       - refractor
       - sugar-high
 
-  prosemirror-changeset@2.4.4:
+  prosemirror-changeset@2.4.6:
     dependencies:
       prosemirror-transform: 1.12.4
 
@@ -6060,15 +6068,15 @@ snapshots:
       prosemirror-state: 1.4.4
       prosemirror-view: 1.42.3
 
-  prosemirror-flat-list@0.7.3:
+  prosemirror-flat-list@0.7.4:
     dependencies:
       prosemirror-commands: 1.7.2
       prosemirror-inputrules: 1.5.1
       prosemirror-model: 1.25.7
       prosemirror-safari-ime-span: 1.0.2
-      prosemirror-splittable: 1.1.0(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)
+      prosemirror-splittable: 1.1.0(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)
       prosemirror-state: 1.4.4
-      prosemirror-transform: 1.12.4
+      prosemirror-transform: 1.12.6
       prosemirror-view: 1.42.3
 
   prosemirror-gapcursor@1.4.1:
@@ -6078,13 +6086,13 @@ snapshots:
       prosemirror-state: 1.4.4
       prosemirror-view: 1.42.3
 
-  prosemirror-highlight@0.16.0(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4)(prosemirror-view@1.42.3):
+  prosemirror-highlight@0.16.0(@shikijs/types@4.5.0)(@types/hast@3.0.5)(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6)(prosemirror-view@1.42.3):
     optionalDependencies:
       '@shikijs/types': 4.5.0
       '@types/hast': 3.0.5
       prosemirror-model: 1.25.7
       prosemirror-state: 1.4.4
-      prosemirror-transform: 1.12.4
+      prosemirror-transform: 1.12.6
       prosemirror-view: 1.42.3
 
   prosemirror-history@1.5.1:
@@ -6128,11 +6136,11 @@ snapshots:
       prosemirror-state: 1.4.4
       prosemirror-view: 1.42.3
 
-  prosemirror-splittable@1.1.0(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.4):
+  prosemirror-splittable@1.1.0(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-transform@1.12.6):
     optionalDependencies:
       prosemirror-model: 1.25.7
       prosemirror-state: 1.4.4
-      prosemirror-transform: 1.12.4
+      prosemirror-transform: 1.12.6
 
   prosemirror-state@1.4.4:
     dependencies:
@@ -6153,6 +6161,10 @@ snapshots:
       prosemirror-model: 1.25.7
 
   prosemirror-transform@1.12.4:
+    dependencies:
+      prosemirror-model: 1.25.7
+
+  prosemirror-transform@1.12.6:
     dependencies:
       prosemirror-model: 1.25.7
 
