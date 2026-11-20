@@ -6,8 +6,8 @@ packages:
 catalogMode: strict
 
 catalog:
-  '@effect/docgen': ^4.1.4
   '@changesets/cli': ^3.0.3
+  '@effect/docgen': ^4.1.4
   # `prepare` patches `tsc` and vite-plus's oxlint with this; it supports only
   # specific versions, so it moves with `@typescript/native` and `vite-plus`
   # (see the `components` table in node_modules/@effect/tsgo/dist/effect-tsgo.cjs).
