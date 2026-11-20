@@ -186,7 +186,7 @@ export default defineConfig({
         },
       },
     ],
-    // `typeCheck` stays off: tsgolint can't type `.svelte` imports, so it
+    // `typeCheck` stays off: tsrs can't type `.svelte` imports, so it
     // reports false errors in the Svelte suites. `vp run check` type-checks.
     options: {
       typeAware: true,
