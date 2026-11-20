@@ -1,5 +1,14 @@
 # @thomasfosterau/prosekit-flowchart
 
+## 0.2.1
+
+### Patch Changes
+
+- 9ae9e90: Trim doc comments to what the signatures don't already say.
+- Updated dependencies [9ae9e90]
+  - @thomasfosterau/prosekit-utilities@0.2.1
+  - @thomasfosterau/prosekit-svelte@0.2.1
+
 ## 0.2.0
 
 ### Minor Changes
