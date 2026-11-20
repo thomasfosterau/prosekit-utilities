@@ -21,7 +21,7 @@ catalog:
   '@sveltejs/package': 3.0.3
   '@sveltejs/vite-plugin-svelte': ^7.3.1
   '@tailwindcss/vite': ^4.3.5
-  '@testing-library/jest-dom': ^7.0.1
+  '@testing-library/jest-dom': ^8.0.0
   '@types/node': ^26.6.6
   # TS7 (bin `tsc`) for the core's type check; svelte-check and the
   # declaration emit need the TS6 JS API (`typescript` below).
