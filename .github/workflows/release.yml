@@ -117,6 +117,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
       - name: Setup Vite+
         uses: voidzero-dev/setup-vp@v1.22.0
@@ -127,12 +128,12 @@ jobs:
           # No `registry-url`: its `.npmrc` token would be tried instead of OIDC.
           run-install: |
             - args: ['--frozen-lockfile', '--ignore-scripts']
-      # `files` is `["dist"]`: a missing build would publish empty packages.
-      - name: Build
-        run: vp run -r build
+      # `vp run release` (vite.config.ts): builds every package, checks the
+      # built `dist/` (`check:dist`), publishes each unpublished version with
+      # `vp pm publish -r` (pnpm exchanges the OIDC token itself), then
+      # `changeset git-tag` reports the new tags through CHANGESETS_OUTPUT,
+      # and the action pushes them and creates the releases.
       - name: Publish to npm
         uses: changesets/action/publish@v2.1.2
         with:
-          script: pnpm run release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          script: vp run release

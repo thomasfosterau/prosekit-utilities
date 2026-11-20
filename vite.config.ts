@@ -72,6 +72,29 @@ export default defineConfig({
         dependsOn: [{ from: 'dependencies', task: 'build' }],
         cache: false,
       },
+      // The release job's publish script (.github/workflows/release.yml),
+      // after every build and `check:dist`: pnpm publishes each public
+      // package whose version is not on npm yet, in dependency order, under
+      // OIDC trusted publishing, rewriting `workspace:` / `catalog:`
+      // specifiers; then `changeset git-tag` tags each version not tagged yet
+      // and reports the tags to `changesets/action` through
+      // `CHANGESETS_OUTPUT`, which pushes them and creates the GitHub
+      // releases. Uncached, so it sees the full environment; a failed publish
+      // stops before tagging, and a re-run publishes only what is missing.
+      release: {
+        command: [
+          'vp pm publish -r --access public --no-git-checks -- --ignore-scripts',
+          'changeset git-tag',
+        ],
+        dependsOn: ['check:dist'],
+        cache: false,
+      },
+      // What `release` would publish, without publishing or tagging.
+      'release:dry-run': {
+        command: 'vp pm publish -r --access public --dry-run --no-git-checks -- --ignore-scripts',
+        dependsOn: ['check:dist'],
+        cache: false,
+      },
       fallow: { command: 'vp exec fallow --summary', cache: false },
       // The pre-commit gate; it reads the coverage map `test:coverage` writes.
       'fallow:audit': {
