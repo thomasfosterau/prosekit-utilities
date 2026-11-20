@@ -17,7 +17,7 @@ catalog:
   '@storybook/addon-a11y': ^10.6.7
   '@storybook/addon-svelte-csf': ^5.1.6
   '@storybook/sveltekit': ^10.6.7
-  '@sveltejs/kit': 3.3.1
+  '@sveltejs/kit': 3.4.0
   '@sveltejs/package': 3.0.3
   '@sveltejs/vite-plugin-svelte': ^7.3.1
   '@tailwindcss/vite': ^4.3.5
