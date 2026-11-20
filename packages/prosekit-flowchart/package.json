@@ -12,6 +12,7 @@
     "svelte5",
     "xyflow"
   ],
+  "homepage": "https://github.com/thomasfosterau/prosekit-utilities/tree/trunk/packages/prosekit-flowchart#readme",
   "license": "MIT",
   "author": "Thomas Foster <me@thomasfoster.au>",
   "repository": {
@@ -38,12 +39,16 @@
       "default": "./dist/node/index.js"
     }
   },
+  "scripts": {
+    "docgen": "docgen"
+  },
   "dependencies": {
     "@thomasfosterau/prosekit-svelte": "workspace:*",
     "@thomasfosterau/prosekit-utilities": "workspace:*",
     "bits-ui": "catalog:"
   },
   "devDependencies": {
+    "@effect/docgen": "catalog:",
     "@prosekit/pm": "catalog:",
     "@storybook/addon-svelte-csf": "catalog:",
     "@storybook/sveltekit": "catalog:",

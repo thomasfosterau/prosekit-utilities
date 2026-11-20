@@ -36,3 +36,8 @@ vite.config.*.timestamp*
 npm-debug.log*
 pnpm-debug.log*
 .vitest/
+
+# docgen output (`vp run docgen`), published by the Pages workflow.
+packages/prosekit-utilities/docs/api/
+packages/prosekit-svelte/docs/api/
+packages/prosekit-flowchart/docs/api/

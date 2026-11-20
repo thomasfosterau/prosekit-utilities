@@ -12,6 +12,7 @@
     "prosemirror",
     "rich-text"
   ],
+  "homepage": "https://github.com/thomasfosterau/prosekit-utilities/tree/trunk/packages/prosekit-utilities#readme",
   "license": "MIT",
   "author": "Thomas Foster <me@thomasfoster.au>",
   "repository": {
@@ -44,7 +45,11 @@
       "default": "./dist/drizzle.js"
     }
   },
+  "scripts": {
+    "docgen": "docgen"
+  },
   "devDependencies": {
+    "@effect/docgen": "catalog:",
     "@effect/vitest": "catalog:",
     "@prosekit/pm": "catalog:",
     "@types/node": "catalog:",

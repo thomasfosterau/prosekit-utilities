@@ -42,6 +42,17 @@ export default defineConfig({
 
   run: {
     tasks: {
+      // The API reference the Pages workflow publishes. Examples are
+      // rendered but not compiled (`tscExecutable: "true"` in docgen.json).
+      docgen: {
+        command: "echo 'docgen: every package documented'",
+        dependsOn: [
+          '@thomasfosterau/prosekit-utilities#docgen',
+          '@thomasfosterau/prosekit-svelte#docgen',
+          '@thomasfosterau/prosekit-flowchart#docgen',
+        ],
+        cache: false,
+      },
       // Everything CI runs, fail-fast; `pnpm audit` needs the network. The
       // Svelte packages' tsconfigs extend `$app/tsconfig`, which `sync` writes.
       ci: {

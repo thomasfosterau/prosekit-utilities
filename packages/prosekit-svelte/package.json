@@ -13,6 +13,7 @@
     "svelte",
     "svelte5"
   ],
+  "homepage": "https://github.com/thomasfosterau/prosekit-utilities/tree/trunk/packages/prosekit-svelte#readme",
   "license": "MIT",
   "author": "Thomas Foster <me@thomasfoster.au>",
   "repository": {
@@ -35,11 +36,15 @@
       "default": "./dist/index.js"
     }
   },
+  "scripts": {
+    "docgen": "docgen"
+  },
   "dependencies": {
     "@thomasfosterau/prosekit-utilities": "workspace:*",
     "bits-ui": "catalog:"
   },
   "devDependencies": {
+    "@effect/docgen": "catalog:",
     "@prosekit/pm": "catalog:",
     "@storybook/addon-a11y": "catalog:",
     "@storybook/addon-svelte-csf": "catalog:",
