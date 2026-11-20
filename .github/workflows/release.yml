@@ -12,7 +12,7 @@ on:
 
 permissions: {}
 
-# pnpm 11 re-installs WITH lifecycle scripts before a top-level `pnpm run`
+# pnpm re-installs WITH lifecycle scripts before a top-level `pnpm run`
 # when a manifest looks newer than the install, which would undo
 # `--ignore-scripts` in these jobs.
 env:
@@ -124,14 +124,9 @@ jobs:
           version-file: pnpm-workspace.yaml
           node-version: lts
           cache: false
-          registry-url: https://registry.npmjs.org
+          # No `registry-url`: its `.npmrc` token would be tried instead of OIDC.
           run-install: |
             - args: ['--frozen-lockfile', '--ignore-scripts']
-      # Trusted publishing needs npm >= 11.5.1.
-      - name: Check npm supports trusted publishing
-        run: |
-          npm --version
-          node -e 'const [a, b, c] = process.argv[1].split(".").map(Number); process.exit(a > 11 || (a === 11 && (b > 5 || (b === 5 && c >= 1))) ? 0 : 1)' "$(npm --version)"
       # `files` is `["dist"]`: a missing build would publish empty packages.
       - name: Build
         run: vp run -r build

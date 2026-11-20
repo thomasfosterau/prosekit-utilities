@@ -7,9 +7,9 @@ Releases use [Changesets](https://github.com/changesets/changesets) and npm [tru
 1. Add a changeset with your change ([CONTRIBUTING.md](CONTRIBUTING.md#changesets)).
 2. On merge to `trunk`, the Release workflow opens or updates the **"chore: version packages"** PR and assigns it to the owner. Its version step is `changeset version && vp fmt`.
 3. That PR's head is pushed with `GITHUB_TOKEN`, which starts no workflow: run **CI** on `changeset-release/trunk` from the Actions tab before merging it.
-4. Once it merges, the `publish` job (protected `release` environment) builds and runs [`scripts/release.sh`](../scripts/release.sh): it packs every package not yet on npm at its version, publishes each tarball with `npm publish`, and runs `changeset tag`.
+4. Once it merges, the `publish` job (protected `release` environment) builds and runs [`scripts/release.sh`](../scripts/release.sh): it packs every package not yet on npm at its version, publishes each tarball with `pnpm publish`, and runs `changeset tag`. Nothing in the release path calls the npm CLI.
 
-npm attaches provenance itself once the repository and package are public. Never pass `--provenance`: from a private repository it fails the publish.
+pnpm attaches provenance itself once the repository and package are public. Never pass `--provenance`: from a private repository it fails the publish.
 
 ## One-time owner setup
 
