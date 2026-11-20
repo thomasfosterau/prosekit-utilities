@@ -13,8 +13,7 @@
   "type": "module",
   "scripts": {
     "prepare": "vp config && effect-tsgo patch --typescript --oxlint",
-    "version": "changeset version && vp fmt",
-    "release": "bash scripts/release.sh"
+    "version": "changeset version && vp fmt"
   },
   "dependencies": {
     "@thomasfosterau/prosekit-flowchart": "workspace:*",
@@ -39,5 +38,5 @@
       "version": "lts"
     }
   },
-  "packageManager": "pnpm@11.26.0"
+  "packageManager": "pnpm@12.21.0"
 }
