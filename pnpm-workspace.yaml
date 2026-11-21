@@ -8,10 +8,11 @@ catalogMode: strict
 catalog:
   '@changesets/cli': ^3.0.3
   '@effect/docgen': ^4.1.4
-  # `prepare` patches `tsc` and vite-plus's oxlint with this; it supports only
-  # specific versions, so it moves with `@typescript/native` and `vite-plus`
+  # `prepare` patches `tsc` and vite-plus's oxlint and tsrs with this; it
+  # supports only specific versions, so it moves with `@typescript/native` and
+  # `vite-plus`
   # (see the `components` table in node_modules/@effect/tsgo/dist/effect-tsgo.cjs).
-  '@effect/tsgo': 0.68.0
+  '@effect/tsgo': 0.73.2
   '@effect/vitest': 4.1.4
   '@enfect/oxlint': 0.10.0
   '@prosekit/pm': ^0.1.21
@@ -53,10 +54,10 @@ catalog:
   tailwindcss: ^4.3.5
   # TS6 JS compiler (bin `tsc6`), for svelte-check and declaration emit.
   typescript: npm:@typescript/typescript6@6.0.2
-  # vite-plus pins `vitest` / `@vitest/*` exactly: keep them, and `vite` (its
-  # aliased core), equal to its pin.
-  vite-plus: 1.6.0
-  vite: npm:@voidzero-dev/vite-plus-core@1.6.0
+  # `vite`, `vitest` and `@vitest/*` must equal what vite-plus itself depends on
+  # (`npm view vite-plus@<v> dependencies`); `vite` no longer equals vite-plus.
+  vite-plus: 1.7.0
+  vite: npm:@voidzero-dev/vite-plus-core@8.3.8000
   vitest: 5.1.0
   vitest-browser-svelte: ^3.1.0
 
@@ -95,12 +96,10 @@ skills:
 # Storybook and its addons lag the 1.x Vite+ toolchain in their peer ranges.
 peerDependencyRules:
   allowAny:
-    - vite
     - vite-plus
     - vitest
     - '@sveltejs/kit'
   allowedVersions:
-    vite: '*'
     vite-plus: '*'
     vitest: '*'
     '@sveltejs/kit': '*'
