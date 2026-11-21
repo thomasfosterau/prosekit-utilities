@@ -83,7 +83,7 @@ Every change to a published package's behaviour carries a changeset (`vp exec ch
 
 Every external version is in the `pnpm-workspace.yaml` catalog; package.json files use `catalog:` or `workspace:*` (literal peer ranges are the exception). After editing the catalog, run `vp install` and commit `pnpm-lock.yaml`.
 
-Dependabot groups the sets that must move together. By hand:
+Dependabot groups the sets that must move together. It can't make the moves below: make them in a PR from a new branch started from its PR's head (never push to a `dependabot/*` branch, which stops it rebasing), and it closes its own PR once yours merges:
 
 - **Toolchain** (`vite-plus`): run `vp dlx --package=vite-plus@<v> vp migrate --no-interactive` to re-pin `vite` and `vitest`, drop any `minimumReleaseAgeExclude` entries it adds, and move the devcontainer image tag to match. `typescript` / `@typescript/native` move only with an `@effect/tsgo` that supports them (see the catalog comment).
 - **`prosekit`**: raise the packages' literal `prosekit` / `@prosekit/pm` peer ranges with its minor.
