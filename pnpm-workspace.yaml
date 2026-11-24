@@ -12,7 +12,7 @@ catalog:
   # supports only specific versions, so it moves with `@typescript/native` and
   # `vite-plus`
   # (see the `components` table in node_modules/@effect/tsgo/dist/effect-tsgo.cjs).
-  '@effect/tsgo': 0.73.2
+  '@effect/tsgo': 0.73.4
   '@effect/vitest': 4.1.4
   '@enfect/oxlint': 0.10.0
   '@prosekit/pm': ^0.1.21
@@ -28,8 +28,8 @@ catalog:
   # TS7 (bin `tsc`) for the core's type check; svelte-check and the
   # declaration emit need the TS6 JS API (`typescript` below).
   '@typescript/native': npm:typescript@7.0.2
-  '@vitest/browser-playwright': 5.1.0
-  '@vitest/coverage-istanbul': 5.1.0
+  '@vitest/browser-playwright': 5.1.1
+  '@vitest/coverage-istanbul': 5.1.1
   '@xyflow/svelte': ^2.0.2
   bits-ui: ^2.21.0
   daisyui: ^5.8.1
@@ -58,7 +58,7 @@ catalog:
   # (`npm view vite-plus@<v> dependencies`); `vite` no longer equals vite-plus.
   vite-plus: 1.7.0
   vite: npm:@voidzero-dev/vite-plus-core@8.3.8000
-  vitest: 5.1.0
+  vitest: 5.1.1
   vitest-browser-svelte: ^3.1.0
 
 overrides:
