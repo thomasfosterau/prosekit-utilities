@@ -225,8 +225,8 @@ catalogs:
       specifier: 5.1.0
       version: 5.1.0
     '@xyflow/svelte':
-      specifier: ^2.0.2
-      version: 2.0.2
+      specifier: ^2.0.3
+      version: 2.0.3
     bits-ui:
       specifier: ^2.21.0
       version: 2.21.0
@@ -371,7 +371,7 @@ importers:
         version: 5.1.0(@voidzero-dev/vite-plus-core@8.3.8000(@types/node@26.6.6)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(playwright@1.65.1)(vitest@5.1.0)
       '@xyflow/svelte':
         specifier: 'catalog:'
-        version: 2.0.2(svelte@5.59.1)
+        version: 2.0.3(svelte@5.59.1)
       effect:
         specifier: 4.1.4
         version: 4.1.4
@@ -2452,14 +2452,14 @@ packages:
   '@webcontainer/env@1.1.1':
     resolution: {integrity: sha512-6aN99yL695Hi9SuIk1oC88l9o0gmxL1nGWWQ/kNy81HigJ0FoaoTXpytCj6ItzgyCEwA9kF1wixsTuv5cjsgng==}
 
-  '@xyflow/svelte@2.0.2':
-    resolution: {integrity: sha512-QJZ5ZzMBqJWO8bQOrp1G09r0qFxsL9ueBQLPbtXAupx3guMrjAPfK32EEAkqyBsp0OUptKn7FIMNq5ky8Nr6zQ==}
+  '@xyflow/svelte@2.0.3':
+    resolution: {integrity: sha512-W5hMPWsvw40YYXd66si+2i7B/G1KTj733mw+rxno0l2nD5PPA5sXXwK2IzGhj0u4SfrUNR/gPF2avNAT4EqP0g==}
     engines: {node: '>=20'}
     peerDependencies:
       svelte: ^5.59.1
 
-  '@xyflow/system@1.0.0':
-    resolution: {integrity: sha512-mOeG0ZIkEUY5V5XQS+LE3QKlJqL7gu5ukqxAniuDDpfxtkA4uagOmBiWKh3w59wZ5nBC7ojBcNrBukM3hUJBKg==}
+  '@xyflow/system@1.0.1':
+    resolution: {integrity: sha512-0vMyv9EbnV9lNe15USaIbBxJVuLF2awbzZNT+foIOd59Mpc2rw04oaozoms1TaSetTa376aHl7mJ/YNKqIoqJA==}
     engines: {node: '>=20'}
 
   '@yuku-core/binding-android-arm64@0.19.0':
@@ -5918,13 +5918,13 @@ snapshots:
 
   '@webcontainer/env@1.1.1': {}
 
-  '@xyflow/svelte@2.0.2(svelte@5.59.1)':
+  '@xyflow/svelte@2.0.3(svelte@5.59.1)':
     dependencies:
       '@svelte-put/shortcut': 4.2.0(svelte@5.59.1)
-      '@xyflow/system': 1.0.0
+      '@xyflow/system': 1.0.1
       svelte: 5.59.1
 
-  '@xyflow/system@1.0.0':
+  '@xyflow/system@1.0.1':
     dependencies:
       '@types/d3-drag': 3.0.7
       '@types/d3-interpolate': 3.0.4
