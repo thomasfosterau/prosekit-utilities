@@ -34,7 +34,7 @@ catalog:
   bits-ui: ^2.21.0
   daisyui: ^5.8.1
   # Peer of `./drizzle` only.
-  drizzle-orm: 1.0.0-rc.5
+  drizzle-orm: 1.0.0-rc.6
   # A peer of every package that uses it, never a dependency.
   effect: 4.1.4
   fallow: 3.48.0
