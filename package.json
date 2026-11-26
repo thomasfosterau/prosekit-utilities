@@ -32,11 +32,5 @@
     "vite": "catalog:",
     "vite-plus": "catalog:"
   },
-  "devEngines": {
-    "runtime": {
-      "name": "node",
-      "version": "lts"
-    }
-  },
   "packageManager": "pnpm@12.21.0"
 }
