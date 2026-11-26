@@ -15,6 +15,12 @@ Read [README.md](README.md) and [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) fir
 - **Bundle boundaries.** The core's `.`, `./derive` and `./drizzle` must not reach ProseKit, and the flowchart's `./node` must not reach Svelte or xyflow. Type checks don't catch this; `vp run check:dist` does, on the built `dist/`.
 - **Browser suites** need Chromium, and the pre-commit fallow audit runs them: in a session, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE=/opt/pw-browsers/chromium`. On a fresh checkout run `vp run -r sync` before `vp check`.
 
+## Pull requests
+
+- **Write the PR body with the `pr` skill** from Matt Pocock's skills (`mattpocock-skills:pr`), filling in the repository's pull request template where there is one.
+- **Resolve merge conflicts before you hand a PR over.** Rebase onto `origin/trunk` and push; a PR that conflicts with `trunk` isn't finished.
+- **Mark the PR ready for review as soon as the initial draft is finished.** Don't wait for CI to run, for reviews, or for the owner to do it. Keep fixing CI failures and review findings on the ready PR.
+
 ## Fallow
 
 - `vp install` links the `fallow` skill into `.claude/skills/fallow` from the installed package (approved under `permissions` in `pnpm-workspace.yaml`); the repository's own fallow rules are in [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
